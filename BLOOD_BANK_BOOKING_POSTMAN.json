@@ -1,0 +1,193 @@
+{
+  "info": {
+    "name": "Blood Bank Booking Tests",
+    "description": "Test blood bank booking with blood group selection and automatic price calculation",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BLOOD_BANK_ID",
+      "value": "6a12a9d64832dec55a136f24",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Search Blood Banks (Get Blood Bank ID & Pricing)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATIENT_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/patient/search/bloodbanks?bloodGroup=A+&city=Los Angeles&page=1&limit=20",
+          "host": ["{{BASE_URL}}"],
+          "path": ["patient", "search", "bloodbanks"],
+          "query": [
+            {
+              "key": "bloodGroup",
+              "value": "A+",
+              "description": "Filter by blood group availability"
+            },
+            {
+              "key": "city",
+              "value": "Los Angeles",
+              "description": "Filter by city"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Search for blood banks that have A+ blood available. Copy the _id and check pricePerUnit from bloodStock array."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Create Blood Booking (2 units of A+)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATIENT_TOKEN}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serviceType\": \"bloodbank\",\n  \"provider\": \"{{BLOOD_BANK_ID}}\",\n  \"bloodGroup\": \"A+\",\n  \"unitsRequired\": 2,\n  \"notes\": \"Urgent blood requirement for surgery - Test booking\",\n  \"location\": {\n    \"address\": \"Apollo Hospital, Mumbai\",\n    \"coordinates\": [72.8777, 19.076]\n  },\n  \"patientName\": \"John Doe\",\n  \"patientAge\": 35,\n  \"hospital\": \"Apollo Hospital\",\n  \"urgency\": \"urgent\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/patient/bookings",
+          "host": ["{{BASE_URL}}"],
+          "path": ["patient", "bookings"]
+        },
+        "description": "Create a blood booking for 2 units of A+ blood. Backend will automatically calculate price = 2 × pricePerUnit."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Create Blood Booking (1 unit of O-)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATIENT_TOKEN}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serviceType\": \"bloodbank\",\n  \"provider\": \"{{BLOOD_BANK_ID}}\",\n  \"bloodGroup\": \"O-\",\n  \"unitsRequired\": 1,\n  \"notes\": \"Emergency requirement - Universal donor blood needed\",\n  \"urgency\": \"emergency\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/patient/bookings",
+          "host": ["{{BASE_URL}}"],
+          "path": ["patient", "bookings"]
+        },
+        "description": "Create emergency booking for 1 unit of O- blood (universal donor)."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get Patient Bookings (Verify Creation)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATIENT_TOKEN}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/patient/bookings?serviceType=bloodbank&page=1&limit=20",
+          "host": ["{{BASE_URL}}"],
+          "path": ["patient", "bookings"],
+          "query": [
+            {
+              "key": "serviceType",
+              "value": "bloodbank"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Get all blood bank bookings for the patient. Verify bloodGroup, unitsRequired, and calculated price."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Get Blood Bank Requests (Vendor Side)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{BLOOD_BANK_TOKEN}}",
+            "type": "text",
+            "description": "Use blood bank vendor token"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/bloodbank/requests?status=requested&page=1&limit=20",
+          "host": ["{{BASE_URL}}"],
+          "path": ["bloodbank", "requests"],
+          "query": [
+            {
+              "key": "status",
+              "value": "requested"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Blood bank vendor can see incoming requests with blood group and units required."
+      },
+      "response": []
+    }
+  ]
+}

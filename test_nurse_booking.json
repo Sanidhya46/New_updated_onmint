@@ -1,0 +1,119 @@
+{
+  "name": "Test Nurse Booking",
+  "description": "Test nurse booking creation and workflow",
+  "requests": [
+    {
+      "name": "1. Create Nurse Booking (Patient)",
+      "method": "POST",
+      "url": "{{BASE_URL}}/patient/bookings",
+      "headers": {
+        "Authorization": "Bearer {{PATIENT_TOKEN}}",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "provider": "{{NURSE_ID}}",
+        "serviceType": "nurse",
+        "scheduledTime": "2026-05-25T10:00:00.000Z",
+        "timeSlot": {
+          "start": "10:00",
+          "end": "12:00"
+        },
+        "location": {
+          "address": "123 Main Street, City",
+          "coordinates": [77.5946, 12.9716]
+        },
+        "notes": "Need home nursing care",
+        "price": 500
+      },
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "requested",
+          "serviceType": "nurse"
+        }
+      }
+    },
+    {
+      "name": "2. Get Nurse Bookings (Vendor)",
+      "method": "GET",
+      "url": "{{BASE_URL}}/nurse/bookings?status=requested",
+      "headers": {
+        "Authorization": "Bearer {{NURSE_TOKEN}}"
+      },
+      "expectedResponse": {
+        "success": true,
+        "data": []
+      }
+    },
+    {
+      "name": "3. Accept Booking (Nurse)",
+      "method": "POST",
+      "url": "{{BASE_URL}}/nurse/bookings/{{BOOKING_ID}}/accept",
+      "headers": {
+        "Authorization": "Bearer {{NURSE_TOKEN}}"
+      },
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "accepted"
+        }
+      }
+    },
+    {
+      "name": "4. Start Visit (Nurse)",
+      "method": "POST",
+      "url": "{{BASE_URL}}/nurse/bookings/{{BOOKING_ID}}/start",
+      "headers": {
+        "Authorization": "Bearer {{NURSE_TOKEN}}"
+      },
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "in_progress"
+        }
+      }
+    },
+    {
+      "name": "5. Complete Visit (Nurse)",
+      "method": "POST",
+      "url": "{{BASE_URL}}/nurse/bookings/{{BOOKING_ID}}/complete",
+      "headers": {
+        "Authorization": "Bearer {{NURSE_TOKEN}}"
+      },
+      "body": {
+        "notes": "Visit completed successfully"
+      },
+      "expectedResponse": {
+        "success": true,
+        "data": {
+          "status": "completed"
+        }
+      }
+    },
+    {
+      "name": "6. Get Patient Bookings (User)",
+      "method": "GET",
+      "url": "{{BASE_URL}}/patient/bookings?status=all&serviceType=all",
+      "headers": {
+        "Authorization": "Bearer {{PATIENT_TOKEN}}"
+      },
+      "expectedResponse": {
+        "success": true,
+        "data": []
+      }
+    }
+  ],
+  "variables": {
+    "BASE_URL": "http://localhost:5000",
+    "PATIENT_TOKEN": "your_patient_token_here",
+    "NURSE_TOKEN": "your_nurse_token_here",
+    "NURSE_ID": "nurse_user_id_here",
+    "BOOKING_ID": "will_be_set_from_step_1"
+  },
+  "notes": [
+    "Complete nurse booking workflow from creation to completion",
+    "Status flow: requested → accepted → in_progress → completed",
+    "Patient creates booking, nurse accepts/starts/completes",
+    "Both apps should show real-time status updates"
+  ]
+}

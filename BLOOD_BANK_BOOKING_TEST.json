@@ -1,0 +1,174 @@
+{
+  "endpoint": "POST {{BASE_URL}}/patient/bookings",
+  "description": "Create a blood bank booking request with blood group selection and automatic price calculation",
+  "headers": {
+    "Authorization": "Bearer {{PATIENT_TOKEN}}",
+    "Content-Type": "application/json"
+  },
+  "requestBody": {
+    "serviceType": "bloodbank",
+    "provider": "6a12a9d64832dec55a136f24",
+    "bloodGroup": "A+",
+    "unitsRequired": 2,
+    "notes": "Urgent blood requirement for surgery",
+    "location": {
+      "address": "Apollo Hospital, Mumbai",
+      "coordinates": [72.8777, 19.076]
+    },
+    "patientName": "John Doe",
+    "patientAge": 35,
+    "hospital": "Apollo Hospital",
+    "urgency": "urgent"
+  },
+  "fieldDescriptions": {
+    "serviceType": "REQUIRED - Must be 'bloodbank'",
+    "provider": "REQUIRED - Blood bank ID from search results (_id field)",
+    "bloodGroup": "REQUIRED - One of: A+, A-, B+, B-, AB+, AB-, O+, O-",
+    "unitsRequired": "REQUIRED - Number of blood units needed (minimum 1)",
+    "notes": "OPTIONAL - Additional notes or reason for blood requirement",
+    "location": "OPTIONAL - Patient location or hospital address",
+    "patientName": "OPTIONAL - Patient name for the blood request",
+    "patientAge": "OPTIONAL - Patient age",
+    "hospital": "OPTIONAL - Hospital name where blood is needed",
+    "urgency": "OPTIONAL - One of: normal, urgent, emergency"
+  },
+  "backendLogic": {
+    "priceCalculation": "Backend automatically calculates price based on: unitsRequired × pricePerUnit from blood bank's bloodStock",
+    "example": "If blood bank has A+ at ₹500/unit and user requests 2 units, price = 2 × 500 = ₹1000",
+    "codeLocation": "Ourdeals_Healthcare/src/services/booking.service.js lines 98-115"
+  },
+  "successResponse": {
+    "success": true,
+    "message": "Booking created successfully",
+    "data": {
+      "_id": "6a12b0b913a30cfe54f49704",
+      "patient": {
+        "_id": "6a0e8b4bb076735b153edb01",
+        "firstName": "John",
+        "lastName": "Doe",
+        "phone": "9876543219"
+      },
+      "provider": {
+        "_id": "6a12a9d64832dec55a136f24",
+        "firstName": "Newvessels",
+        "lastName": "Bloodbank",
+        "bankName": "LifeSaver Blood Bank",
+        "phone": "9876543266"
+      },
+      "serviceType": "bloodbank",
+      "status": "requested",
+      "bloodGroup": "A+",
+      "unitsRequired": 2,
+      "price": 1000,
+      "paymentStatus": "pending",
+      "paymentMethod": "cash",
+      "notes": "Urgent blood requirement for surgery",
+      "location": {
+        "address": "Apollo Hospital, Mumbai",
+        "coordinates": [72.8777, 19.076]
+      },
+      "createdAt": "2026-05-24T08:03:05.449Z",
+      "updatedAt": "2026-05-24T08:03:05.449Z"
+    }
+  },
+  "testScenarios": [
+    {
+      "scenario": "Book 2 units of A+ blood",
+      "bloodGroup": "A+",
+      "unitsRequired": 2,
+      "expectedPrice": "2 × pricePerUnit for A+ from blood bank"
+    },
+    {
+      "scenario": "Book 1 unit of O- blood (universal donor)",
+      "bloodGroup": "O-",
+      "unitsRequired": 1,
+      "expectedPrice": "1 × pricePerUnit for O- from blood bank"
+    },
+    {
+      "scenario": "Emergency booking with 3 units",
+      "bloodGroup": "B+",
+      "unitsRequired": 3,
+      "urgency": "emergency",
+      "expectedPrice": "3 × pricePerUnit for B+ from blood bank"
+    }
+  ],
+  "howToTest": {
+    "step1": "Get blood bank list with pricing",
+    "step1_endpoint": "GET {{BASE_URL}}/patient/search/bloodbanks?bloodGroup=A+&city=Mumbai",
+    "step1_note": "Copy the _id of a blood bank and check the pricePerUnit for your desired blood group",
+    
+    "step2": "Create booking with correct fields",
+    "step2_endpoint": "POST {{BASE_URL}}/patient/bookings",
+    "step2_body": {
+      "serviceType": "bloodbank",
+      "provider": "<BLOOD_BANK_ID_FROM_STEP1>",
+      "bloodGroup": "A+",
+      "unitsRequired": 2,
+      "notes": "Test booking"
+    },
+    
+    "step3": "Verify price calculation",
+    "step3_note": "Check response.data.price = unitsRequired × pricePerUnit",
+    
+    "step4": "Check booking in vendor app",
+    "step4_endpoint": "GET {{BASE_URL}}/bloodbank/requests?status=requested",
+    "step4_note": "Login to blood bank vendor app to see the request"
+  },
+  "commonErrors": {
+    "error1": {
+      "message": "Provider is required",
+      "cause": "Missing 'provider' field in request",
+      "fix": "Add 'provider' field with blood bank ID"
+    },
+    "error2": {
+      "message": "Blood group is required",
+      "cause": "Missing 'bloodGroup' field",
+      "fix": "Add 'bloodGroup' field with valid blood group (A+, A-, B+, B-, AB+, AB-, O+, O-)"
+    },
+    "error3": {
+      "message": "Units required must be at least 1",
+      "cause": "unitsRequired is 0 or negative",
+      "fix": "Set unitsRequired to a positive number"
+    },
+    "error4": {
+      "message": "Blood group not available",
+      "cause": "Selected blood group has 0 units in stock",
+      "fix": "Choose a different blood group or blood bank"
+    }
+  },
+  "frontendIntegration": {
+    "file": "New_Onmint/user_app/lib/screens/booking/blood_request_screen.dart",
+    "apiMethod": "createBloodRequest()",
+    "correctFields": {
+      "provider": "widget.bloodBank['_id']",
+      "bloodGroup": "_selectedBloodGroup",
+      "unitsRequired": "int.parse(_unitsController.text)",
+      "notes": "_reasonController.text"
+    },
+    "status": "✅ FIXED - Now sends correct field names"
+  },
+  "priceCalculationExample": {
+    "bloodBankStock": {
+      "bloodGroup": "A+",
+      "unitsAvailable": 5000,
+      "pricePerUnit": 500
+    },
+    "userRequest": {
+      "bloodGroup": "A+",
+      "unitsRequired": 3
+    },
+    "calculation": "price = 3 units × ₹500/unit = ₹1500",
+    "finalBooking": {
+      "bloodGroup": "A+",
+      "unitsRequired": 3,
+      "price": 1500
+    }
+  },
+  "workflowStates": {
+    "1_requested": "Patient creates booking → status: 'requested'",
+    "2_accepted": "Blood bank accepts → status: 'accepted'",
+    "3_in_progress": "Blood bank prepares blood → status: 'in_progress'",
+    "4_completed": "Blood delivered → status: 'completed'",
+    "cancelled": "Either party cancels → status: 'cancelled'"
+  }
+}

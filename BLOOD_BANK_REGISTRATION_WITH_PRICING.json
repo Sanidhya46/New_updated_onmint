@@ -1,0 +1,86 @@
+{
+  "description": "Blood Bank Registration - NOW WITH REQUIRED PRICING",
+  "endpoint": "POST {{BASE_URL}}/auth/register",
+  "example_request": {
+    "email": "lifesaver.bloodbank55@healthcare.com",
+    "password": "SecurePass@123!",
+    "phone": "9876543277",
+    "role": "bloodbank",
+    "firstName": "Shobhit",
+    "lastName": "Bloodbank",
+    "street": "123 Emergency Lane",
+    "city": "Los Angeles",
+    "state": "CA",
+    "pincode": "90001",
+    "country": "USA",
+    "location": {
+      "type": "Point",
+      "coordinates": [-118.2437, 34.0522]
+    },
+    "bankName": "LifeSaver Blood Bank",
+    "licenseNumber": "BB-FX-567890",
+    "emergencyContact": "+1234567899",
+    "operatingHours": {
+      "open": "00:00",
+      "close": "23:59"
+    },
+    "bloodStock": [
+      {
+        "bloodGroup": "A+",
+        "unitsAvailable": 50,
+        "pricePerUnit": 500,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "A-",
+        "unitsAvailable": 25,
+        "pricePerUnit": 600,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "B+",
+        "unitsAvailable": 40,
+        "pricePerUnit": 500,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "B-",
+        "unitsAvailable": 20,
+        "pricePerUnit": 600,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "AB+",
+        "unitsAvailable": 15,
+        "pricePerUnit": 700,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "AB-",
+        "unitsAvailable": 10,
+        "pricePerUnit": 800,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "O+",
+        "unitsAvailable": 60,
+        "pricePerUnit": 450,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      },
+      {
+        "bloodGroup": "O-",
+        "unitsAvailable": 30,
+        "pricePerUnit": 750,
+        "lastUpdated": "2026-04-11T10:00:00.000Z"
+      }
+    ]
+  },
+  "notes": [
+    "pricePerUnit is NOW REQUIRED for each blood group",
+    "Typical prices: ₹450-₹800 per unit",
+    "O+ is usually cheapest (most common)",
+    "AB- is usually most expensive (rarest)",
+    "All fields in bloodStock array are required"
+  ]
+}
+ 

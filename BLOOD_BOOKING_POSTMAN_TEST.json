@@ -1,0 +1,35 @@
+{
+  "name": "Blood Bank Booking Test",
+  "description": "Test blood bank booking with all required fields",
+  "method": "POST",
+  "url": "http://localhost:5000/api/v1/patient/bookings",
+  "headers": {
+    "Authorization": "Bearer YOUR_PATIENT_TOKEN_HERE",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "serviceType": "bloodbank",
+    "provider": "6a12a9d64832dec55a136f24",
+    "bloodGroup": "B-",
+    "unitsRequired": 3,
+    "notes": "i want b- blood"
+  },
+  "expectedResponse": {
+    "success": true,
+    "message": "Booking created successfully",
+    "data": {
+      "_id": "...",
+      "serviceType": "bloodbank",
+      "bloodGroup": "B-",
+      "unitsRequired": 3,
+      "price": 1800,
+      "status": "requested"
+    }
+  },
+  "notes": [
+    "Replace YOUR_PATIENT_TOKEN_HERE with actual patient token",
+    "Replace provider ID with actual blood bank ID",
+    "Backend will calculate price automatically",
+    "Check server logs for detailed debug information"
+  ]
+}
