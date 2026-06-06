@@ -1,0 +1,756 @@
+{
+  "info": {
+    "_postman_id": "0ed1985a-25fc-45c0-a975-c1e50c0dd391",
+    "name": "Healthcare Platform - Blood Bank API",
+    "description": "Complete Postman collection for Blood Bank endpoints including authentication, profile management, blood stock management, blood request handling, and dashboard analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Blood Bank",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('BLOODBANK_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('BLOODBANK_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"LifeSaver Blood Bank\",\n  \"email\": \"lifesaver.bloodbank@healthcare.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+1234567898\",\n  \"role\": \"bloodbank\",\n  \"address\": {\n    \"street\": \"789 Medical Center Drive\",\n    \"city\": \"Houston\",\n    \"state\": \"TX\",\n    \"zipCode\": \"77001\",\n    \"country\": \"USA\"\n  },\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-95.3698, 29.7604]\n  },\n  \"bankName\": \"LifeSaver Blood Bank\",\n  \"licenseNumber\": \"BB-TX-567890\",\n  \"emergencyContact\": \"+1234567899\",\n  \"operatingHours\": {\n    \"open\": \"00:00\",\n    \"close\": \"23:59\"\n  },\n  \"bloodStock\": [\n    {\n      \"bloodGroup\": \"A+\",\n      \"unitsAvailable\": 50,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"A-\",\n      \"unitsAvailable\": 25,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"B+\",\n      \"unitsAvailable\": 40,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"B-\",\n      \"unitsAvailable\": 20,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"AB+\",\n      \"unitsAvailable\": 15,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"AB-\",\n      \"unitsAvailable\": 10,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"O+\",\n      \"unitsAvailable\": 60,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    },\n    {\n      \"bloodGroup\": \"O-\",\n      \"unitsAvailable\": 30,\n      \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new blood bank with initial blood stock inventory for all blood groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Blood Bank",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('BLOODBANK_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('BLOODBANK_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"lifesaver.bloodbank@healthcare.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with blood bank credentials to receive access token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Blood Bank Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get currently authenticated blood bank's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/change-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Change blood bank account password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout-all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Logout from all devices"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for blood bank registration, login, and session management"
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bankName\": \"LifeSaver Blood Bank & Transfusion Center\",\n  \"phone\": \"+1234567900\",\n  \"address\": {\n    \"street\": \"789 Medical Center Drive Suite 300\",\n    \"city\": \"Houston\",\n    \"state\": \"TX\",\n    \"zipCode\": \"77001\",\n    \"country\": \"USA\"\n  },\n  \"emergencyContact\": \"+1234567901\",\n  \"operatingHours\": {\n    \"open\": \"00:00\",\n    \"close\": \"23:59\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/profile",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "profile"
+              ]
+            },
+            "description": "Update blood bank profile including bank name, emergency contact, and operating hours"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing blood bank profile information"
+    },
+    {
+      "name": "Blood Stock Management",
+      "item": [
+        {
+          "name": "Get Blood Stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Get current blood stock inventory for all blood groups"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - A+",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"A+\",\n  \"unitsAvailable\": 55\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for A+ blood group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - A-",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"A-\",\n  \"unitsAvailable\": 30\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for A- blood group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - B+",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"B+\",\n  \"unitsAvailable\": 45\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for B+ blood group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - B-",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"B-\",\n  \"unitsAvailable\": 25\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for B- blood group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - AB+",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"AB+\",\n  \"unitsAvailable\": 20\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for AB+ blood group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - AB-",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"AB-\",\n  \"unitsAvailable\": 15\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for AB- blood group"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - O+",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"O+\",\n  \"unitsAvailable\": 65\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for O+ blood group (universal donor for Rh+)"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock - O-",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"O-\",\n  \"unitsAvailable\": 35\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "stock"
+              ]
+            },
+            "description": "Update blood stock for O- blood group (universal donor)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing blood stock inventory for all blood groups"
+    },
+    {
+      "name": "Blood Request Management",
+      "item": [
+        {
+          "name": "Get All Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('REQUEST_ID', response.data[0]._id);",
+                  "        if (response.data[0].patient && response.data[0].patient._id) {",
+                  "            pm.collectionVariables.set('PATIENT_ID', response.data[0].patient._id);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/requests?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all blood requests with optional status filter and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/requests?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all pending blood requests awaiting blood bank acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Confirmed Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/requests?status=confirmed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all confirmed requests ready for fulfillment"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/requests?status=completed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all completed blood requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/requests/{{REQUEST_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "requests",
+                "{{REQUEST_ID}}",
+                "accept"
+              ]
+            },
+            "description": "Accept a pending blood request from a patient or hospital"
+          },
+          "response": []
+        },
+        {
+          "name": "Fulfill Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bloodGroup\": \"O+\",\n  \"unitsProvided\": 2\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/requests/{{REQUEST_ID}}/fulfill",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "requests",
+                "{{REQUEST_ID}}",
+                "fulfill"
+              ]
+            },
+            "description": "Fulfill a blood request by providing blood units. Stock will be automatically deducted."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing blood requests and fulfillment workflow"
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/bloodbank/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "bloodbank",
+                "dashboard"
+              ]
+            },
+            "description": "Get blood bank dashboard with active requests, total requests, total units available, and complete blood stock inventory"
+          },
+          "response": []
+        }
+      ],
+      "description": "Dashboard and analytics endpoints for blood bank performance metrics"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{BLOODBANK_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "BLOODBANK_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BLOODBANK_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "REQUEST_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

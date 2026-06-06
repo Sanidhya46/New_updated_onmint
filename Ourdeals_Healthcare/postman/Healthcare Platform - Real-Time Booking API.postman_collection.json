@@ -1,0 +1,876 @@
+{
+  "info": {
+    "_postman_id": "d730fd51-c02f-4af5-a05d-47f3e1f26ccb",
+    "name": "Healthcare Platform - Real-Time Booking API",
+    "description": "Complete Postman collection for Real-Time Booking System. Patients can create instant booking requests that are sent to nearby providers. Providers receive notifications and can accept bookings in real-time. Includes emergency booking support, location-based matching, and auto-expiration after 15 minutes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Patient - Create Booking Requests",
+      "item": [
+        {
+          "name": "Create Emergency Doctor Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('BOOKING_ID', response.data._id);",
+                  "        console.log('Booking ID:', response.data._id);",
+                  "        console.log('Status:', response.data.status);",
+                  "        console.log('Notified Providers:', response.data.notifiedProviders.length);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"doctor\",\n  \"description\": \"Severe chest pain and difficulty breathing. Need immediate medical attention.\",\n  \"urgency\": \"emergency\",\n  \"preferredTime\": \"2026-04-11T12:00:00.000Z\",\n  \"specialRequirements\": \"Cardiologist preferred. Patient has history of heart disease.\",\n  \"address\": \"123 Main Street, Apartment 5B, New York, NY 10001\",\n  \"coordinates\": [-73.9352, 40.7306],\n  \"isEmergency\": true,\n  \"notes\": \"Patient is 65 years old, diabetic, on blood pressure medication.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/create",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "create"
+              ]
+            },
+            "description": "**Create Emergency Doctor Request**\n\nPatient creates an urgent booking request for immediate medical attention. This endpoint:\n- Creates real-time booking with 15-minute auto-expiration\n- Finds nearby doctors within 10km radius\n- Sends push notifications to all nearby providers\n- Marks as emergency for priority handling\n- Returns list of notified providers\n\n**Service Types:**\n- doctor\n- nurse\n- ambulance\n- pharmacist\n- bloodbank\n- pathology\n\n**Urgency Levels:**\n- low: Non-urgent, flexible timing\n- medium: Standard priority (default)\n- high: Urgent, need soon\n- emergency: Critical, immediate attention\n\n**Location:**\n- address: Full address string\n- coordinates: [longitude, latitude] for geo-matching\n\n**Auto-Expiration:**\n- Booking expires after 15 minutes if no provider accepts\n- Status changes to 'expired' automatically\n- Patient receives notification to create new request"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Ambulance Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"ambulance\",\n  \"description\": \"Need ambulance for patient transport to hospital. Patient fell and injured leg.\",\n  \"urgency\": \"high\",\n  \"preferredTime\": \"2026-04-11T12:30:00.000Z\",\n  \"specialRequirements\": \"Need stretcher and oxygen support. Patient cannot walk.\",\n  \"address\": \"456 Oak Avenue, Brooklyn, NY 11201\",\n  \"coordinates\": [-73.9903, 40.6944],\n  \"isEmergency\": true,\n  \"notes\": \"Patient is conscious but in pain. Possible fracture.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/create",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "create"
+              ]
+            },
+            "description": "Create emergency ambulance request for patient transport. Notifies nearby ambulance services."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Nurse Home Visit Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"nurse\",\n  \"description\": \"Need nurse for wound dressing and IV medication administration at home.\",\n  \"urgency\": \"medium\",\n  \"preferredTime\": \"2026-04-11T15:00:00.000Z\",\n  \"specialRequirements\": \"Experience with post-surgery wound care. Need to change dressing daily.\",\n  \"address\": \"789 Park Lane, Queens, NY 11375\",\n  \"coordinates\": [-73.8448, 40.7282],\n  \"isEmergency\": false,\n  \"notes\": \"Patient had surgery 3 days ago. Wound healing well but needs professional care.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/create",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "create"
+              ]
+            },
+            "description": "Create nurse home visit request for wound care and medication administration."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Medicine Delivery Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"pharmacist\",\n  \"description\": \"Need urgent medicine delivery. Prescription medicines for diabetes and blood pressure.\",\n  \"urgency\": \"high\",\n  \"preferredTime\": \"2026-04-11T13:00:00.000Z\",\n  \"specialRequirements\": \"Have prescription. Need medicines within 1 hour.\",\n  \"address\": \"321 Elm Street, Manhattan, NY 10002\",\n  \"coordinates\": [-73.9866, 40.7145],\n  \"isEmergency\": false,\n  \"notes\": \"Medicines running out. Patient is diabetic and hypertensive.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/create",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "create"
+              ]
+            },
+            "description": "Create urgent medicine delivery request. Notifies nearby pharmacies."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Blood Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"bloodbank\",\n  \"description\": \"Urgent need for O+ blood. Patient scheduled for surgery tomorrow.\",\n  \"urgency\": \"emergency\",\n  \"preferredTime\": \"2026-04-11T14:00:00.000Z\",\n  \"specialRequirements\": \"Need 2 units of O+ blood. Cross-matching required.\",\n  \"address\": \"555 Hospital Road, Bronx, NY 10451\",\n  \"coordinates\": [-73.9249, 40.8448],\n  \"isEmergency\": true,\n  \"notes\": \"Patient blood group: O+. Surgery scheduled for tomorrow 8 AM.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/create",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "create"
+              ]
+            },
+            "description": "Create urgent blood request for surgery. Notifies nearby blood banks."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Lab Test Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"pathology\",\n  \"description\": \"Need home sample collection for blood tests. CBC, Lipid Profile, HbA1c.\",\n  \"urgency\": \"medium\",\n  \"preferredTime\": \"2026-04-12T08:00:00.000Z\",\n  \"specialRequirements\": \"Fasting required. Please come early morning. Need home collection.\",\n  \"address\": \"888 Riverside Drive, Manhattan, NY 10032\",\n  \"coordinates\": [-73.9534, 40.8296],\n  \"isEmergency\": false,\n  \"notes\": \"Patient will be fasting. Please collect sample before 9 AM.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/create",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "create"
+              ]
+            },
+            "description": "Create lab test request with home sample collection. Notifies nearby pathology labs."
+          },
+          "response": []
+        }
+      ],
+      "description": "Patient endpoints for creating real-time booking requests for various services"
+    },
+    {
+      "name": "Patient - Manage Bookings",
+      "item": [
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/my-bookings?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "my-bookings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all bookings created by patient with pagination. Can filter by status."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Bookings",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/my-bookings?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "my-bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get bookings waiting for provider acceptance."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Bookings",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/my-bookings?status=accepted&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "my-bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "accepted"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get bookings that have been accepted by providers."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}"
+              ]
+            },
+            "description": "Get detailed information about a specific booking including provider details, status, and timeline."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Patient condition improved. No longer need immediate medical attention.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/cancel",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel a booking request. Requires cancellation reason. Notifies provider if booking was already accepted."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient Dashboard",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/patient/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "patient",
+                "dashboard"
+              ]
+            },
+            "description": "Get patient dashboard with statistics: active bookings, completed bookings, total spent, and recent bookings."
+          },
+          "response": []
+        }
+      ],
+      "description": "Patient endpoints for viewing and managing their booking requests"
+    },
+    {
+      "name": "Provider - Manage Bookings",
+      "item": [
+        {
+          "name": "Get Provider Bookings",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/provider/bookings?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "provider",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all booking requests sent to provider. Includes both pending requests and accepted bookings."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Requests",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/provider/bookings?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "provider",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get pending booking requests waiting for provider acceptance."
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Booking Request",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "accept"
+              ]
+            },
+            "description": "**Accept Booking Request**\n\nProvider accepts a pending booking request. This endpoint:\n- Changes booking status to 'accepted'\n- Sets acceptedProvider to current provider\n- Records acceptance timestamp\n- Sends notification to patient\n- Prevents other providers from accepting (first-come-first-served)\n- Returns 409 error if already accepted by another provider\n\n**After Acceptance:**\n- Provider should update status to 'on_the_way' when traveling\n- Then 'in_progress' when service starts\n- Finally 'completed' when service ends"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status - On The Way",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"on_the_way\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/status",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "status"
+              ]
+            },
+            "description": "Update booking status to 'on_the_way' when provider starts traveling to patient location. Patient receives notification with ETA."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status - In Progress",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/status",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "status"
+              ]
+            },
+            "description": "Update booking status to 'in_progress' when service starts. Records start time."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Status - Completed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/status",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "status"
+              ]
+            },
+            "description": "Update booking status to 'completed' when service ends. Records end time. Patient can now rate and review."
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Booking as Viewed",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/viewed",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "viewed"
+              ]
+            },
+            "description": "Mark booking notification as viewed. Updates viewed status and timestamp in notifiedProviders array."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking (Provider)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Emergency situation. Unable to provide service. Apologize for inconvenience.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/{{BOOKING_ID}}/cancel",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "{{BOOKING_ID}}",
+                "cancel"
+              ]
+            },
+            "description": "Provider cancels accepted booking. Requires reason. Patient receives notification and can create new request."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Provider Dashboard",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PROVIDER_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/realtime-bookings/provider/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "realtime-bookings",
+                "provider",
+                "dashboard"
+              ]
+            },
+            "description": "Get provider dashboard with statistics: pending requests, active bookings, completed bookings, total earnings, and recent bookings."
+          },
+          "response": []
+        }
+      ],
+      "description": "Provider endpoints for receiving, accepting, and managing booking requests"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{ACCESS_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PROVIDER_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BOOKING_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

@@ -1,0 +1,571 @@
+{
+  "info": {
+    "name": "OnMint Healthcare - Video Call APIs",
+    "description": "Complete collection for doctor appointment and video call consultation flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "12345678"
+  },
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login as Doctor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.token) {",
+                  "        pm.environment.set(\"doctor_token\", jsonData.data.token);",
+                  "        console.log(\"Doctor token saved:\", jsonData.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"password\": \"SecurePass@123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as doctor to get authentication token"
+          },
+          "response": []
+        },
+        {
+          "name": "Login as Patient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.token) {",
+                  "        pm.environment.set(\"patient_token\", jsonData.data.token);",
+                  "        console.log(\"Patient token saved:\", jsonData.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543999\",\n  \"password\": \"SecurePass@123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as patient to get authentication token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Doctor Dashboard",
+      "item": [
+        {
+          "name": "Get Doctor Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/doctor/dashboard",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "dashboard"]
+            },
+            "description": "Get doctor dashboard with today's appointments and stats"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Appointments Management",
+      "item": [
+        {
+          "name": "Get Requested Appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data && jsonData.data.length > 0) {",
+                  "        pm.environment.set(\"appointment_id\", jsonData.data[0]._id);",
+                  "        console.log(\"Appointment ID saved:\", jsonData.data[0]._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments?status=requested&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "requested"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get list of requested appointments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Accepted Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments?status=accepted&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "accepted"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get list of accepted appointments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments?status=completed&page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get list of completed appointments"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Appointment Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments/{{appointment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments", "{{appointment_id}}"]
+            },
+            "description": "Get details of a specific appointment"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments/{{appointment_id}}/accept",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments", "{{appointment_id}}", "accept"]
+            },
+            "description": "Accept a requested appointment"
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Not available at this time\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments/{{appointment_id}}/reject",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments", "{{appointment_id}}", "reject"]
+            },
+            "description": "Reject an appointment with reason"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Appointment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/doctor/appointments/{{appointment_id}}/complete",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "appointments", "{{appointment_id}}", "complete"]
+            },
+            "description": "Mark appointment as completed"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Video Call APIs",
+      "item": [
+        {
+          "name": "Create Video Room",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    if (jsonData.data) {",
+                  "        pm.environment.set(\"meeting_id\", jsonData.data.meetingId);",
+                  "        pm.environment.set(\"video_token\", jsonData.data.token);",
+                  "        console.log(\"Meeting ID saved:\", jsonData.data.meetingId);",
+                  "        console.log(\"Video token saved:\", jsonData.data.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{appointment_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/video/room",
+              "host": ["{{base_url}}"],
+              "path": ["video", "room"]
+            },
+            "description": "Create Zoom video room for consultation"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Video Token",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/video/token/{{appointment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["video", "token", "{{appointment_id}}"]
+            },
+            "description": "Get or refresh video token for Zoom meeting"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Video Room Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/video/status/{{appointment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["video", "status", "{{appointment_id}}"]
+            },
+            "description": "Get current status of video room"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Video Service Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/video/service-status",
+              "host": ["{{base_url}}"],
+              "path": ["video", "service-status"]
+            },
+            "description": "Get Zoom service status"
+          },
+          "response": []
+        },
+        {
+          "name": "End Video Call",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{base_url}}/video/end/{{appointment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["video", "end", "{{appointment_id}}"]
+            },
+            "description": "End video consultation and close Zoom meeting"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Prescription Management",
+      "item": [
+        {
+          "name": "Create Prescription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{doctor_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{appointment_id}}\",\n  \"diagnosis\": \"Common cold with fever\",\n  \"symptoms\": [\"Fever\", \"Cough\", \"Headache\"],\n  \"medicines\": [\n    {\n      \"name\": \"Paracetamol 500mg\",\n      \"dosage\": \"1 tablet\",\n      \"frequency\": \"3 times a day\",\n      \"duration\": \"5 days\",\n      \"instructions\": \"Take after meals\"\n    }\n  ],\n  \"tests\": [\"Complete Blood Count\"],\n  \"advice\": \"Rest and drink plenty of fluids. Avoid cold drinks.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/doctor/prescriptions",
+              "host": ["{{base_url}}"],
+              "path": ["doctor", "prescriptions"]
+            },
+            "description": "Create prescription for patient"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Patient Booking APIs",
+      "item": [
+        {
+          "name": "Create Booking (Patient)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patient_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"doctor\",\n  \"provider\": \"doctor_id_here\",\n  \"scheduledTime\": \"2026-04-21T11:00:00.000Z\",\n  \"consultationType\": \"video-call\",\n  \"location\": {\n    \"address\": \"Patient Home\",\n    \"coordinates\": [77.5946, 12.9716]\n  },\n  \"notes\": \"Fever and headache for 2 days\",\n  \"price\": 500\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings",
+              "host": ["{{base_url}}"],
+              "path": ["bookings"]
+            },
+            "description": "Create new booking/appointment (Patient side)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Bookings (Patient)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{patient_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/patient/bookings?status=all",
+              "host": ["{{base_url}}"],
+              "path": ["patient", "bookings"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                }
+              ]
+            },
+            "description": "Get patient's bookings"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    }
+  ]
+}

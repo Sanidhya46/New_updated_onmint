@@ -1,0 +1,845 @@
+{
+  "info": {
+    "_postman_id": "f9a2408a-e5de-427f-bfad-4fa0c98bc717",
+    "name": "Healthcare Management System - Patient API",
+    "description": "Complete Patient API collection for Healthcare Management System including bookings, search, emergency services, notifications, and ratings",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Patient Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('PATIENT_TOKEN', response.data.accessToken);",
+                  "    pm.collectionVariables.set('PATIENT_ID', response.data.user._id);",
+                  "    console.log('Patient registered and token set successfully');",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"patient12@example.com\",\n  \"password\": \"SecurePass@123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"9876543219\",\n  \"role\": \"patient\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [72.8777, 19.0760]\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new patient account. Token will be automatically saved."
+          },
+          "response": []
+        },
+        {
+          "name": "Patient Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('PATIENT_TOKEN', response.data.accessToken);",
+                  "    pm.collectionVariables.set('PATIENT_ID', response.data.user._id);",
+                  "    console.log('Patient token set successfully');",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543219\",\n  \"password\": \"SecurePass@123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login as patient. Token will be automatically saved to PATIENT_TOKEN variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Patient Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get current patient profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Device Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"firebase_device_token_here\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/device-token",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "device-token"
+              ]
+            },
+            "description": "Update Firebase device token for push notifications"
+          },
+          "response": []
+        }
+      ],
+      "description": "Patient authentication endpoints"
+    },
+    {
+      "name": "Search Services",
+      "item": [
+        {
+          "name": "Global Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/search?query=cardiology&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "cardiology",
+                  "description": "Search term"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Search across all services (doctors, medicines, pharmacies, labs, blood banks)"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Doctors",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('PROVIDER_ID', response.data[0]._id);",
+                  "        console.log('Provider ID set:', response.data[0]._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/search/doctors?specialization=Cardiology&city=Mumbai&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "search",
+                "doctors"
+              ],
+              "query": [
+                {
+                  "key": "specialization",
+                  "value": "Cardiology",
+                  "description": "Doctor specialization"
+                },
+                {
+                  "key": "city",
+                  "value": "Mumbai",
+                  "description": "City filter"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search for doctors by specialization, city, or name. First doctor ID will be saved to PROVIDER_ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Medicines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/search/medicines?query=paracetamol&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "search",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "paracetamol",
+                  "description": "Medicine name or generic name"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search for medicines by name or generic name"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pharmacies",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/search/pharmacies?city=Mumbai&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "search",
+                "pharmacies"
+              ],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Mumbai",
+                  "description": "City filter"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search for pharmacies by city or name"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pathology Labs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/search/labs?city=Mumbai&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "search",
+                "labs"
+              ],
+              "query": [
+                {
+                  "key": "city",
+                  "value": "Mumbai",
+                  "description": "City filter"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search for pathology labs by city or name"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Blood Banks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/search/bloodbanks?bloodGroup=O+&city=Mumbai&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "search",
+                "bloodbanks"
+              ],
+              "query": [
+                {
+                  "key": "bloodGroup",
+                  "value": "O+",
+                  "description": "Blood group: A+, A-, B+, B-, AB+, AB-, O+, O-"
+                },
+                {
+                  "key": "city",
+                  "value": "Mumbai",
+                  "description": "City filter"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search for blood banks by blood group availability and city"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Nearby Services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/services/nearby?latitude=19.0760&longitude=72.8777&maxDistance=10&serviceType=doctor",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "services",
+                "nearby"
+              ],
+              "query": [
+                {
+                  "key": "latitude",
+                  "value": "19.0760",
+                  "description": "Your latitude"
+                },
+                {
+                  "key": "longitude",
+                  "value": "72.8777",
+                  "description": "Your longitude"
+                },
+                {
+                  "key": "maxDistance",
+                  "value": "10",
+                  "description": "Maximum distance in kilometers"
+                },
+                {
+                  "key": "serviceType",
+                  "value": "doctor",
+                  "description": "Service type: doctor, nurse, ambulance, pharmacist, bloodbank, pathology"
+                }
+              ]
+            },
+            "description": "Find nearby healthcare services based on your location"
+          },
+          "response": []
+        }
+      ],
+      "description": "Search for healthcare providers and services"
+    },
+    {
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Create Booking",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('BOOKING_ID', response.data._id);",
+                  "    console.log('Booking created with ID:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"{{PROVIDER_ID}}\",\n  \"serviceType\": \"doctor\",\n  \"scheduledTime\": \"2024-12-25T10:00:00Z\",\n  \"location\": {\n    \"address\": \"123 Main Street, Mumbai, Maharashtra 400001\",\n    \"coordinates\": [72.8777, 19.0760]\n  },\n  \"timeSlot\": {\n    \"start\": \"10:00\",\n    \"end\": \"10:30\"\n  },\n  \"notes\": \"Experiencing chest pain and shortness of breath\",\n  \"price\": 500\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/patient/bookings",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "bookings"
+              ]
+            },
+            "description": "Create a new booking with a healthcare provider. Booking ID will be saved to BOOKING_ID variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/bookings?page=1&limit=10&status=all&serviceType=all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "all",
+                  "description": "Filter by status: all, requested, accepted, on_the_way, in_progress, completed, cancelled"
+                },
+                {
+                  "key": "serviceType",
+                  "value": "all",
+                  "description": "Filter by service: all, doctor, nurse, ambulance, pharmacist, bloodbank, pathology"
+                }
+              ]
+            },
+            "description": "Get paginated list of all your bookings with optional filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/bookings/active",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "bookings",
+                "active"
+              ]
+            },
+            "description": "Get all your active bookings (requested, accepted, on_the_way, in_progress)"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Booking Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/bookings/{{BOOKING_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "bookings",
+                "{{BOOKING_ID}}"
+              ]
+            },
+            "description": "Get detailed information about a specific booking"
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Unable to attend due to personal emergency. Need to reschedule.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/patient/bookings/{{BOOKING_ID}}/cancel",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "cancel"
+              ]
+            },
+            "description": "Cancel a booking with a reason. Only bookings in 'requested' or 'accepted' status can be cancelled."
+          },
+          "response": []
+        },
+        {
+          "name": "Add Rating & Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"review\": \"Excellent service! The doctor was very professional and took time to explain everything clearly. Highly recommended.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/patient/bookings/{{BOOKING_ID}}/rate",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "rate"
+              ]
+            },
+            "description": "Add rating (1-5) and review for a completed booking"
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage bookings and appointments"
+    },
+    {
+      "name": "Emergency Services",
+      "item": [
+        {
+          "name": "Trigger Emergency (Ambulance)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [72.8777, 19.0760]\n  },\n  \"address\": \"123 Main Street, Mumbai, Maharashtra 400001\",\n  \"notes\": \"Severe chest pain, difficulty breathing. Patient is conscious but in distress. Please hurry!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/patient/emergency",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "emergency"
+              ]
+            },
+            "description": "Trigger emergency ambulance request. Nearest available ambulance will be automatically assigned. Rate limited to 5 requests per hour."
+          },
+          "response": []
+        }
+      ],
+      "description": "Emergency ambulance and urgent care"
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.notifications && response.data.notifications.length > 0) {",
+                  "        pm.collectionVariables.set('NOTIFICATION_ID', response.data.notifications[0]._id);",
+                  "        console.log('Notification ID set:', response.data.notifications[0]._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/notifications?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                }
+              ]
+            },
+            "description": "Get paginated list of all your notifications. First notification ID will be saved to NOTIFICATION_ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/notifications/unread-count",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Get count of unread notifications"
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/notifications/{{NOTIFICATION_ID}}/read",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "notifications",
+                "{{NOTIFICATION_ID}}",
+                "read"
+              ]
+            },
+            "description": "Mark a specific notification as read"
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage notifications and alerts"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{PATIENT_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_TOKEN",
+      "value": "",
+      "type": "string",
+      "description": "Patient access token - set after patient login"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BOOKING_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PROVIDER_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "NOTIFICATION_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

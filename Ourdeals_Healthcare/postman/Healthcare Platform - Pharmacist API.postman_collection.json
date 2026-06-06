@@ -1,0 +1,855 @@
+{
+  "info": {
+    "_postman_id": "f11e8712-77bc-41b6-94bc-cb476a9badac",
+    "name": "Healthcare Platform - Pharmacist API",
+    "description": "Complete Postman collection for Pharmacist role endpoints including authentication, profile management, medicine inventory management, order processing, stock management, and dashboard analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Pharmacist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('PHARMACIST_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('PHARMACIST_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"MediCare Pharmacy\",\n  \"email\": \"medicare.pharmacy@healthcare.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+1234567892\",\n  \"role\": \"pharmacist\",\n  \"address\": {\n    \"street\": \"789 Health Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-73.9352, 40.7306]\n  },\n  \"pharmacyName\": \"MediCare Pharmacy\",\n  \"licenseNumber\": \"PHARM-NY-789012\",\n  \"deliveryTimes\": [\"30min\", \"1hr\", \"same_day\"],\n  \"minimumOrderAmount\": 10,\n  \"deliveryFee\": 5,\n  \"operatingHours\": {\n    \"open\": \"08:00\",\n    \"close\": \"22:00\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new pharmacist account with pharmacy details, delivery options, and operating hours"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Pharmacist",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('PHARMACIST_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('PHARMACIST_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"medicare.pharmacy@healthcare.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with pharmacist credentials to receive access token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Pharmacist Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get currently authenticated pharmacist's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/change-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Change pharmacist account password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout-all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Logout from all devices"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for pharmacist registration, login, and session management"
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pharmacyName\": \"MediCare Pharmacy & Wellness\",\n  \"phone\": \"+1234567893\",\n  \"address\": {\n    \"street\": \"789 Health Street Suite 100\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zipCode\": \"10001\",\n    \"country\": \"USA\"\n  },\n  \"deliveryTimes\": [\"30min\", \"1hr\", \"same_day\"],\n  \"minimumOrderAmount\": 15,\n  \"deliveryFee\": 7,\n  \"operatingHours\": {\n    \"open\": \"07:00\",\n    \"close\": \"23:00\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/profile",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "profile"
+              ]
+            },
+            "description": "Update pharmacist profile including pharmacy name, delivery options, operating hours, and fees"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing pharmacist profile information"
+    },
+    {
+      "name": "Medicine Inventory",
+      "item": [
+        {
+          "name": "Add Medicine",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('MEDICINE_ID', response.data._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amoxicillin\",\n  \"genericName\": \"Amoxicillin Trihydrate\",\n  \"manufacturer\": \"PharmaCorp Inc.\",\n  \"description\": \"Antibiotic used to treat bacterial infections\",\n  \"category\": \"Antibiotics\",\n  \"dosageForm\": \"Capsule\",\n  \"strength\": \"500mg\",\n  \"packaging\": \"Strip of 10 capsules\",\n  \"price\": 12.99,\n  \"discountedPrice\": 10.99,\n  \"stock\": 150,\n  \"requiresPrescription\": true,\n  \"expiryDate\": \"2027-12-31T00:00:00.000Z\",\n  \"imageUrl\": \"https://example.com/images/amoxicillin.jpg\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines"
+              ]
+            },
+            "description": "Add a new medicine to the pharmacy inventory with complete details"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Inventory",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0 && response.data[0]._id) {",
+                  "        pm.collectionVariables.set('MEDICINE_ID', response.data[0]._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "amoxicillin",
+                  "disabled": true
+                },
+                {
+                  "key": "category",
+                  "value": "Antibiotics",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all medicines in inventory with optional search and category filters"
+          },
+          "response": []
+        },
+        {
+          "name": "Search Medicines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines?search=paracetamol&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "paracetamol"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Search medicines by name or generic name"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines?category=Antibiotics&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "Antibiotics"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Filter medicines by category"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Medicine",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Amoxicillin\",\n  \"genericName\": \"Amoxicillin Trihydrate\",\n  \"manufacturer\": \"PharmaCorp Inc.\",\n  \"description\": \"Broad-spectrum antibiotic used to treat various bacterial infections including respiratory, ear, and urinary tract infections\",\n  \"category\": \"Antibiotics\",\n  \"dosageForm\": \"Capsule\",\n  \"strength\": \"500mg\",\n  \"packaging\": \"Strip of 10 capsules\",\n  \"price\": 13.99,\n  \"discountedPrice\": 11.99,\n  \"requiresPrescription\": true,\n  \"expiryDate\": \"2027-12-31T00:00:00.000Z\",\n  \"imageUrl\": \"https://example.com/images/amoxicillin-updated.jpg\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines/{{MEDICINE_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines",
+                "{{MEDICINE_ID}}"
+              ]
+            },
+            "description": "Update medicine details including price, description, and other attributes"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Stock",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stock\": 200\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines/{{MEDICINE_ID}}/stock",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines",
+                "{{MEDICINE_ID}}",
+                "stock"
+              ]
+            },
+            "description": "Update medicine stock quantity"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Medicine",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/medicines/{{MEDICINE_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "medicines",
+                "{{MEDICINE_ID}}"
+              ]
+            },
+            "description": "Delete a medicine from inventory"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing medicine inventory including add, update, delete, and stock management"
+    },
+    {
+      "name": "Order Management",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('ORDER_ID', response.data[0]._id);",
+                  "        if (response.data[0].patient && response.data[0].patient._id) {",
+                  "            pm.collectionVariables.set('PATIENT_ID', response.data[0].patient._id);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all medicine orders with optional status filter and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all pending orders awaiting pharmacist acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Confirmed Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders?status=confirmed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all confirmed orders ready for processing"
+          },
+          "response": []
+        },
+        {
+          "name": "Get In-Progress Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders?status=in-progress&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "in-progress"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all orders currently being prepared or delivered"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders?status=completed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all completed and delivered orders"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Order",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders/{{ORDER_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders",
+                "{{ORDER_ID}}",
+                "accept"
+              ]
+            },
+            "description": "Accept a pending medicine order from a patient"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status to In-Progress",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in-progress\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders/{{ORDER_ID}}/status",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders",
+                "{{ORDER_ID}}",
+                "status"
+              ]
+            },
+            "description": "Update order status to in-progress when preparing medicines"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status to Completed",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders/{{ORDER_ID}}/status",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders",
+                "{{ORDER_ID}}",
+                "status"
+              ]
+            },
+            "description": "Update order status to completed when medicines are delivered"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Order Status to Cancelled",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"cancelled\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/orders/{{ORDER_ID}}/status",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "orders",
+                "{{ORDER_ID}}",
+                "status"
+              ]
+            },
+            "description": "Cancel an order if medicines are unavailable or other issues"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing medicine orders and order status workflow"
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pharmacist/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pharmacist",
+                "dashboard"
+              ]
+            },
+            "description": "Get pharmacist dashboard with active orders, total orders, inventory stats, low stock alerts, and ratings"
+          },
+          "response": []
+        }
+      ],
+      "description": "Dashboard and analytics endpoints for pharmacy performance metrics"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{PHARMACIST_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "PHARMACIST_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PHARMACIST_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "MEDICINE_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ORDER_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

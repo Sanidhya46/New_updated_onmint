@@ -1,0 +1,533 @@
+{
+  "info": {
+    "_postman_id": "33e12ca4-98b0-44d4-892a-eaa94f02db0c",
+    "name": "Healthcare Management System - Doctor API",
+    "description": "Complete Doctor API collection for Healthcare Management System including profile management, availability scheduling, appointment management, prescription creation, and dashboard analytics",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Doctor Registration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('DOCTOR_TOKEN', response.data.accessToken);",
+                  "    pm.collectionVariables.set('DOCTOR_ID', response.data.user._id);",
+                  "    console.log('Doctor registered and token set successfully');",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"doctor@example.com\",\n  \"password\": \"SecurePass@123!\",\n  \"firstName\": \"Dr. Sarah\",\n  \"lastName\": \"Smith\",\n  \"phone\": \"9876543211\",\n  \"role\": \"doctor\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [72.8777, 19.0760]\n  },\n  \"specialization\": \"Cardiology\",\n  \"qualifications\": [\"MBBS\", \"MD Cardiology\", \"Fellowship in Interventional Cardiology\"],\n  \"experience\": 10,\n  \"consultationFee\": 500,\n  \"languages\": [\"English\", \"Hindi\", \"Marathi\"],\n  \"about\": \"Experienced cardiologist with 10+ years of practice. Specialized in interventional cardiology and heart disease prevention.\",\n  \"licenseNumber\": \"MH-DOC-12345\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new doctor account. Status will be 'pending' until admin approval. Token will be automatically saved."
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('DOCTOR_TOKEN', response.data.accessToken);",
+                  "    pm.collectionVariables.set('DOCTOR_ID', response.data.user._id);",
+                  "    console.log('Doctor token set successfully');",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9876543211\",\n  \"password\": \"SecurePass@123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login as doctor. Token will be automatically saved to DOCTOR_TOKEN variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Doctor Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get current doctor profile information including specialization, qualifications, and availability"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Device Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceToken\": \"firebase_device_token_here\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/device-token",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "device-token"
+              ]
+            },
+            "description": "Update Firebase device token for push notifications about new appointments"
+          },
+          "response": []
+        }
+      ],
+      "description": "Doctor authentication endpoints"
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consultationFee\": 600,\n  \"about\": \"Experienced cardiologist with 10+ years of practice. Specialized in interventional cardiology, heart disease prevention, and cardiac rehabilitation. Published researcher with multiple papers in international journals.\",\n  \"languages\": [\"English\", \"Hindi\", \"Marathi\", \"Gujarati\"],\n  \"qualifications\": [\"MBBS\", \"MD Cardiology\", \"Fellowship in Interventional Cardiology\", \"FACC\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/profile",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "profile"
+              ]
+            },
+            "description": "Update doctor profile information including consultation fee, about section, languages, and qualifications"
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage doctor profile and professional information"
+    },
+    {
+      "name": "Availability Management",
+      "item": [
+        {
+          "name": "Set Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availability\": [\n    {\n      \"day\": \"MONDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"09:00\",\n          \"endTime\": \"12:00\",\n          \"isAvailable\": true\n        },\n        {\n          \"startTime\": \"14:00\",\n          \"endTime\": \"18:00\",\n          \"isAvailable\": true\n        }\n      ]\n    },\n    {\n      \"day\": \"TUESDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"09:00\",\n          \"endTime\": \"12:00\",\n          \"isAvailable\": true\n        },\n        {\n          \"startTime\": \"14:00\",\n          \"endTime\": \"18:00\",\n          \"isAvailable\": true\n        }\n      ]\n    },\n    {\n      \"day\": \"WEDNESDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"09:00\",\n          \"endTime\": \"12:00\",\n          \"isAvailable\": true\n        },\n        {\n          \"startTime\": \"14:00\",\n          \"endTime\": \"18:00\",\n          \"isAvailable\": true\n        }\n      ]\n    },\n    {\n      \"day\": \"THURSDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"09:00\",\n          \"endTime\": \"12:00\",\n          \"isAvailable\": true\n        },\n        {\n          \"startTime\": \"14:00\",\n          \"endTime\": \"18:00\",\n          \"isAvailable\": true\n        }\n      ]\n    },\n    {\n      \"day\": \"FRIDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"09:00\",\n          \"endTime\": \"12:00\",\n          \"isAvailable\": true\n        },\n        {\n          \"startTime\": \"14:00\",\n          \"endTime\": \"17:00\",\n          \"isAvailable\": true\n        }\n      ]\n    },\n    {\n      \"day\": \"SATURDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"09:00\",\n          \"endTime\": \"13:00\",\n          \"isAvailable\": true\n        }\n      ]\n    },\n    {\n      \"day\": \"SUNDAY\",\n      \"slots\": [\n        {\n          \"startTime\": \"10:00\",\n          \"endTime\": \"12:00\",\n          \"isAvailable\": false\n        }\n      ]\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/availability",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "availability"
+              ]
+            },
+            "description": "Set or update doctor availability schedule for the week. Define time slots for each day with availability status."
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage doctor availability and time slots"
+    },
+    {
+      "name": "Appointment Management",
+      "item": [
+        {
+          "name": "Get All Appointments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.bookings && response.data.bookings.length > 0) {",
+                  "        pm.collectionVariables.set('APPOINTMENT_ID', response.data.bookings[0]._id);",
+                  "        if (response.data.bookings[0].patient) {",
+                  "            pm.collectionVariables.set('PATIENT_ID', response.data.bookings[0].patient._id);",
+                  "        }",
+                  "        console.log('Appointment ID set:', response.data.bookings[0]._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/appointments?page=1&limit=10&status=all&serviceType=all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "appointments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "status",
+                  "value": "all",
+                  "description": "Filter by status: all, requested, accepted, on_the_way, in_progress, completed, cancelled"
+                },
+                {
+                  "key": "serviceType",
+                  "value": "all",
+                  "description": "Filter by service type"
+                }
+              ]
+            },
+            "description": "Get paginated list of all appointments with optional filters. First appointment ID will be saved to APPOINTMENT_ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Requested Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/appointments?page=1&limit=10&status=requested",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "appointments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "requested",
+                  "description": "Show only pending appointment requests"
+                }
+              ]
+            },
+            "description": "Get all pending appointment requests that need your acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Today's Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/appointments?page=1&limit=20&status=accepted",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "appointments"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "accepted",
+                  "description": "Show accepted appointments for today"
+                }
+              ]
+            },
+            "description": "Get today's accepted appointments"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Appointment",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/appointments/{{APPOINTMENT_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "appointments",
+                "{{APPOINTMENT_ID}}",
+                "accept"
+              ]
+            },
+            "description": "Accept a pending appointment request. Appointment status will change to 'accepted'."
+          },
+          "response": []
+        }
+      ],
+      "description": "Manage patient appointments and consultations"
+    },
+    {
+      "name": "Prescription Management",
+      "item": [
+        {
+          "name": "Create Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('PRESCRIPTION_ID', response.data._id);",
+                  "    console.log('Prescription created with ID:', response.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patient\": \"{{PATIENT_ID}}\",\n  \"booking\": \"{{APPOINTMENT_ID}}\",\n  \"diagnosis\": \"Hypertension (Stage 1) with mild dyslipidemia\",\n  \"medications\": [\n    {\n      \"name\": \"Amlodipine\",\n      \"dosage\": \"5mg\",\n      \"frequency\": \"Once daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take after breakfast with water. Do not skip doses.\"\n    },\n    {\n      \"name\": \"Atorvastatin\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"Once daily at bedtime\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take at night before sleep. Avoid grapefruit juice.\"\n    },\n    {\n      \"name\": \"Aspirin\",\n      \"dosage\": \"75mg\",\n      \"frequency\": \"Once daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take after dinner to prevent gastric irritation.\"\n    }\n  ],\n  \"tests\": [\n    \"Blood Pressure Monitoring (twice daily)\",\n    \"Lipid Profile (after 30 days)\",\n    \"ECG (if chest pain occurs)\"\n  ],\n  \"notes\": \"Patient advised to:\n- Monitor blood pressure twice daily (morning and evening)\n- Reduce salt intake to less than 5g per day\n- Exercise 30 minutes daily (brisk walking)\n- Avoid smoking and alcohol\n- Maintain healthy weight (target BMI: 18.5-24.9)\n- Follow up after 30 days with lipid profile report\n- Report immediately if experiencing chest pain, severe headache, or dizziness\",\n  \"followUpDate\": \"2025-01-25\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "Create a prescription for a patient after consultation. Include diagnosis, medications, tests, and follow-up instructions. Prescription ID will be saved to PRESCRIPTION_ID."
+          },
+          "response": []
+        }
+      ],
+      "description": "Create and manage patient prescriptions"
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "dashboard"
+              ]
+            },
+            "description": "Get doctor dashboard with statistics including total appointments, completed consultations, pending requests, earnings, and patient ratings"
+          },
+          "response": []
+        }
+      ],
+      "description": "Doctor dashboard and statistics"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{DOCTOR_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "DOCTOR_TOKEN",
+      "value": "",
+      "type": "string",
+      "description": "Doctor access token - set after doctor login"
+    },
+    {
+      "key": "DOCTOR_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "APPOINTMENT_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PRESCRIPTION_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

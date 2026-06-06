@@ -1,0 +1,518 @@
+{
+  "info": {
+    "_postman_id": "e84696ca-8eb1-488b-888f-fafcc77a1d99",
+    "name": "Healthcare Platform - Prescription API",
+    "description": "Complete Postman collection for Prescription Management. Doctors can create and manage prescriptions with medicines, diagnosis, and follow-up dates. Patients can view their prescription history.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Doctor - Prescription Management",
+      "item": [
+        {
+          "name": "Create Prescription",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('PRESCRIPTION_ID', response.data._id);",
+                  "        console.log('Prescription ID:', response.data._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{BOOKING_ID}}\",\n  \"diagnosis\": \"Acute Upper Respiratory Tract Infection (Common Cold)\",\n  \"medicines\": [\n    {\n      \"name\": \"Paracetamol 500mg\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"3 times a day\",\n      \"duration\": \"5 days\",\n      \"instructions\": \"Take after meals\"\n    },\n    {\n      \"name\": \"Cetirizine 10mg\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"Once daily at night\",\n      \"duration\": \"7 days\",\n      \"instructions\": \"Take before bedtime\"\n    },\n    {\n      \"name\": \"Vitamin C 500mg\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"Once daily\",\n      \"duration\": \"10 days\",\n      \"instructions\": \"Take with water after breakfast\"\n    }\n  ],\n  \"advice\": \"1. Take adequate rest and sleep for 7-8 hours\\n2. Drink plenty of warm fluids (water, herbal tea, soup)\\n3. Avoid cold beverages and ice cream\\n4. Use steam inhalation 2-3 times daily\\n5. Gargle with warm salt water 3 times a day\\n6. Avoid smoking and exposure to smoke\\n7. Maintain good hand hygiene\",\n  \"followUpDate\": \"2026-04-18T10:00:00.000Z\",\n  \"notes\": \"Patient presented with fever, runny nose, and sore throat for 2 days. Temperature: 100.4°F. Throat examination shows mild inflammation. Advised to return if symptoms worsen or fever persists beyond 3 days.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "**Doctor Only - Create Prescription**\n\nCreate a new prescription after completing a consultation. This endpoint:\n- Validates booking is completed and belongs to the doctor\n- Creates prescription with diagnosis, medicines, and advice\n- Sends notification to patient\n- Updates booking with prescription reference\n- Prevents duplicate prescriptions for same booking\n\n**Required Fields:**\n- bookingId: Completed booking ID\n- diagnosis: Medical diagnosis\n\n**Optional Fields:**\n- medicines: Array of medicine objects\n  - name: Medicine name with strength\n  - dosage: Dosage amount\n  - frequency: How often to take\n  - duration: Treatment duration\n  - instructions: Special instructions\n- advice: General health advice\n- followUpDate: Next consultation date\n- prescriptionFile: S3 URL of uploaded prescription PDF\n- notes: Doctor's private notes\n\n**Medicine Examples:**\n- Paracetamol 500mg - 3 times daily - 5 days\n- Amoxicillin 500mg - 3 times daily - 7 days\n- Cetirizine 10mg - Once daily - 7 days\n- Omeprazole 20mg - Once daily before breakfast - 14 days"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Prescription - Diabetes Management",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data._id) {",
+                  "        pm.collectionVariables.set('PRESCRIPTION_ID', response.data._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{BOOKING_ID}}\",\n  \"diagnosis\": \"Type 2 Diabetes Mellitus - Uncontrolled (HbA1c: 8.5%)\",\n  \"medicines\": [\n    {\n      \"name\": \"Metformin 500mg\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"Twice daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take with breakfast and dinner\"\n    },\n    {\n      \"name\": \"Glimepiride 2mg\",\n      \"dosage\": \"2mg\",\n      \"frequency\": \"Once daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take 30 minutes before breakfast\"\n    },\n    {\n      \"name\": \"Atorvastatin 10mg\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"Once daily at night\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take after dinner\"\n    }\n  ],\n  \"advice\": \"1. Follow diabetic diet plan - avoid sugar, refined carbs\\n2. Exercise 30 minutes daily (brisk walking)\\n3. Monitor blood sugar fasting and post-meal\\n4. Maintain blood sugar log book\\n5. Check feet daily for any cuts or wounds\\n6. Stay hydrated - drink 8-10 glasses of water\\n7. Avoid alcohol and smoking\\n8. Regular eye checkup every 6 months\",\n  \"followUpDate\": \"2026-05-11T10:00:00.000Z\",\n  \"notes\": \"Patient's HbA1c increased from 7.2% to 8.5%. Fasting blood sugar: 165 mg/dL. Post-meal: 220 mg/dL. BP: 140/90. Weight: 82 kg. BMI: 28.5. Advised lifestyle modifications and medication adjustment. Need to monitor kidney function and lipid profile in next visit.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "Example prescription for diabetes management with multiple medications and lifestyle advice."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Prescription - Hypertension",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{BOOKING_ID}}\",\n  \"diagnosis\": \"Essential Hypertension - Stage 2 (BP: 160/100 mmHg)\",\n  \"medicines\": [\n    {\n      \"name\": \"Amlodipine 5mg\",\n      \"dosage\": \"5mg\",\n      \"frequency\": \"Once daily in morning\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take at same time every day\"\n    },\n    {\n      \"name\": \"Telmisartan 40mg\",\n      \"dosage\": \"40mg\",\n      \"frequency\": \"Once daily in morning\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take before breakfast\"\n    },\n    {\n      \"name\": \"Aspirin 75mg\",\n      \"dosage\": \"75mg\",\n      \"frequency\": \"Once daily at night\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take after dinner\"\n    }\n  ],\n  \"advice\": \"1. Reduce salt intake to less than 5g per day\\n2. Avoid processed and packaged foods\\n3. Regular exercise - 30 minutes daily\\n4. Maintain healthy weight (target BMI: 18.5-24.9)\\n5. Limit alcohol consumption\\n6. Quit smoking\\n7. Manage stress through yoga/meditation\\n8. Monitor BP at home twice daily\\n9. Adequate sleep of 7-8 hours\",\n  \"followUpDate\": \"2026-04-25T10:00:00.000Z\",\n  \"notes\": \"Patient has uncontrolled hypertension. BP readings: 160/100, 155/98, 162/102 over past week. No target organ damage. ECG normal. Started on combination therapy. Advised home BP monitoring and lifestyle modifications.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "Example prescription for hypertension management."
+          },
+          "response": []
+        },
+        {
+          "name": "Get All My Prescriptions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions?page=1&limit=10",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all prescriptions created by the doctor with pagination. Returns patient details, booking info, and prescription data."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Prescription",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"diagnosis\": \"Acute Upper Respiratory Tract Infection (Common Cold) - Improving\",\n  \"medicines\": [\n    {\n      \"name\": \"Paracetamol 500mg\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"3 times a day\",\n      \"duration\": \"3 days (reduced from 5 days)\",\n      \"instructions\": \"Take after meals. Stop if fever subsides.\"\n    },\n    {\n      \"name\": \"Cetirizine 10mg\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"Once daily at night\",\n      \"duration\": \"5 days (reduced from 7 days)\",\n      \"instructions\": \"Take before bedtime\"\n    }\n  ],\n  \"advice\": \"1. Continue rest and adequate sleep\\n2. Drink warm fluids\\n3. Steam inhalation twice daily\\n4. Patient showing improvement, reduced medication duration\",\n  \"notes\": \"Follow-up call: Patient reports improvement. Fever reduced. Throat pain minimal. Adjusted medication duration.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions/{{PRESCRIPTION_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions",
+                "{{PRESCRIPTION_ID}}"
+              ]
+            },
+            "description": "Update an existing prescription. Doctor can modify diagnosis, medicines, advice, or notes. Only the doctor who created the prescription can update it."
+          },
+          "response": []
+        }
+      ],
+      "description": "Doctor endpoints for creating and managing prescriptions"
+    },
+    {
+      "name": "Patient - View Prescriptions",
+      "item": [
+        {
+          "name": "Get All My Prescriptions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/patient/prescriptions?page=1&limit=10",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "patient",
+                "prescriptions"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all prescriptions for the patient with pagination. Returns doctor details, booking info, diagnosis, medicines, and advice."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Prescription by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PATIENT_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/prescriptions/{{PRESCRIPTION_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{PRESCRIPTION_ID}}"
+              ]
+            },
+            "description": "Get a specific prescription by ID. Patient can only view their own prescriptions."
+          },
+          "response": []
+        }
+      ],
+      "description": "Patient endpoints for viewing prescription history"
+    },
+    {
+      "name": "Common - Get Prescription",
+      "item": [
+        {
+          "name": "Get Prescription by ID (Doctor)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/prescriptions/{{PRESCRIPTION_ID}}",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "prescriptions",
+                "{{PRESCRIPTION_ID}}"
+              ]
+            },
+            "description": "Doctor can view prescription details including patient info, medicines, and notes."
+          },
+          "response": []
+        }
+      ],
+      "description": "Common endpoint accessible by both doctor and patient"
+    },
+    {
+      "name": "Prescription Examples",
+      "item": [
+        {
+          "name": "Example - Gastritis Treatment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{BOOKING_ID}}\",\n  \"diagnosis\": \"Acute Gastritis with Acid Reflux\",\n  \"medicines\": [\n    {\n      \"name\": \"Omeprazole 20mg\",\n      \"dosage\": \"20mg\",\n      \"frequency\": \"Once daily\",\n      \"duration\": \"14 days\",\n      \"instructions\": \"Take 30 minutes before breakfast on empty stomach\"\n    },\n    {\n      \"name\": \"Sucralfate 1g\",\n      \"dosage\": \"1g\",\n      \"frequency\": \"4 times daily\",\n      \"duration\": \"7 days\",\n      \"instructions\": \"Take 1 hour before meals and at bedtime\"\n    },\n    {\n      \"name\": \"Domperidone 10mg\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"3 times daily\",\n      \"duration\": \"5 days\",\n      \"instructions\": \"Take 15-30 minutes before meals\"\n    }\n  ],\n  \"advice\": \"1. Avoid spicy, oily, and fried foods\\n2. Eat small frequent meals (5-6 times a day)\\n3. Avoid coffee, tea, alcohol, and carbonated drinks\\n4. Don't lie down immediately after eating\\n5. Elevate head while sleeping\\n6. Avoid smoking\\n7. Manage stress through relaxation techniques\\n8. Drink plenty of water between meals\",\n  \"followUpDate\": \"2026-04-25T10:00:00.000Z\",\n  \"notes\": \"Patient complains of burning sensation in upper abdomen, nausea, and bloating for 5 days. Worse after meals. No vomiting or blood in stool. Advised dietary modifications and medications.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "Example prescription for gastritis and acid reflux treatment."
+          },
+          "response": []
+        },
+        {
+          "name": "Example - Asthma Management",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{BOOKING_ID}}\",\n  \"diagnosis\": \"Bronchial Asthma - Moderate Persistent\",\n  \"medicines\": [\n    {\n      \"name\": \"Budesonide + Formoterol Inhaler\",\n      \"dosage\": \"200/6 mcg\",\n      \"frequency\": \"2 puffs twice daily\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Use morning and evening. Rinse mouth after use.\"\n    },\n    {\n      \"name\": \"Salbutamol Inhaler\",\n      \"dosage\": \"100 mcg\",\n      \"frequency\": \"As needed (SOS)\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Use during breathlessness. Max 4 puffs in 24 hours.\"\n    },\n    {\n      \"name\": \"Montelukast 10mg\",\n      \"dosage\": \"10mg\",\n      \"frequency\": \"Once daily at night\",\n      \"duration\": \"30 days\",\n      \"instructions\": \"Take before bedtime\"\n    }\n  ],\n  \"advice\": \"1. Avoid dust, smoke, and pollution\\n2. Use air purifier at home\\n3. Avoid cold air exposure\\n4. Regular breathing exercises\\n5. Maintain asthma diary\\n6. Keep rescue inhaler always with you\\n7. Avoid allergens (pets, pollen)\\n8. Get flu vaccination\\n9. Regular peak flow monitoring\",\n  \"followUpDate\": \"2026-05-11T10:00:00.000Z\",\n  \"notes\": \"Patient experiencing frequent wheezing and breathlessness, especially at night and early morning. Peak flow: 65% of predicted. Prescribed controller and reliever inhalers. Advised proper inhaler technique demonstration.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "Example prescription for asthma management with inhalers."
+          },
+          "response": []
+        },
+        {
+          "name": "Example - Urinary Tract Infection",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DOCTOR_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bookingId\": \"{{BOOKING_ID}}\",\n  \"diagnosis\": \"Acute Urinary Tract Infection (UTI)\",\n  \"medicines\": [\n    {\n      \"name\": \"Nitrofurantoin 100mg\",\n      \"dosage\": \"100mg\",\n      \"frequency\": \"Twice daily\",\n      \"duration\": \"7 days\",\n      \"instructions\": \"Take with food. Complete full course.\"\n    },\n    {\n      \"name\": \"Cranberry Extract 500mg\",\n      \"dosage\": \"500mg\",\n      \"frequency\": \"Twice daily\",\n      \"duration\": \"14 days\",\n      \"instructions\": \"Take with water\"\n    },\n    {\n      \"name\": \"Phenazopyridine 100mg\",\n      \"dosage\": \"100mg\",\n      \"frequency\": \"3 times daily\",\n      \"duration\": \"2 days\",\n      \"instructions\": \"Take after meals. May cause orange urine (normal).\"\n    }\n  ],\n  \"advice\": \"1. Drink plenty of water (3-4 liters daily)\\n2. Urinate frequently, don't hold urine\\n3. Maintain good personal hygiene\\n4. Wipe front to back after toilet\\n5. Urinate after sexual intercourse\\n6. Avoid tight clothing\\n7. Avoid caffeine and alcohol\\n8. Complete antibiotic course even if symptoms improve\",\n  \"followUpDate\": \"2026-04-18T10:00:00.000Z\",\n  \"notes\": \"Patient presents with burning urination, frequency, and urgency for 2 days. Urine routine shows pus cells 15-20/hpf. Started on antibiotics. Advised to send urine culture if symptoms persist.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/doctor/prescriptions",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "doctor",
+                "prescriptions"
+              ]
+            },
+            "description": "Example prescription for urinary tract infection treatment."
+          },
+          "response": []
+        }
+      ],
+      "description": "Real-world prescription examples for common conditions"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{ACCESS_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "ACCESS_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "DOCTOR_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BOOKING_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PRESCRIPTION_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

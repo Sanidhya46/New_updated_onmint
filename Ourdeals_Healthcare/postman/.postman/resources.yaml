@@ -1,0 +1,17 @@
+# Use this workspace to collaborate
+workspace:
+  id: 6ddae7f5-db13-483d-8fc4-c7811c238230
+
+localResources:
+  collections:
+    - ..\Healthcare Management System - Admin API.postman_collection.json
+    - ..\Healthcare Management System - Doctor API.postman_collection.json
+    - ..\Healthcare Management System - Patient API.postman_collection.json
+    - ..\Healthcare Management System API.postman_collection.json
+    - ..\Healthcare Platform - Ambulance API.postman_collection.json
+    - ..\Healthcare Platform - Blood Bank API.postman_collection.json
+    - ..\Healthcare Platform - Nurse API.postman_collection.json
+    - ..\Healthcare Platform - Pathology Lab API.postman_collection.json
+    - ..\Healthcare Platform - Pharmacist API.postman_collection.json
+    - ..\Healthcare Platform - Prescription API.postman_collection.json
+    - ..\Healthcare Platform - Real-Time Booking API.postman_collection.json

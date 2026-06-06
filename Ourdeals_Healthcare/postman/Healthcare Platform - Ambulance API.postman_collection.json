@@ -1,0 +1,700 @@
+{
+  "info": {
+    "_postman_id": "94268a87-6c79-43bc-abee-e90066486fb8",
+    "name": "Healthcare Platform - Ambulance API",
+    "description": "Complete Postman collection for Ambulance service endpoints including authentication, profile management, real-time location tracking, availability management, ride request handling, and dashboard analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Ambulance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('AMBULANCE_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('AMBULANCE_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"QuickResponse\",\n  \"lastName\": \" Ambulance Service\",\n  \"email\": \"quickresponse.ambulance@healthcare.com\",\n  \"password\": \"SecurePass@123!\",\n  \"phone\": \"9956317444\",\n  \"role\": \"ambulance\",\n    \"street\": \"123 Emergency Lane\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"pincode\": \"90001\",\n    \"country\": \"USA\",\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-118.2437, 34.0522]\n  },\n  \"driverName\": \"Michael Rodriguez\",\n  \"driverLicense\": \"DL-CA-456789\",\n  \"vehicleNumber\": \"AMB-LA-001\",\n  \"vehicleType\": \"Advanced Life Support\",\n  \"equipmentAvailable\": [\n    \"Defibrillator\",\n    \"Oxygen Cylinder\",\n    \"Stretcher\",\n    \"First Aid Kit\",\n    \"ECG Monitor\",\n    \"Ventilator\",\n    \"IV Fluids\",\n    \"Suction Device\"\n  ],\n  \"isAvailable\": true,\n  \"currentLocation\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-118.2437, 34.0522],\n    \"lastUpdated\": \"2026-04-11T10:00:00.000Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new ambulance service with driver details, vehicle information, and medical equipment"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Ambulance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('AMBULANCE_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('AMBULANCE_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"9956317444\",\n  \"password\": \"SecurePass@123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with ambulance credentials to receive access token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Ambulance Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get currently authenticated ambulance's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/change-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Change ambulance account password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout-all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Logout from all devices"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for ambulance registration, login, and session management"
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"QuickResponse Ambulance Service - Premium\",\n  \"phone\": \"+1234567895\",\n  \"address\": {\n    \"street\": \"123 Emergency Lane Suite 5\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"zipCode\": \"90001\",\n    \"country\": \"USA\"\n  },\n  \"driverName\": \"Michael Rodriguez\",\n  \"vehicleType\": \"ICU Ambulance\",\n  \"equipmentAvailable\": [\n    \"Defibrillator\",\n    \"Oxygen Cylinder\",\n    \"Stretcher\",\n    \"First Aid Kit\",\n    \"ECG Monitor\",\n    \"Ventilator\",\n    \"IV Fluids\",\n    \"Suction Device\",\n    \"Cardiac Monitor\",\n    \"Infusion Pump\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/profile",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "profile"
+              ]
+            },
+            "description": "Update ambulance profile including driver details, vehicle type, and equipment"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing ambulance profile information"
+    },
+    {
+      "name": "Location & Availability",
+      "item": [
+        {
+          "name": "Update Location",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 34.0522,\n  \"longitude\": -118.2437\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/location",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "location"
+              ]
+            },
+            "description": "Update ambulance's current GPS location for real-time tracking and nearby search"
+          },
+          "response": []
+        },
+        {
+          "name": "Set Available",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isAvailable\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/availability",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "availability"
+              ]
+            },
+            "description": "Set ambulance as available to accept new ride requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Set Unavailable",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isAvailable\": false\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/availability",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "availability"
+              ]
+            },
+            "description": "Set ambulance as unavailable (off-duty, maintenance, or busy)"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing real-time location and availability status"
+    },
+    {
+      "name": "Ride Request Management",
+      "item": [
+        {
+          "name": "Get All Ride Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('RIDE_REQUEST_ID', response.data[0]._id);",
+                  "        if (response.data[0].patient && response.data[0].patient._id) {",
+                  "            pm.collectionVariables.set('PATIENT_ID', response.data[0].patient._id);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all emergency ride requests with optional status filter and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all pending emergency requests awaiting ambulance acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Confirmed Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests?status=confirmed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all confirmed requests ready to start"
+          },
+          "response": []
+        },
+        {
+          "name": "Get On-The-Way Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests?status=on-the-way&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "on-the-way"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all rides where ambulance is en route to pickup location"
+          },
+          "response": []
+        },
+        {
+          "name": "Get In-Progress Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests?status=in-progress&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "in-progress"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all rides where patient is onboard and being transported"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests?status=completed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all completed emergency rides"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Ride Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests/{{RIDE_REQUEST_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests",
+                "{{RIDE_REQUEST_ID}}",
+                "accept"
+              ]
+            },
+            "description": "Accept an emergency ride request and calculate ETA to pickup location"
+          },
+          "response": []
+        },
+        {
+          "name": "Start Ride (En Route)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests/{{RIDE_REQUEST_ID}}/start",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests",
+                "{{RIDE_REQUEST_ID}}",
+                "start"
+              ]
+            },
+            "description": "Mark ride as started - ambulance is now en route to pickup location"
+          },
+          "response": []
+        },
+        {
+          "name": "Arrive at Pickup",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests/{{RIDE_REQUEST_ID}}/arrive",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests",
+                "{{RIDE_REQUEST_ID}}",
+                "arrive"
+              ]
+            },
+            "description": "Mark arrival at pickup location - patient is being loaded into ambulance"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Ride",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/requests/{{RIDE_REQUEST_ID}}/complete",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "requests",
+                "{{RIDE_REQUEST_ID}}",
+                "complete"
+              ]
+            },
+            "description": "Mark ride as completed - patient delivered to destination"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing emergency ride requests and ride workflow"
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ambulance/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "ambulance",
+                "dashboard"
+              ]
+            },
+            "description": "Get ambulance dashboard with active rides, total rides, availability status, ratings, and vehicle type"
+          },
+          "response": []
+        }
+      ],
+      "description": "Dashboard and analytics endpoints for ambulance performance metrics"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{AMBULANCE_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "AMBULANCE_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "AMBULANCE_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "RIDE_REQUEST_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

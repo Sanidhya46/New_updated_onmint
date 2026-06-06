@@ -1,0 +1,629 @@
+{
+  "info": {
+    "_postman_id": "93d7cc55-623d-47b4-91cf-8e7d35ccf838",
+    "name": "Healthcare Platform - Nurse API",
+    "description": "Complete Postman collection for Nurse role endpoints including authentication, profile management, service management, availability scheduling, booking management, and dashboard analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Nurse",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('NURSE_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('NURSE_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sarah Johnson\",\n  \"email\": \"sarah.nurse@healthcare.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+1234567890\",\n  \"role\": \"nurse\",\n  \"address\": {\n    \"street\": \"456 Care Avenue\",\n    \"city\": \"Boston\",\n    \"state\": \"MA\",\n    \"zipCode\": \"02101\",\n    \"country\": \"USA\"\n  },\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-71.0589, 42.3601]\n  },\n  \"licenseNumber\": \"RN-MA-123456\",\n  \"experience\": 5,\n  \"specializations\": [\"ICU\", \"Pediatric Care\", \"Home Healthcare\"],\n  \"certifications\": [\"BLS\", \"ACLS\", \"PALS\"],\n  \"servicesOffered\": [\n    {\n      \"name\": \"Home Nursing Care\",\n      \"description\": \"Comprehensive nursing care at patient's home\",\n      \"pricePerHour\": 50\n    },\n    {\n      \"name\": \"Post-Surgery Care\",\n      \"description\": \"Specialized post-operative nursing care\",\n      \"pricePerHour\": 60\n    },\n    {\n      \"name\": \"Elderly Care\",\n      \"description\": \"Compassionate care for elderly patients\",\n      \"pricePerHour\": 45\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new nurse account with profile details, services, and certifications"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Nurse",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('NURSE_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('NURSE_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"sarah.nurse@healthcare.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with nurse credentials to receive access token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Nurse Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get currently authenticated nurse's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/change-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Change nurse account password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout-all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Logout from all devices"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for nurse registration, login, and session management"
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sarah Johnson RN\",\n  \"phone\": \"+1234567891\",\n  \"address\": {\n    \"street\": \"456 Care Avenue Suite 200\",\n    \"city\": \"Boston\",\n    \"state\": \"MA\",\n    \"zipCode\": \"02101\",\n    \"country\": \"USA\"\n  },\n  \"experience\": 6,\n  \"specializations\": [\"ICU\", \"Pediatric Care\", \"Home Healthcare\", \"Wound Care\"],\n  \"certifications\": [\"BLS\", \"ACLS\", \"PALS\", \"CCRN\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/profile",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "profile"
+              ]
+            },
+            "description": "Update nurse profile information including contact details, experience, specializations, and certifications"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing nurse profile information"
+    },
+    {
+      "name": "Service Management",
+      "item": [
+        {
+          "name": "Update Services Offered",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"servicesOffered\": [\n    {\n      \"name\": \"Home Nursing Care\",\n      \"description\": \"Comprehensive nursing care at patient's home including vital monitoring, medication administration, and wound care\",\n      \"pricePerHour\": 55\n    },\n    {\n      \"name\": \"Post-Surgery Care\",\n      \"description\": \"Specialized post-operative nursing care with drain management and surgical site monitoring\",\n      \"pricePerHour\": 65\n    },\n    {\n      \"name\": \"Elderly Care\",\n      \"description\": \"Compassionate care for elderly patients including mobility assistance and daily living support\",\n      \"pricePerHour\": 50\n    },\n    {\n      \"name\": \"IV Therapy\",\n      \"description\": \"Intravenous medication and fluid administration at home\",\n      \"pricePerHour\": 70\n    },\n    {\n      \"name\": \"Wound Care\",\n      \"description\": \"Professional wound assessment, dressing changes, and healing monitoring\",\n      \"pricePerHour\": 60\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/services",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "services"
+              ]
+            },
+            "description": "Update the list of services offered by the nurse with descriptions and pricing"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing nursing services and pricing"
+    },
+    {
+      "name": "Availability Management",
+      "item": [
+        {
+          "name": "Set Availability",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availability\": [\n    {\n      \"date\": \"2026-04-14T00:00:00.000Z\",\n      \"startTime\": \"08:00\",\n      \"endTime\": \"16:00\",\n      \"isBooked\": false\n    },\n    {\n      \"date\": \"2026-04-15T00:00:00.000Z\",\n      \"startTime\": \"09:00\",\n      \"endTime\": \"17:00\",\n      \"isBooked\": false\n    },\n    {\n      \"date\": \"2026-04-16T00:00:00.000Z\",\n      \"startTime\": \"08:00\",\n      \"endTime\": \"14:00\",\n      \"isBooked\": false\n    },\n    {\n      \"date\": \"2026-04-17T00:00:00.000Z\",\n      \"startTime\": \"10:00\",\n      \"endTime\": \"18:00\",\n      \"isBooked\": false\n    },\n    {\n      \"date\": \"2026-04-18T00:00:00.000Z\",\n      \"startTime\": \"08:00\",\n      \"endTime\": \"16:00\",\n      \"isBooked\": false\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/availability",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "availability"
+              ]
+            },
+            "description": "Set nurse availability schedule with date, time slots, and booking status"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing nurse availability schedule"
+    },
+    {
+      "name": "Booking Management",
+      "item": [
+        {
+          "name": "Get All Bookings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('BOOKING_ID', response.data[0]._id);",
+                  "        if (response.data[0].patient && response.data[0].patient._id) {",
+                  "            pm.collectionVariables.set('PATIENT_ID', response.data[0].patient._id);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all bookings for the nurse with optional status filter and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all pending booking requests awaiting nurse acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Confirmed Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings?status=confirmed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all confirmed bookings scheduled for visits"
+          },
+          "response": []
+        },
+        {
+          "name": "Get In-Progress Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings?status=in-progress&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "in-progress"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all currently active visits in progress"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings?status=completed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all completed visits with patient care history"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Booking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings/{{BOOKING_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "accept"
+              ]
+            },
+            "description": "Accept a pending booking request from a patient"
+          },
+          "response": []
+        },
+        {
+          "name": "Start Visit",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings/{{BOOKING_ID}}/start",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "start"
+              ]
+            },
+            "description": "Mark a confirmed booking as in-progress when starting the patient visit"
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Patient visit completed successfully. Vital signs monitored: BP 120/80, HR 72, Temp 98.6°F. Wound dressing changed and cleaned. Patient showed good progress. Medications administered as prescribed. Patient educated on wound care and medication schedule. Follow-up recommended in 3 days.\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/bookings/{{BOOKING_ID}}/complete",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "complete"
+              ]
+            },
+            "description": "Mark a visit as completed with optional care notes and observations"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing patient bookings and visit workflow"
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/nurse/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "nurse",
+                "dashboard"
+              ]
+            },
+            "description": "Get nurse dashboard with active visits, total visits, ratings, and services offered"
+          },
+          "response": []
+        }
+      ],
+      "description": "Dashboard and analytics endpoints for nurse performance metrics"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{NURSE_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "NURSE_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "NURSE_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BOOKING_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

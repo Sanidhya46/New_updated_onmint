@@ -1,0 +1,606 @@
+{
+  "info": {
+    "_postman_id": "951d48d5-745e-4c0c-9b61-c9edcee5d5e3",
+    "name": "Healthcare Platform - Pathology Lab API",
+    "description": "Complete Postman collection for Pathology Lab endpoints including authentication, profile management, test catalog management, booking management, sample collection scheduling, report uploads, and dashboard analytics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "37469907"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register Pathology Lab",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('PATHOLOGY_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('PATHOLOGY_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"HealthCheck Diagnostics\",\n  \"email\": \"healthcheck.diagnostics@healthcare.com\",\n  \"password\": \"SecurePass123!\",\n  \"phone\": \"+1234567896\",\n  \"role\": \"pathology\",\n  \"address\": {\n    \"street\": \"456 Medical Plaza\",\n    \"city\": \"Chicago\",\n    \"state\": \"IL\",\n    \"zipCode\": \"60601\",\n    \"country\": \"USA\"\n  },\n  \"location\": {\n    \"type\": \"Point\",\n    \"coordinates\": [-87.6298, 41.8781]\n  },\n  \"labName\": \"HealthCheck Diagnostics\",\n  \"licenseNumber\": \"LAB-IL-345678\",\n  \"homeCollectionAvailable\": true,\n  \"homeCollectionFee\": 10,\n  \"certifications\": [\"NABL\", \"CAP\", \"ISO 15189\"],\n  \"operatingHours\": {\n    \"open\": \"07:00\",\n    \"close\": \"20:00\"\n  },\n  \"testsOffered\": [\n    {\n      \"name\": \"Complete Blood Count (CBC)\",\n      \"description\": \"Comprehensive blood test measuring red cells, white cells, platelets, hemoglobin, and hematocrit\",\n      \"price\": 25,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"6hrs\"\n    },\n    {\n      \"name\": \"Lipid Profile\",\n      \"description\": \"Measures cholesterol levels including total, HDL, LDL, and triglycerides\",\n      \"price\": 35,\n      \"preparationInstructions\": \"Fasting for 12-14 hours required\",\n      \"reportDeliveryTime\": \"12hrs\"\n    },\n    {\n      \"name\": \"Liver Function Test (LFT)\",\n      \"description\": \"Evaluates liver health through enzymes and protein levels\",\n      \"price\": 40,\n      \"preparationInstructions\": \"Fasting for 8-12 hours recommended\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"Kidney Function Test (KFT)\",\n      \"description\": \"Assesses kidney function through creatinine, urea, and electrolytes\",\n      \"price\": 40,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"Thyroid Profile\",\n      \"description\": \"Measures TSH, T3, and T4 levels to assess thyroid function\",\n      \"price\": 50,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"24hrs\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new pathology lab with test catalog, certifications, and home collection services"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Pathology Lab",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('PATHOLOGY_TOKEN', response.data.accessToken);",
+                  "    }",
+                  "    if (response.data && response.data.user && response.data.user._id) {",
+                  "        pm.collectionVariables.set('PATHOLOGY_ID', response.data.user._id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"healthcheck.diagnostics@healthcare.com\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with pathology lab credentials to receive access token"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current Lab Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/me",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get currently authenticated pathology lab's profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePass123!\",\n  \"newPassword\": \"NewSecurePass456!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/change-password",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "change-password"
+              ]
+            },
+            "description": "Change pathology lab account password"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout from current device"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout-all",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "auth",
+                "logout-all"
+              ]
+            },
+            "description": "Logout from all devices"
+          },
+          "response": []
+        }
+      ],
+      "description": "Authentication endpoints for pathology lab registration, login, and session management"
+    },
+    {
+      "name": "Profile Management",
+      "item": [
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"labName\": \"HealthCheck Diagnostics & Research Center\",\n  \"phone\": \"+1234567897\",\n  \"address\": {\n    \"street\": \"456 Medical Plaza Suite 200\",\n    \"city\": \"Chicago\",\n    \"state\": \"IL\",\n    \"zipCode\": \"60601\",\n    \"country\": \"USA\"\n  },\n  \"homeCollectionAvailable\": true,\n  \"homeCollectionFee\": 15,\n  \"certifications\": [\"NABL\", \"CAP\", \"ISO 15189\", \"CLIA\"],\n  \"operatingHours\": {\n    \"open\": \"06:00\",\n    \"close\": \"21:00\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/profile",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "profile"
+              ]
+            },
+            "description": "Update pathology lab profile including lab name, home collection services, certifications, and operating hours"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing pathology lab profile information"
+    },
+    {
+      "name": "Test Catalog Management",
+      "item": [
+        {
+          "name": "Update Tests Offered",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"testsOffered\": [\n    {\n      \"name\": \"Complete Blood Count (CBC)\",\n      \"description\": \"Comprehensive blood test measuring red cells, white cells, platelets, hemoglobin, and hematocrit\",\n      \"price\": 25,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"6hrs\"\n    },\n    {\n      \"name\": \"Lipid Profile\",\n      \"description\": \"Measures cholesterol levels including total, HDL, LDL, and triglycerides\",\n      \"price\": 35,\n      \"preparationInstructions\": \"Fasting for 12-14 hours required\",\n      \"reportDeliveryTime\": \"12hrs\"\n    },\n    {\n      \"name\": \"Liver Function Test (LFT)\",\n      \"description\": \"Evaluates liver health through enzymes and protein levels\",\n      \"price\": 40,\n      \"preparationInstructions\": \"Fasting for 8-12 hours recommended\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"Kidney Function Test (KFT)\",\n      \"description\": \"Assesses kidney function through creatinine, urea, and electrolytes\",\n      \"price\": 40,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"Thyroid Profile\",\n      \"description\": \"Measures TSH, T3, and T4 levels to assess thyroid function\",\n      \"price\": 50,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"HbA1c\",\n      \"description\": \"Measures average blood sugar levels over the past 2-3 months for diabetes monitoring\",\n      \"price\": 30,\n      \"preparationInstructions\": \"No fasting required\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"Vitamin D (25-OH)\",\n      \"description\": \"Measures vitamin D levels to assess bone health and immune function\",\n      \"price\": 45,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"48hrs\"\n    },\n    {\n      \"name\": \"Vitamin B12\",\n      \"description\": \"Measures vitamin B12 levels for nerve and blood cell health\",\n      \"price\": 35,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"24hrs\"\n    },\n    {\n      \"name\": \"C-Reactive Protein (CRP)\",\n      \"description\": \"Measures inflammation levels in the body\",\n      \"price\": 30,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"12hrs\"\n    },\n    {\n      \"name\": \"Serum Electrolytes\",\n      \"description\": \"Measures sodium, potassium, chloride, and bicarbonate levels\",\n      \"price\": 25,\n      \"preparationInstructions\": \"No special preparation required\",\n      \"reportDeliveryTime\": \"6hrs\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/tests",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "tests"
+              ]
+            },
+            "description": "Update the complete test catalog with prices, preparation instructions, and delivery times"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing pathology test catalog and pricing"
+    },
+    {
+      "name": "Booking Management",
+      "item": [
+        {
+          "name": "Get All Bookings",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.length > 0) {",
+                  "        pm.collectionVariables.set('BOOKING_ID', response.data[0]._id);",
+                  "        if (response.data[0].patient && response.data[0].patient._id) {",
+                  "            pm.collectionVariables.set('PATIENT_ID', response.data[0].patient._id);",
+                  "        }",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings?page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all test bookings with optional status filter and pagination"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings?status=pending&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all pending test bookings awaiting lab acceptance"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Confirmed Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings?status=confirmed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "confirmed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all confirmed bookings awaiting sample collection"
+          },
+          "response": []
+        },
+        {
+          "name": "Get In-Progress Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings?status=in-progress&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "in-progress"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all bookings where samples are being processed"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Bookings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings?status=completed&page=1&limit=20",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all completed bookings with reports uploaded"
+          },
+          "response": []
+        },
+        {
+          "name": "Accept Booking",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings/{{BOOKING_ID}}/accept",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "accept"
+              ]
+            },
+            "description": "Accept a pending test booking from a patient"
+          },
+          "response": []
+        },
+        {
+          "name": "Schedule Sample Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collectionTime\": \"2026-04-12T09:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings/{{BOOKING_ID}}/schedule",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "schedule"
+              ]
+            },
+            "description": "Schedule home sample collection time for a confirmed booking"
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Test Report",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "report",
+                  "type": "file",
+                  "description": "Upload the test report PDF file",
+                  "value": null
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/bookings/{{BOOKING_ID}}/report",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "bookings",
+                "{{BOOKING_ID}}",
+                "report"
+              ]
+            },
+            "description": "Upload test report PDF and mark booking as completed. Patient will be notified."
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing test bookings, sample collection scheduling, and report uploads"
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/pathology/dashboard",
+              "host": [
+                "{{BASE_URL}}"
+              ],
+              "path": [
+                "pathology",
+                "dashboard"
+              ]
+            },
+            "description": "Get pathology lab dashboard with active tests, total tests, tests offered count, and home collection availability"
+          },
+          "response": []
+        }
+      ],
+      "description": "Dashboard and analytics endpoints for pathology lab performance metrics"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{PATHOLOGY_TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "PATHOLOGY_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATHOLOGY_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BOOKING_ID",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PATIENT_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
