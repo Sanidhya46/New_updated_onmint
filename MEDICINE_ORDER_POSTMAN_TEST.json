@@ -1,0 +1,362 @@
+{
+  "info": {
+    "name": "Medicine Order System Test",
+    "description": "Complete test for medicine order flow from patient to pharmacist",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Patient Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"patient@test.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/auth/login",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.success && response.data.token) {",
+              "        pm.environment.set('PATIENT_TOKEN', response.data.token);",
+              "        console.log('✅ Patient login successful');",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Pharmacist Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"pharmacist@test.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/auth/login",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "auth", "login"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.success && response.data.token) {",
+              "        pm.environment.set('PHARMACIST_TOKEN', response.data.token);",
+              "        console.log('✅ Pharmacist login successful');",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Get Available Medicines",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATIENT_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/medicines?page=1&limit=5",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "medicines"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.success && response.data.length > 0) {",
+              "        pm.environment.set('MEDICINE_ID_1', response.data[0]._id);",
+              "        if (response.data.length > 1) {",
+              "            pm.environment.set('MEDICINE_ID_2', response.data[1]._id);",
+              "        }",
+              "        console.log('✅ Medicines fetched:', response.data.length);",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Patient Creates Medicine Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATIENT_TOKEN}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serviceType\": \"pharmacist\",\n  \"title\": \"Medicine Order\",\n  \"description\": \"Medicine order: Paracetamol (2x), Cough Syrup (1x). Total: ₹60.00\",\n  \"medicines\": [\n    {\n      \"medicineId\": \"{{MEDICINE_ID_1}}\",\n      \"quantity\": 2\n    },\n    {\n      \"medicineId\": \"{{MEDICINE_ID_2}}\",\n      \"quantity\": 1\n    }\n  ],\n  \"address\": \"123 Test Street, Mumbai, Maharashtra - 400001\",\n  \"coordinates\": [72.8777, 19.0760],\n  \"urgency\": \"medium\",\n  \"isEmergency\": false,\n  \"notes\": \"Payment method: cash. Please call before delivery.\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/realtime/create",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "realtime", "create"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "    const response = pm.response.json();",
+              "    if (response.success && response.data._id) {",
+              "        pm.environment.set('ORDER_ID', response.data._id);",
+              "        console.log('✅ Medicine order created:', response.data._id);",
+              "        console.log('📋 Order details:', JSON.stringify(response.data, null, 2));",
+              "    }",
+              "} else {",
+              "    console.log('❌ Order creation failed:', pm.response.text());",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Pharmacist Gets Pending Orders",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PHARMACIST_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/pharmacist/orders/pending?page=1&limit=20",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "pharmacist", "orders", "pending"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.success) {",
+              "        console.log('✅ Pending orders fetched:', response.data.length);",
+              "        ",
+              "        // Check if our order is in the list",
+              "        const orderId = pm.environment.get('ORDER_ID');",
+              "        const foundOrder = response.data.find(order => order._id === orderId);",
+              "        ",
+              "        if (foundOrder) {",
+              "            console.log('🎉 ORDER FOUND IN PENDING LIST!');",
+              "            console.log('📋 Order details:', JSON.stringify(foundOrder, null, 2));",
+              "        } else {",
+              "            console.log('❌ Order NOT found in pending list');",
+              "            console.log('🔍 Looking for order ID:', orderId);",
+              "            console.log('📋 Available orders:', response.data.map(o => o._id));",
+              "        }",
+              "    }",
+              "} else {",
+              "    console.log('❌ Failed to fetch pending orders:', pm.response.text());",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Pharmacist Accepts Order",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PHARMACIST_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/pharmacist/orders/{{ORDER_ID}}/accept",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "pharmacist", "orders", "{{ORDER_ID}}", "accept"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.success) {",
+              "        console.log('✅ Order accepted successfully!');",
+              "        console.log('📋 Updated order:', JSON.stringify(response.data, null, 2));",
+              "    }",
+              "} else {",
+              "    console.log('❌ Failed to accept order:', pm.response.text());",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Verify Order No Longer Pending",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PHARMACIST_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/pharmacist/orders/pending?page=1&limit=20",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "pharmacist", "orders", "pending"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    const orderId = pm.environment.get('ORDER_ID');",
+              "    const foundOrder = response.data.find(order => order._id === orderId);",
+              "    ",
+              "    if (!foundOrder) {",
+              "        console.log('✅ Order correctly removed from pending list!');",
+              "    } else {",
+              "        console.log('❌ Order still in pending list (should not be there)');",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Pharmacist Gets Active Orders",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PHARMACIST_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/api/v1/pharmacist/orders?status=accepted",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "v1", "pharmacist", "orders"],
+          "query": [
+            {
+              "key": "status",
+              "value": "accepted"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    const orderId = pm.environment.get('ORDER_ID');",
+              "    const foundOrder = response.data.find(order => order._id === orderId);",
+              "    ",
+              "    if (foundOrder) {",
+              "        console.log('✅ Order found in active orders!');",
+              "        console.log('📋 Order status:', foundOrder.status);",
+              "    } else {",
+              "        console.log('❌ Order not found in active orders');",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000"
+    }
+  ]
+}

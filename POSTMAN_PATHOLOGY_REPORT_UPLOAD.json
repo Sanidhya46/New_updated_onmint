@@ -1,0 +1,188 @@
+{
+  "info": {
+    "name": "Pathology Report Upload Test",
+    "description": "Test pathology report upload endpoint",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Login as Pathology",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    pm.environment.set('PATHOLOGY_TOKEN', response.data.token);",
+              "    console.log('✅ Login successful');",
+              "    console.log('Token saved to environment');",
+              "} else {",
+              "    console.log('❌ Login failed');",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"pathology1@test.com\",\n  \"password\": \"password123\",\n  \"role\": \"pathology\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/auth/login",
+          "host": ["{{BASE_URL}}"],
+          "path": ["auth", "login"]
+        }
+      }
+    },
+    {
+      "name": "2. Get Bookings",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    if (response.data && response.data.length > 0) {",
+              "        pm.environment.set('BOOKING_ID', response.data[0]._id);",
+              "        console.log('✅ Booking ID saved:', response.data[0]._id);",
+              "    } else {",
+              "        console.log('⚠️ No bookings found');",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATHOLOGY_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/pathology/bookings?status=sample_collected",
+          "host": ["{{BASE_URL}}"],
+          "path": ["pathology", "bookings"],
+          "query": [
+            {
+              "key": "status",
+              "value": "sample_collected"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Upload Report (PDF)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    console.log('✅ Report uploaded successfully');",
+              "    console.log('Report URL:', response.data.report);",
+              "    console.log('Status:', response.data.status);",
+              "} else {",
+              "    console.log('❌ Upload failed');",
+              "    console.log('Error:', pm.response.json());",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATHOLOGY_TOKEN}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "report",
+              "type": "file",
+              "src": "",
+              "description": "Select a PDF file to upload"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/pathology/bookings/{{BOOKING_ID}}/report",
+          "host": ["{{BASE_URL}}"],
+          "path": ["pathology", "bookings", "{{BOOKING_ID}}", "report"]
+        }
+      }
+    },
+    {
+      "name": "4. Verify Report Uploaded",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 200) {",
+              "    const response = pm.response.json();",
+              "    console.log('✅ Booking details fetched');",
+              "    console.log('Status:', response.data.status);",
+              "    console.log('Report URL:', response.data.report);",
+              "    ",
+              "    if (response.data.report) {",
+              "        console.log('✅ Report is accessible at:');",
+              "        console.log('http://localhost:5000' + response.data.report);",
+              "    }",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{PATHOLOGY_TOKEN}}"
+          }
+        ],
+        "url": {
+          "raw": "{{BASE_URL}}/pathology/bookings/{{BOOKING_ID}}",
+          "host": ["{{BASE_URL}}"],
+          "path": ["pathology", "bookings", "{{BOOKING_ID}}"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "PATHOLOGY_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "BOOKING_ID",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
