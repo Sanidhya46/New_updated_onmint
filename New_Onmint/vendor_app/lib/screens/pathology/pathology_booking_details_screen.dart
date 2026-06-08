@@ -25,6 +25,7 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
   Map<String, dynamic>? _booking;
   bool _isLoading = true;
   bool _isProcessing = false;
+  String _currentStage = 'requested';
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
       
       setState(() {
         _booking = data;
+        _currentStage = data['status'] ?? 'requested';
         _isLoading = false;
       });
     } catch (e) {
@@ -59,11 +61,7 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Test Booking Details'),
-        backgroundColor: AppColors.pathology,
-        foregroundColor: Colors.white,
-      ),
+      appBar: _buildAppBar(),
       body: _isLoading
           ? const LoadingWidget(message: 'Loading booking details...')
           : _booking == null
@@ -72,109 +70,91 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
                   title: 'Booking Not Found',
                   message: 'The requested booking could not be found',
                 )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatusCard(),
-                      const SizedBox(height: 20),
-                      _buildStatusTracker(),
-                      const SizedBox(height: 20),
-                      _buildPatientSection(),
-                      const SizedBox(height: 20),
-                      _buildTestDetailsSection(),
-                      const SizedBox(height: 20),
-                      _buildActionButtons(),
-                    ],
-                  ),
-                ),
+              : _currentStage == 'requested'
+                  ? _buildRequestDetailsScreen()
+                  : _buildProgressScreen(),
     );
   }
 
-  Widget _buildStatusCard() {
-    final status = _booking!['status'] ?? 'unknown';
-    Color statusColor;
-    IconData statusIcon;
-
-    switch (status) {
-      case 'requested':
-        statusColor = Colors.orange;
-        statusIcon = Icons.schedule;
-        break;
-      case 'accepted':
-        statusColor = Colors.blue;
-        statusIcon = Icons.check_circle;
-        break;
-      case 'sample_collected':
-        statusColor = Colors.purple;
-        statusIcon = Icons.science;
-        break;
-      case 'report_ready':
-        statusColor = Colors.green;
-        statusIcon = Icons.description;
-        break;
-      case 'completed':
-        statusColor = Colors.green;
-        statusIcon = Icons.done_all;
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.info;
+  PreferredSizeWidget _buildAppBar() {
+    if (_currentStage == 'requested') {
+      return AppBar(
+        title: const Text(
+          'Lab Test Request Details',
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: AppColors.pathology,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 28),
+          onPressed: () => Navigator.pop(context),
+        ),
+      );
+    } else {
+      return AppBar(
+        title: const Text(
+          'Lab Test Booking',
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, size: 30, color: Color(0xFF6C5CE7)),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.headset_mic, size: 30, color: Color(0xFF6C5CE7)),
+            onPressed: () {},
+          ),
+        ],
+      );
     }
+  }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
-      ),
-      child: Row(
+  Widget _buildRequestDetailsScreen() {
+    final patient = _booking!['patient'] ?? {};
+    final patientName = patient['fullName'] ?? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim() ?? 'Rahul Sharma';
+    final testType = _booking!['testType'] ?? _booking!['serviceType'] ?? 'CBC (Complete Blood Count)';
+    final price = _booking!['fees'] ?? _booking!['price'] ?? 300;
+    final age = patient['age'] ?? 35;
+    final gender = patient['gender'] ?? 'Male';
+    final address = patient['address'] ?? 'H-101, Shanti Nagar, Govindpuram, Ghaziabad, Uttar Pradesh - 201013';
+    final notes = _booking!['notes'] ?? 'Patient requested morning sample collection.';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(statusIcon, color: statusColor, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Test Status',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    if (widget.isRealtimeBooking) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                        ),
-                        child: const Text(
-                          'INSTANT',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  status.toUpperCase().replaceAll('_', ' '),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
-                ),
-              ],
+          // Request Summary
+          _buildRequestSummary(patientName, gender, age),
+          const SizedBox(height: 20),
+          // Patient Details
+          _buildPatientDetails(patientName, age, gender, address),
+          const SizedBox(height: 20),
+          // Lab Test Details
+          _buildLabTestDetails(testType, notes, price),
+          const SizedBox(height: 30),
+          // Action Buttons
+          _buildAcceptRejectButtons(),
+          const SizedBox(height: 20),
+          // Footer Text
+          Center(
+            child: Text(
+              'Once accepted, technician details will be shared with the patient and sample collection status can be updated from the vendor panel.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
             ),
           ),
         ],
@@ -182,228 +162,528 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
     );
   }
 
-  Widget _buildStatusTracker() {
-    final status = _booking!['status'] ?? 'requested';
-    final stages = ['Requested', 'Accepted', 'Sample Collected', 'Report Ready', 'Completed'];
-    final stageValues = ['requested', 'accepted', 'sample_collected', 'report_ready', 'completed'];
-    final currentIndex = stageValues.indexOf(status);
+  Widget _buildRequestSummary(String name, String gender, int age) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Avatar
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              shape: BoxShape.circle,
+              image: const DecorationImage(
+                image: NetworkImage(
+                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop',
+                ),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: const Icon(
+              Icons.person,
+              size: 40,
+              color: Color(0xFF1565C0),
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Name and Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0D1B2A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$gender • $age Years',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Requested On
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Requested On',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                '12 May 2025, 11:20 AM',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF0D1B2A),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-    return Column(
+  Widget _buildPatientDetails(String name, int age, String gender, String address) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Patient Details',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0D1B2A),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildDetailRow(Icons.person_outline, 'Name', name),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender'),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.location_on_outlined, 'Address', address),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabTestDetails(String testType, String notes, int price) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Lab Test Details',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF0D1B2A),
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildDetailRow(Icons.science_outlined, 'Test Name', testType),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.home_outlined, 'Sample Collection', 'Home Collection'),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.calendar_today_outlined, 'Preferred Date', '13 May 2025'),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.access_time_outlined, 'Preferred Time', '10:00 AM'),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.description_outlined, 'Report Delivery', 'Within 24-48 Hours'),
+          const Divider(height: 32),
+          _buildDetailRow(Icons.notes_outlined, 'Note (From Patient)', notes),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Test Progress',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 80,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: stages.length,
-            itemBuilder: (context, index) {
-              final isCompleted = index <= currentIndex;
-              final isCurrent = index == currentIndex;
-
-              return Container(
-                width: 80,
-                margin: const EdgeInsets.only(right: 8),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isCompleted ? AppColors.pathology : Colors.grey[300],
-                        border: isCurrent
-                            ? Border.all(color: AppColors.pathology, width: 3)
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            color: isCompleted ? Colors.white : Colors.grey[600],
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      stages[index],
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isCompleted ? AppColors.pathology : Colors.grey[600],
-                        fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+        Icon(icon, size: 28, color: const Color(0xFF1565C0)),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFF0D1B2A),
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  Widget _buildPatientSection() {
-    final patient = _booking!['patient'] ?? {};
-    final age = _calculateAge(patient['dateOfBirth']);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Patient Information',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: AppColors.pathology.withOpacity(0.1),
-                child: Text(
-                  (patient['fullName'] ?? patient['firstName'] ?? 'P')[0].toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.pathology,
-                  ),
-                ),
+  Widget _buildAcceptRejectButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _isProcessing ? null : _rejectBooking,
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.red, width: 2),
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      patient['fullName'] ?? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim(),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$age • ${patient['gender'] ?? 'N/A'}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      patient['phone'] ?? 'N/A',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (patient['address'] != null) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.location_on, size: 16, color: AppColors.pathology),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    patient['address'],
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                ),
-              ],
             ),
-          ],
+            child: _isProcessing
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.close, color: Colors.red, size: 30),
+                      SizedBox(width: 10),
+                      Text(
+                        'Reject Request',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _isProcessing ? null : _acceptBooking,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+              side: const BorderSide(color: Colors.green, width: 2),
+            ),
+            child: _isProcessing
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.check, color: Colors.white, size: 30),
+                      SizedBox(width: 10),
+                      Text(
+                        'Accept Request',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProgressScreen() {
+    final patient = _booking!['patient'] ?? {};
+    final patientName = patient['fullName'] ?? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim() ?? 'Umeya Khan';
+    final price = _booking!['fees'] ?? _booking!['price'] ?? 300;
+    final age = patient['age'] ?? 27;
+    final gender = patient['gender'] ?? 'Female';
+    final address = patient['address'] ?? 'H-101, Shanti Nagar, Govindpuram, Ghaziabad, Uttar Pradesh - 201013';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          // Patient Info Card
+          _buildPatientInfoCard(patientName, age, gender, address, price),
+          const SizedBox(height: 24),
+          // Test Details
+          _buildTestDetailsCard(),
+          const SizedBox(height: 24),
+          // Progress Tracker
+          _buildProgressTracker(),
+          const SizedBox(height: 24),
+          // Action Buttons (Call, Chat, Map, Test Details)
+          _buildQuickActions(),
+          const SizedBox(height: 24),
+          // Main Action Button
+          _buildMainActionButton(),
         ],
       ),
     );
   }
 
-  Widget _buildTestDetailsSection() {
-    final scheduledTime = _booking!['scheduledTime'] != null 
-        ? DateTime.parse(_booking!['scheduledTime']) 
-        : null;
-
+  Widget _buildPatientInfoCard(String name, int age, String gender, String address, int price) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Avatar
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              shape: BoxShape.circle,
+              image: const DecorationImage(
+                image: NetworkImage(
+                  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
+                ),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          const SizedBox(width: 18),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.female, color: Color(0xFF6C5CE7), size: 20),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$gender • $age Years',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.location_on, color: Color(0xFF6C5CE7), size: 20),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        address,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    const Icon(Icons.calendar_today, color: Color(0xFF6C5CE7), size: 20),
+                    const SizedBox(width: 6),
+                    Text(
+                      '13 May 2025',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, color: Color(0xFF6C5CE7), size: 20),
+                    const SizedBox(width: 6),
+                    Text(
+                      '10:00 AM',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Price
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '₹$price',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF00B894),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Service Fee',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTestDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Test Details',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A2E),
+            ),
           ),
           const SizedBox(height: 16),
-          _buildDetailRow('Test Type', _booking!['testType'] ?? _booking!['serviceType'] ?? 'N/A'),
-          if (scheduledTime != null) ...[
-            _buildDetailRow('Date', '${scheduledTime.day}/${scheduledTime.month}/${scheduledTime.year}'),
-            _buildDetailRow('Time', '${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}'),
-          ],
-          if (_booking!['urgency'] != null)
-            _buildDetailRow('Urgency', _booking!['urgency'].toString().toUpperCase()),
-          _buildDetailRow(
-            'Fees',
-            '₹${_booking!['fees'] ?? _booking!['price'] ?? 0}',
-            color: Colors.green,
-          ),
-          if (_booking!['homeCollection'] == true)
-            _buildDetailRow('Collection', 'Home Collection', color: AppColors.pathology),
-          if (_booking!['notes'] != null) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            const Text(
-              'Patient Notes',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _booking!['notes'],
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
-          ),
-          Text(
-            value,
+          const Text(
+            'Test Name / Package',
             style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              color: color,
+              fontSize: 16,
+              color: Color(0xFF1A1A2E),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '• CBC Test\n• Thyroid Profile',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+          const Text(
+            'Sample Type',
+            style: TextStyle(
+              fontSize: 16,
+              color: Color(0xFF1A1A2E),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Blood',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF1A1A2E),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 16),
+          const Text(
+            'Additional Notes',
+            style: TextStyle(
+              fontSize: 16,
+              color: Color(0xFF1A1A2E),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Patient has mild fever. Please handle carefully.',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF1A1A2E),
             ),
           ),
         ],
@@ -411,188 +691,244 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
     );
   }
 
-  Widget _buildActionButtons() {
-    final status = _booking!['status'] ?? 'requested';
-    final collectionScheduled = _booking!['collectionScheduled'] == true;
+  Widget _buildProgressTracker() {
+    final stages = [
+      {'label': 'Accepted', 'icon': Icons.check, 'completed': true},
+      {'label': 'On The Way', 'icon': Icons.check, 'completed': true},
+      {'label': 'Blood Sample\nCollected', 'icon': Icons.check, 'completed': _currentStage == 'sample_collected' || _currentStage == 'report_ready' || _currentStage == 'completed'},
+      {'label': 'Completed', 'icon': Icons.circle_outlined, 'completed': _currentStage == 'completed'},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Connecting Lines
+          Positioned(
+            top: 25,
+            left: 50,
+            right: 50,
+            child: Row(
+              children: List.generate(stages.length - 1, (index) {
+                return Expanded(
+                  child: Container(
+                    height: 3,
+                    color: (stages[index]['completed'] as bool) && (stages[index + 1]['completed'] as bool)
+                        ? const Color(0xFF00B894)
+                        : const Color(0xFFB2BEC3),
+                  ),
+                );
+              }),
+            ),
+          ),
+          // Stages
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(stages.length, (index) {
+              final stage = stages[index];
+              final isActive = stage['completed'] as bool;
+              
+              return Expanded(
+                child: Column(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: isActive ? const Color(0xFF00B894) : Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isActive ? const Color(0xFF00B894) : const Color(0xFFB2BEC3),
+                          width: 3,
+                        ),
+                      ),
+                      child: Icon(
+                        stage['icon'] as IconData,
+                        color: isActive ? Colors.white : const Color(0xFFB2BEC3),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      stage['label'] as String,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isActive ? const Color(0xFF00B894) : const Color(0xFF636E72),
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildQuickActionButton(Icons.call, 'Call Patient'),
+        _buildQuickActionButton(Icons.chat_bubble, 'Chat'),
+        _buildQuickActionButton(Icons.map, 'Open Map'),
+        _buildQuickActionButton(Icons.description, 'Test Details'),
+      ],
+    );
+  }
+
+  Widget _buildQuickActionButton(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          width: 65,
+          height: 65,
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0EDFF),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Icon(
+            icon,
+            size: 32,
+            color: const Color(0xFF6C5CE7),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 15,
+            color: Color(0xFF1A1A2E),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainActionButton() {
+    String buttonText;
+    IconData buttonIcon;
+    
+    switch (_currentStage) {
+      case 'accepted':
+        buttonText = 'On The Way';
+        buttonIcon = Icons.motorcycle;
+        break;
+      case 'on_the_way':
+        buttonText = 'Collect Blood Sample';
+        buttonIcon = Icons.water_drop;
+        break;
+      case 'sample_collected':
+        buttonText = 'Upload Report';
+        buttonIcon = Icons.cloud_upload;
+        break;
+      case 'report_ready':
+      case 'completed':
+        return const SizedBox.shrink();
+      default:
+        buttonText = 'Collect Blood Sample';
+        buttonIcon = Icons.water_drop;
+    }
 
     return Column(
       children: [
-        if (status == 'requested') ...[
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _isProcessing ? null : _acceptBooking,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isProcessing
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text('Accept'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _isProcessing ? null : _rejectBooking,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Reject'),
-                ),
-              ),
-            ],
-          ),
-        ],
-        // Step 1: Schedule Collection (only if not scheduled yet)
-        if (status == 'accepted' && !collectionScheduled) ...[
-          ElevatedButton.icon(
-            onPressed: _isProcessing ? null : _scheduleCollection,
-            icon: const Icon(Icons.schedule),
-            label: const Text('Schedule Collection'),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _isProcessing ? null : () => _handleMainAction(_currentStage),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.pathology,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              minimumSize: const Size(double.infinity, 50),
+              backgroundColor: const Color(0xFF6C5CE7),
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
             ),
+            child: _isProcessing
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(buttonIcon, size: 36),
+                      const SizedBox(width: 12),
+                      Text(
+                        buttonText,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
-        ],
-        // Step 2: Mark Sample Collected (only after scheduling)
-        if (status == 'accepted' && collectionScheduled) ...[
-          Container(
+        ),
+        if (_currentStage == 'sample_collected') ...[
+          const SizedBox(height: 16),
+          SizedBox(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.check_circle, color: Colors.blue, size: 32),
-                const SizedBox(height: 8),
-                const Text(
-                  'Collection Scheduled',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF6C5CE7), width: 2),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Ready to collect sample',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(Icons.arrow_back, size: 32, color: Color(0xFF6C5CE7)),
+                  SizedBox(width: 12),
+                  Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF6C5CE7),
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: _isProcessing ? null : _markSampleCollected,
-            icon: const Icon(Icons.science),
-            label: const Text('Mark Sample Collected'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purple,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-        ],
-        // Step 3: Upload Report (after sample collected)
-        if (status == 'sample_collected') ...[
-          ElevatedButton.icon(
-            onPressed: _isProcessing ? null : _uploadReport,
-            icon: const Icon(Icons.upload_file),
-            label: const Text('Upload Report (PDF)'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-        ],
-        if (status == 'report_ready' || status == 'completed') ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
-            ),
-            child: Column(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 32),
-                const SizedBox(height: 8),
-                const Text(
-                  'Test Completed Successfully',
-                  style: TextStyle(
-                    color: Colors.green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Report delivered to patient',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // View Report Button
-          if (_booking!['report'] != null) ...[
-            ElevatedButton.icon(
-              onPressed: _isProcessing ? null : _viewReport,
-              icon: const Icon(Icons.description),
-              label: const Text('View Report'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                minimumSize: const Size(double.infinity, 50),
+                ],
               ),
             ),
-          ],
+          ),
         ],
       ],
     );
   }
 
-  String _calculateAge(String? dateOfBirth) {
-    if (dateOfBirth == null) return 'N/A';
-    try {
-      final birthDate = DateTime.parse(dateOfBirth);
-      final now = DateTime.now();
-      int age = now.year - birthDate.year;
-      if (now.month < birthDate.month || 
-          (now.month == birthDate.month && now.day < birthDate.day)) {
-        age--;
-      }
-      return '$age years';
-    } catch (e) {
-      return 'N/A';
+  Future<void> _handleMainAction(String stage) async {
+    switch (stage) {
+      case 'accepted':
+        await _markOnTheWay();
+        break;
+      case 'on_the_way':
+        await _markSampleCollected();
+        break;
+      case 'sample_collected':
+        await _uploadReport();
+        break;
     }
   }
 
@@ -606,8 +942,11 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
       }
       
       if (mounted) {
-        ToastUtils.showSuccess('Booking accepted');
-        _loadBooking();
+        ToastUtils.showSuccess('Booking accepted!');
+        setState(() {
+          _currentStage = 'accepted';
+          _isProcessing = false;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -623,9 +962,8 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
         } else {
           ToastUtils.showError('Error: $e');
         }
+        setState(() => _isProcessing = false);
       }
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -643,217 +981,31 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
     } catch (e) {
       if (mounted) {
         ToastUtils.showError('Error: $e');
+        setState(() => _isProcessing = false);
       }
-    } finally {
-      setState(() => _isProcessing = false);
     }
   }
 
-  Future<void> _scheduleCollection() async {
+  Future<void> _markOnTheWay() async {
+    setState(() => _isProcessing = true);
     try {
-      final DateTime? selectedDate = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now().add(const Duration(hours: 2)),
-        firstDate: DateTime.now(),
-        lastDate: DateTime.now().add(const Duration(days: 7)),
-      );
-      
-      if (selectedDate != null) {
-        final TimeOfDay? selectedTime = await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.now(),
-        );
-        
-        if (selectedTime != null) {
-          setState(() => _isProcessing = true);
-          
-          final collectionDateTime = DateTime(
-            selectedDate.year,
-            selectedDate.month,
-            selectedDate.day,
-            selectedTime.hour,
-            selectedTime.minute,
-          );
-          
-          await _apiClient.pathology.scheduleCollection(
-            widget.bookingId, 
-            collectionDateTime.toIso8601String(),
-          );
-          
-          if (mounted) {
-            ToastUtils.showSuccess('Sample collection scheduled');
-            _loadBooking();
-          }
-        }
+      await _apiClient.pathology.updateBookingStatus(widget.bookingId, 'on_the_way');
+      if (mounted) {
+        ToastUtils.showSuccess('Marked as On The Way!');
+        setState(() {
+          _currentStage = 'on_the_way';
+          _isProcessing = false;
+        });
       }
     } catch (e) {
       if (mounted) {
-        ToastUtils.showError('Failed to schedule collection: $e');
-      }
-    } finally {
-      setState(() => _isProcessing = false);
-    }
-  }
-
-  Future<void> _uploadReport() async {
-    try {
-      print('🔵 Starting report upload...');
-      
-      // Pick image report using image_picker to fix compilation
-      final ImagePicker picker = ImagePicker();
-      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-
-      if (file == null) {
-        print('⚠️ User cancelled file selection');
-        return; // User cancelled
-      }
-
-      print('✅ File selected: ${file.name}');
-
-      // Show confirmation
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Upload Report'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Are you sure you want to upload this report?'),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'File: ${file.name}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    FutureBuilder<int>(
-                      future: file.length(),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) return const SizedBox();
-                        return Text(
-                          'Size: ${(snapshot.data! / 1024).toStringAsFixed(2)} KB',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        );
-                      }
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Upload'),
-            ),
-          ],
-        ),
-      );
-
-      if (confirmed != true) {
-        print('⚠️ User cancelled upload confirmation');
-        return;
-      }
-
-      setState(() => _isProcessing = true);
-      print('🔵 Starting upload to server...');
-      print('   Booking ID: ${widget.bookingId}');
-
-      // Upload file - use kIsWeb to determine platform
-      if (kIsWeb) {
-        // Web - use bytes
-        print('🌐 Using bytes upload (web)');
-        final bytes = await file.readAsBytes();
-        if (bytes.isEmpty) {
-          print('❌ No bytes available on web');
-          if (mounted) {
-            ToastUtils.showError('Unable to read file. Please try again.');
-            setState(() => _isProcessing = false);
-            return;
-          }
-        }
-        print('   Bytes length: ${bytes.length}');
-        await _apiClient.pathology.uploadReportFileBytes(
-          widget.bookingId,
-          bytes,
-          file.name,
-        );
-      } else {
-        // Mobile/Desktop - use file path
-        print('📱 Using file path upload (mobile/desktop)');
-        if (file.path == null) {
-          print('❌ No file path available on mobile');
-          if (mounted) {
-            ToastUtils.showError('Unable to read file. Please try again.');
-            setState(() => _isProcessing = false);
-            return;
-          }
-        }
-        await _apiClient.pathology.uploadReportFile(
-          widget.bookingId,
-          file.path!,
-        );
-      }
-
-      print('✅ Upload successful!');
-      if (mounted) {
-        ToastUtils.showSuccess('Report uploaded successfully');
-        _loadBooking();
-      }
-    } catch (e, stackTrace) {
-      print('❌ Upload failed with error:');
-      print('   Error: $e');
-      print('   Stack trace: $stackTrace');
-      
-      if (mounted) {
-        // Extract meaningful error message
-        String errorMessage = 'Failed to upload report';
-        if (e.toString().contains('DioException')) {
-          errorMessage = 'Network error. Please check your connection.';
-        } else if (e.toString().contains('400')) {
-          errorMessage = 'Invalid file. Please select a valid PDF.';
-        } else if (e.toString().contains('401') || e.toString().contains('403')) {
-          errorMessage = 'Not authorized. Please login again.';
-        } else if (e.toString().contains('404')) {
-          errorMessage = 'Booking not found.';
-        } else if (e.toString().contains('500')) {
-          errorMessage = 'Server error. Please try again later.';
-        }
-        
-        ToastUtils.showError('$errorMessage\n\nDetails: $e');
-      }
-    } finally {
-      if (mounted) {
+        ToastUtils.showError('Error: $e');
         setState(() => _isProcessing = false);
       }
     }
   }
 
   Future<void> _markSampleCollected() async {
-    // Show confirmation dialog
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -880,21 +1032,101 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
 
     setState(() => _isProcessing = true);
     try {
-      await _apiClient.pathology.updateBookingStatus(
-        widget.bookingId,
-        'sample_collected',
-      );
+      await _apiClient.pathology.updateBookingStatus(widget.bookingId, 'sample_collected');
       
       if (mounted) {
-        ToastUtils.showSuccess('Sample marked as collected');
-        _loadBooking();
+        ToastUtils.showSuccess('Sample marked as collected!');
+        setState(() {
+          _currentStage = 'sample_collected';
+          _isProcessing = false;
+        });
       }
     } catch (e) {
       if (mounted) {
-        ToastUtils.showError('Failed to update status: $e');
+        ToastUtils.showError('Error: $e');
+        setState(() => _isProcessing = false);
       }
-    } finally {
-      setState(() => _isProcessing = false);
+    }
+  }
+
+  Future<void> _uploadReport() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
+
+      if (file == null) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Upload Report'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Are you sure you want to upload this report?'),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'File: ${file.name}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Upload'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+
+      setState(() => _isProcessing = true);
+
+      if (kIsWeb) {
+        final bytes = await file.readAsBytes();
+        await _apiClient.pathology.uploadReportFileBytes(widget.bookingId, bytes, file.name);
+      } else {
+        await _apiClient.pathology.uploadReportFile(widget.bookingId, file.path!);
+      }
+
+      if (mounted) {
+        ToastUtils.showSuccess('Report uploaded successfully!');
+        setState(() {
+          _currentStage = 'completed';
+          _isProcessing = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastUtils.showError('Failed to upload report: $e');
+        setState(() => _isProcessing = false);
+      }
     }
   }
 
@@ -928,32 +1160,5 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
         ],
       ),
     );
-  }
-
-  Future<void> _viewReport() async {
-    try {
-      final reportUrl = _booking!['report'];
-      if (reportUrl == null) {
-        ToastUtils.showError('Report URL not available');
-        return;
-      }
-
-      // Build full URL if relative
-      final fullUrl = reportUrl.startsWith('http')
-          ? reportUrl
-          : 'http://localhost:5000$reportUrl';
-
-      print('🔵 Opening report: $fullUrl');
-
-      final Uri uri = Uri.parse(fullUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        ToastUtils.showError('Could not launch $fullUrl');
-      }
-    } catch (e) {
-      print('❌ View report error: $e');
-      ToastUtils.showError('Failed to view report: $e');
-    }
   }
 }

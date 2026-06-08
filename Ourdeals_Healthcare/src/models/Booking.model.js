@@ -81,6 +81,23 @@ const BookingSchema = new mongoose.Schema(
       type: Date,
     },
 
+    // Ambulance-specific status timestamps
+    acceptedAt: {
+      type: Date,
+    },
+
+    onTheWayAt: {
+      type: Date,
+    },
+
+    atPickupAt: {
+      type: Date,
+    },
+
+    atDropAt: {
+      type: Date,
+    },
+
     estimatedArrival: {
       type: Date,
     },

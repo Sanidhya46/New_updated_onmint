@@ -12,7 +12,7 @@ class AppColors {
   static const Color pharmacist = Color(0xFFFF9800); // Orange
   static const Color ambulance = Color(0xFFE52329); // Red
   static const Color bloodBank = Color(0xFFE91E63); // Pink
-  static const Color pathology = Color(0xFF00BCD4); // Cyan
+  static const Color pathology = Color(0xFF1565C0); // Dark Blue (same as doctor/nurse)
   
   // Status Colors
   static const Color success = Color(0xFF4CAF50);
