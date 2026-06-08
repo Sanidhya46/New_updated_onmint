@@ -32,61 +32,61 @@ class _NursingCareSelectionScreenState
   final List<NursingCareModel> _allCares = [
     NursingCareModel(
       id: '1',
-      name: '1. Injection Assistance',
+      name: 'Injection Assistance',
       description: 'Get injection at home',
       iconPath: 'assets/images/nurse/injection.png', // Fallback to icons if images don't exist
     ),
     NursingCareModel(
       id: '2',
-      name: '2. IV Drip Administration',
+      name: 'IV Drip Administration',
       description: 'IV therapy and saline at home',
       iconPath: 'assets/images/nurse/iv_drip.png',
     ),
     NursingCareModel(
       id: '3',
-      name: '3. Wound Dressing',
+      name: 'Wound Dressing',
       description: 'Wound care and dressing',
       iconPath: 'assets/images/nurse/wound.png',
     ),
     NursingCareModel(
       id: '4',
-      name: '4. Catheter Care',
+      name: 'Catheter Care',
       description: 'Catheter change and care',
       iconPath: 'assets/images/nurse/catheter.png',
     ),
     NursingCareModel(
       id: '5',
-      name: '5. Elderly Care',
+      name: 'Elderly Care',
       description: 'Elderly and patient care at home',
       iconPath: 'assets/images/nurse/elderly.png',
     ),
     NursingCareModel(
       id: '6',
-      name: '6. Post-Operative Care',
+      name: 'Post-Operative Care',
       description: 'Care for post-surgery patients',
       iconPath: 'assets/images/nurse/post_op.png',
     ),
     NursingCareModel(
       id: '7',
-      name: '7. Vital Signs Monitoring',
+      name: 'Vital Signs Monitoring',
       description: 'BP, sugar, temperature & more',
       iconPath: 'assets/images/nurse/vitals.png',
     ),
     NursingCareModel(
       id: '8',
-      name: '8. Home Nursing Care',
+      name: 'Home Nursing Care',
       description: 'Hourly or full-day nursing care',
       iconPath: 'assets/images/nurse/home_nursing.png',
     ),
     NursingCareModel(
       id: '9',
-      name: '9. Baby & Mother Care',
+      name: 'Baby & Mother Care',
       description: 'Newborn and mother care',
       iconPath: 'assets/images/nurse/baby_care.png',
     ),
     NursingCareModel(
       id: '10',
-      name: '10. Medicine Administration',
+      name: 'Medicine Administration',
       description: 'Medicine on time at home',
       iconPath: 'assets/images/nurse/medicine.png',
     ),
@@ -250,7 +250,7 @@ class _NursingCareSelectionScreenState
           ),
         ],
       ),
-      bottomNavigationBar: Container(
+      bottomNavigationBar: _selectedCares.isEmpty ? const SizedBox.shrink() : Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -265,7 +265,7 @@ class _NursingCareSelectionScreenState
         child: SafeArea(
           child: SizedBox(
             width: double.infinity,
-            height: 40,
+            height: 44,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context, _selectedCares);
@@ -276,15 +276,20 @@ class _NursingCareSelectionScreenState
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: Text(
-                _selectedCares.isEmpty
-                    ? 'Proceed'
-                    : 'Proceed (${_selectedCares.length} Selected)',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Proceed',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                ],
               ),
             ),
           ),

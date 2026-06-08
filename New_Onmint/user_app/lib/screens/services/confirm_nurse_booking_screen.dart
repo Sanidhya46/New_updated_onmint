@@ -7,6 +7,8 @@ class ConfirmNurseBookingScreen extends StatefulWidget {
   final String address;
   final String name;
   final String phone;
+  final int age;
+  final String gender;
   final String notes;
   final List<NursingCareModel> selectedCares;
   final DateTime? preferredDate;
@@ -17,6 +19,8 @@ class ConfirmNurseBookingScreen extends StatefulWidget {
     required this.address,
     required this.name,
     required this.phone,
+    required this.age,
+    required this.gender,
     required this.notes,
     required this.selectedCares,
     this.preferredDate,
@@ -46,6 +50,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
         'address': widget.address,
         'name': widget.name,
         'phone': widget.phone,
+        'patientAge': widget.age,
+        'patientGender': widget.gender,
         'notes': widget.notes,
         'nursingCares': widget.selectedCares.map((c) => {'name': c.name}).toList(),
         if (widget.preferredDate != null) 'preferredDate': widget.preferredDate!.toIso8601String(),
@@ -153,7 +159,7 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                   alignment: Alignment.topCenter,
                 ),
                 Positioned(
-                  top: 40,
+                  top: 25,
                   left: 5,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 24),
@@ -203,6 +209,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                         
                         _buildSummaryRow(Icons.person_outline, 'Contact Name', widget.name),
                         _buildSummaryRow(Icons.phone_outlined, 'Phone Number', widget.phone),
+                        _buildSummaryRow(Icons.calendar_today_outlined, 'Age', widget.age.toString()),
+                        _buildSummaryRow(Icons.person_outline, 'Gender', widget.gender),
                         _buildSummaryRow(
                           Icons.medical_services_outlined, 
                           'Nursing Cares', 

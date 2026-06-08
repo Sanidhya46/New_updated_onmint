@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const SERVICE_TYPES = [
   "doctor",
@@ -30,6 +30,16 @@ const BookingSchema = new mongoose.Schema(
       ref: "User",
       required: true,
       index: true,
+    },
+
+    patientAge: {
+      type: Number,
+      min: 0,
+    },
+
+    patientGender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
     },
 
     provider: {

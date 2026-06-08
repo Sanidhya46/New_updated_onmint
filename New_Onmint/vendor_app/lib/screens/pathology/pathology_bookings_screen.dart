@@ -408,7 +408,18 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen> with 
       ToastUtils.showSuccess('Booking accepted');
       _loadBookings();
     } catch (e) {
-      ToastUtils.showError('Failed to accept booking: $e');
+      final errorMsg = e.toString().toLowerCase();
+      if (errorMsg.contains('404') ||
+          errorMsg.contains('409') ||
+          errorMsg.contains('410') ||
+          errorMsg.contains('not found') ||
+          errorMsg.contains('already been accepted') ||
+          errorMsg.contains('expired')) {
+        ToastUtils.showError('This request has already been accepted or is no longer available.');
+        _loadBookings(); // Refresh list to remove stale booking
+      } else {
+        ToastUtils.showError('Failed to accept booking: $e');
+      }
     }
   }
 

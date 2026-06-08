@@ -169,17 +169,17 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                         child: Row(
                           children: [
                             _buildStatItem(
-                              '${_dashboardData?.totalBookings ?? 0}',
-                              "Today's Requests",
+                              '${_pendingAppointments.length}',
+                              "Requested",
                             ),
                             _buildDivider(),
                             _buildStatItem(
-                              '${_dashboardData?.activeBookings ?? 0}',
-                              "Accepted",
+                              '${_dashboardData?.todayAppointments ?? 0}',
+                              "Today's",
                             ),
                             _buildDivider(),
                             _buildStatItem(
-                              '${_dashboardData?.completedBookings ?? 0}',
+                              '${_dashboardData?.completedConsultations ?? 0}',
                               "Completed",
                             ),
                           ],
@@ -321,69 +321,71 @@ class _DoctorDashboardState extends State<DoctorDashboard> {
                                 ],
                               ),
                             ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Manage Your\nConsultations Easily',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF152238),
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Check your requests, track consultations, and manage your progress all in one place.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF1565C0),
-                                    shape: BoxShape.circle,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Manage Your\nConsultations Easily',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF152238),
+                                      height: 1.3,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Check your requests, track consultations, and manage your progress all in one place.',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                      height: 1.4,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF1565C0),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
                                 ],
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

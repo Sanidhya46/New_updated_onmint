@@ -16,6 +16,7 @@ const STATUS = [
   "preparing",      // Provider is preparing the order (for pharmacist)
   "ready",          // Order is ready for pickup/delivery (for pharmacist)
   "on_the_way",     // Provider is traveling/delivering
+  "reached",        // Provider has reached the location
   "in_progress",    // Service in progress
   "completed",      // Service completed
   "cancelled",      // Cancelled by patient or system
@@ -66,6 +67,16 @@ const RealTimeBookingSchema = new mongoose.Schema(
     patientPhone: {
       type: String,
       trim: true,
+    },
+
+    patientAge: {
+      type: Number,
+      min: 0,
+    },
+
+    patientGender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
     },
 
     hospitalName: {

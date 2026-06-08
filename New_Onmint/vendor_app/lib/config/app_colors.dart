@@ -7,10 +7,10 @@ class AppColors {
   static const Color primaryLight = Color(0xFFE1BEE7);
   
   // Role-specific colors
-  static const Color doctor = Color(0xFF2196F3); // Blue
-  static const Color nurse = Color(0xFF4CAF50); // Green
+  static const Color doctor = Color(0xFF1565C0); // Dark Blue
+  static const Color nurse = Color(0xFF1565C0); // Dark Blue (user requested dark blue)
   static const Color pharmacist = Color(0xFFFF9800); // Orange
-  static const Color ambulance = Color(0xFFF44336); // Red
+  static const Color ambulance = Color(0xFFE52329); // Red
   static const Color bloodBank = Color(0xFFE91E63); // Pink
   static const Color pathology = Color(0xFF00BCD4); // Cyan
   

@@ -41,9 +41,17 @@ class _BookingDetailsScreenEnhancedState extends State<BookingDetailsScreenEnhan
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading booking: $e')),
-        );
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('404') || errorMsg.contains('not found')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This request is no longer available.')),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading booking: $e')),
+          );
+        }
       }
     }
   }
@@ -60,12 +68,25 @@ class _BookingDetailsScreenEnhancedState extends State<BookingDetailsScreenEnhan
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('404') ||
+            errorMsg.contains('409') ||
+            errorMsg.contains('410') ||
+            errorMsg.contains('not found') ||
+            errorMsg.contains('already been accepted') ||
+            errorMsg.contains('expired')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This request has already been accepted or is no longer available.')),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
       }
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 

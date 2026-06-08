@@ -67,8 +67,18 @@ const getAppointments = async (req, res) => {
       const realTimeQuery = {
         $or: [
           { acceptedProvider: doctorId },
-          { "notifiedProviders.provider": doctorId, status: "requested" },
+          { 
+            "notifiedProviders.provider": doctorId, 
+            status: "requested",
+            acceptedProvider: null, // Only show if no one has accepted yet
+            $or: [
+              { expiresAt: { $exists: false } },
+              { expiresAt: { $gt: new Date() } }
+            ]
+          },
         ],
+        // Exclude cancelled and expired bookings
+        status: { $nin: ["cancelled", "expired"] },
       };
       
       if (status === 'requested') {
@@ -256,14 +266,37 @@ const getDashboard = async (req, res) => {
   try {
     const doctorId = req.user.userId;
 
-    const [activeBookings, doctor] = await Promise.all([
+    const { RealTimeBooking } = await import('../models/RealTimeBooking.model.js');
+
+    const [activeBookings, doctor, realTimeRequested, realTimeAccepted, realTimeCompleted] = await Promise.all([
       bookingService.getActiveBookings(doctorId, 'provider'),
       Doctor.findById(doctorId),
+      // Count active real-time requests (not expired, not accepted by anyone)
+      RealTimeBooking.countDocuments({
+        'notifiedProviders.provider': doctorId,
+        status: 'requested',
+        acceptedProvider: null,
+        $or: [
+          { expiresAt: { $exists: false } },
+          { expiresAt: { $gt: new Date() } }
+        ]
+      }),
+      // Count accepted real-time bookings
+      RealTimeBooking.countDocuments({
+        acceptedProvider: doctorId,
+        status: 'accepted',
+      }),
+      // Count completed real-time bookings
+      RealTimeBooking.countDocuments({
+        acceptedProvider: doctorId,
+        status: 'completed',
+      }),
     ]);
 
     const dashboardData = {
-      todayAppointments: activeBookings.length,
-      totalConsultations: doctor?.totalConsultations || 0,
+      todayAppointments: activeBookings.length + realTimeRequested,
+      totalConsultations: (doctor?.totalConsultations || 0) + realTimeCompleted,
+      acceptedAppointments: activeBookings.filter(b => b.status === 'accepted').length + realTimeAccepted,
       rating: doctor?.rating || { average: 0, count: 0 },
       upcomingAppointments: activeBookings,
     };

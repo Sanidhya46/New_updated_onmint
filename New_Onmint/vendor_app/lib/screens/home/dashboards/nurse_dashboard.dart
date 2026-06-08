@@ -17,6 +17,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
   Map<String, dynamic>? _dashboardData;
   List<Map<String, dynamic>> _pendingBookings = [];
   bool _isLoading = true;
+  bool _showAllRequests = false;
 
   @override
   void initState() {
@@ -104,14 +105,14 @@ class _NurseDashboardState extends State<NurseDashboard> {
             children: [
               // ─── BLUE HEADER + STATS CARD ──────────────────────────────
               SizedBox(
-                height: 260,
+                height: 250,
                 child: Stack(
                   clipBehavior: Clip.none,
                   children: [
                     // Blue header
                     Container(
                       width: double.infinity,
-                      height: 220,
+                      height: 200,
                       decoration: const BoxDecoration(
                         color: Color(0xFF1565C0),
                         borderRadius: BorderRadius.only(
@@ -122,7 +123,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                       child: SafeArea(
                         child: Padding(
                           padding: const EdgeInsets.only(
-                              left: 24, right: 24, bottom: 40),
+                              left: 24, right: 24, bottom: 20),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
@@ -272,10 +273,14 @@ class _NurseDashboardState extends State<NurseDashboard> {
                           ),
                           const Spacer(),
                           GestureDetector(
-                            onTap: () {},
-                            child: const Text(
-                              'View All',
-                              style: TextStyle(
+                            onTap: () {
+                              setState(() {
+                                _showAllRequests = !_showAllRequests;
+                              });
+                            },
+                            child: Text(
+                              _showAllRequests ? 'View Less' : 'View All',
+                              style: const TextStyle(
                                 color: Color(0xFF1565C0),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -304,7 +309,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                         padding: const EdgeInsets.symmetric(horizontal: 20),
                         child: Column(
                           children: _pendingBookings
-                              .take(3)
+                              .take(_showAllRequests ? _pendingBookings.length : 1)
                               .map((b) => _buildBookingCard(b))
                               .toList(),
                         ),
@@ -354,74 +359,52 @@ class _NurseDashboardState extends State<NurseDashboard> {
                                 ],
                               ),
                             ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Manage Your\nConsultations Easily',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF152238),
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Check your requests, track consultations, and manage your progress all in one place.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF1565C0),
-                                    shape: BoxShape.circle,
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Manage Your\nConsultations Easily',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF152238),
+                                      height: 1.3,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'Check your requests, track consultations, and manage your progress all in one place.',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.grey.shade600,
+                                      height: 1.4,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFF1565C0),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade300,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        width: 8,
                                         height: 8,
                                         decoration: BoxDecoration(
                                           color: Colors.grey.shade300,

@@ -9,6 +9,8 @@ import 'change_password_screen.dart';
 import 'addresses_screen.dart';
 import 'help_support_screen.dart';
 import '../services/my_bookings_screen.dart';
+import 'personal_details_view_screen.dart';
+import 'address_view_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -66,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -115,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 child: Column(
                   children: [
                     Row(
@@ -125,19 +127,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Stack(
                           children: [
                             CircleAvatar(
-                              radius: 40,
+                              radius: 30,
                               backgroundColor: Colors.blue[100],
                               child: user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
                                   ? ClipOval(
                                       child: Image.network(
                                         user.profilePictureUrl!,
-                                        width: 80,
-                                        height: 80,
+                                        width: 60,
+                                        height: 60,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 50, color: Colors.blue[300]),
+                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 40, color: Colors.blue[300]),
                                       ),
                                     )
-                                  : Icon(Icons.person, size: 50, color: Colors.blue[300]),
+                                  : Icon(Icons.person, size: 40, color: Colors.blue[300]),
                             ),
                             Positioned(
                               bottom: 0,
@@ -235,50 +237,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
                     const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     // Stats
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatItem(
-                          icon: Icons.water_drop_outlined,
-                          iconColor: Colors.red[400]!,
-                          label: 'Blood Group',
-                          value: user.bloodGroup?.isNotEmpty == true ? user.bloodGroup! : 'N/A',
-                        ),
-                        Container(width: 1, height: 40, color: const Color(0xFFEEEEEE)),
-                        _buildStatItem(
-                          icon: Icons.calendar_today_outlined,
-                          iconColor: Colors.blue[400]!,
-                          label: 'Member Since',
-                          value: memberSince,
-                        ),
-                        Container(width: 1, height: 40, color: const Color(0xFFEEEEEE)),
-                        _buildStatItem(
-                          icon: Icons.receipt_long_outlined,
-                          iconColor: Colors.green[400]!,
-                          label: 'Total Orders',
-                          value: _isLoadingOrders ? '...' : '$_totalOrders',
-                        ),
-                      ],
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F8FF), // Ice blue
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildStatItem(
+                            icon: Icons.water_drop_outlined,
+                            iconColor: Colors.red[400]!,
+                            label: 'Blood Group',
+                            value: user.bloodGroup?.isNotEmpty == true ? user.bloodGroup! : 'N/A',
+                          ),
+                          Container(width: 1, height: 24, color: const Color(0xFFD6E4F0)),
+                          _buildStatItem(
+                            icon: Icons.calendar_today_outlined,
+                            iconColor: Colors.blue[400]!,
+                            label: 'Member Since',
+                            value: memberSince,
+                          ),
+                          Container(width: 1, height: 24, color: const Color(0xFFD6E4F0)),
+                          _buildStatItem(
+                            icon: Icons.receipt_long_outlined,
+                            iconColor: Colors.green[400]!,
+                            label: 'Total Orders',
+                            value: _isLoadingOrders ? '...' : '$_totalOrders',
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
 
               // My Account Section
-              const Text(
-                'My Account',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              const Padding(
+                padding: EdgeInsets.only(left: 6.0),
+                child: Text(
+                  'My Account',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -299,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                          MaterialPageRoute(builder: (context) => const PersonalDetailsViewScreen()),
                         );
                       },
                     ),
@@ -316,7 +328,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const AddressesScreen()),
+                          MaterialPageRoute(builder: (context) => const AddressViewScreen()),
                         );
                       },
                     ),
@@ -329,18 +341,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
 
               // More Section
-              const Text(
-                'More',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+              const Padding(
+                padding: EdgeInsets.only(left: 6.0),
+                child: Text(
+                  'More',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -406,7 +421,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -422,20 +437,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return Column(
       children: [
-        Icon(icon, color: iconColor, size: 20),
-        const SizedBox(height: 8),
+        Icon(icon, color: iconColor, size: 16),
+        const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: 9,
             color: Colors.grey[600],
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 2),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 14,
+            fontSize: 12,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
@@ -453,21 +468,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     bool hideArrow = false,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? Colors.black87, size: 22),
+      leading: Icon(icon, color: iconColor ?? Colors.black87, size: 18),
       title: Text(
         title,
         style: TextStyle(
           color: titleColor ?? Colors.black87,
-          fontSize: 14,
+          fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
       ),
       trailing: hideArrow
           ? null
-          : const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+          : const Icon(Icons.chevron_right, color: Colors.grey, size: 16),
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       visualDensity: const VisualDensity(vertical: -2),
+      dense: true,
     );
   }
 

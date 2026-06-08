@@ -27,6 +27,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
   final _addressController = TextEditingController();
   final _reasonController = TextEditingController();
   final _unitsController = TextEditingController();
+  final _scrollController = ScrollController();
   
   String? _selectedBloodGroup;
   bool _isLoading = false;
@@ -41,6 +42,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     _addressController.dispose();
     _reasonController.dispose();
     _unitsController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -74,7 +76,11 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
               emergencyNote: _reasonController.text,
             ),
           ),
-        );
+        ).then((_) {
+          if (_scrollController.hasClients) {
+            _scrollController.jumpTo(0);
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -103,6 +109,7 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       ),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Form(
           key: _formKey,
           child: Column(

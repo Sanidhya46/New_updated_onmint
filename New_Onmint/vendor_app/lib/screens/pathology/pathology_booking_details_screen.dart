@@ -2,7 +2,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../config/app_colors.dart';
 
 class PathologyBookingDetailsScreen extends StatefulWidget {
@@ -361,12 +362,11 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
           ],
           if (_booking!['urgency'] != null)
             _buildDetailRow('Urgency', _booking!['urgency'].toString().toUpperCase()),
-          if (_booking!['fees'] != null || _booking!['price'] != null)
-            _buildDetailRow(
-              'Fees',
-              '₹${_booking!['fees'] ?? _booking!['price'] ?? 0}',
-              color: Colors.green,
-            ),
+          _buildDetailRow(
+            'Fees',
+            '₹${_booking!['fees'] ?? _booking!['price'] ?? 0}',
+            color: Colors.green,
+          ),
           if (_booking!['homeCollection'] == true)
             _buildDetailRow('Collection', 'Home Collection', color: AppColors.pathology),
           if (_booking!['notes'] != null) ...[
@@ -611,10 +611,21 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
       }
     } catch (e) {
       if (mounted) {
-        ToastUtils.showError('Error: $e');
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('404') ||
+            errorMsg.contains('409') ||
+            errorMsg.contains('410') ||
+            errorMsg.contains('not found') ||
+            errorMsg.contains('already been accepted') ||
+            errorMsg.contains('expired')) {
+          ToastUtils.showError('This request has already been accepted or is no longer available.');
+          Navigator.pop(context, true);
+        } else {
+          ToastUtils.showError('Error: $e');
+        }
       }
     } finally {
-      setState(() => _isProcessing = false);
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -688,22 +699,16 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
     try {
       print('🔵 Starting report upload...');
       
-      // Pick PDF file
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
+      // Pick image report using image_picker to fix compilation
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickImage(source: ImageSource.gallery);
 
-      if (result == null || result.files.isEmpty) {
+      if (file == null) {
         print('⚠️ User cancelled file selection');
         return; // User cancelled
       }
 
-      final file = result.files.first;
       print('✅ File selected: ${file.name}');
-      print('   Size: ${file.size} bytes');
-      print('   Has bytes: ${file.bytes != null}');
-      print('   Platform: ${kIsWeb ? "Web" : "Mobile/Desktop"}');
 
       // Show confirmation
       final confirmed = await showDialog<bool>(
@@ -733,12 +738,18 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      'Size: ${(file.size / 1024).toStringAsFixed(2)} KB',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
+                    FutureBuilder<int>(
+                      future: file.length(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) return const SizedBox();
+                        return Text(
+                          'Size: ${(snapshot.data! / 1024).toStringAsFixed(2)} KB',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        );
+                      }
                     ),
                   ],
                 ),
@@ -775,7 +786,8 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
       if (kIsWeb) {
         // Web - use bytes
         print('🌐 Using bytes upload (web)');
-        if (file.bytes == null) {
+        final bytes = await file.readAsBytes();
+        if (bytes.isEmpty) {
           print('❌ No bytes available on web');
           if (mounted) {
             ToastUtils.showError('Unable to read file. Please try again.');
@@ -783,10 +795,10 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
             return;
           }
         }
-        print('   Bytes length: ${file.bytes!.length}');
+        print('   Bytes length: ${bytes.length}');
         await _apiClient.pathology.uploadReportFileBytes(
           widget.bookingId,
-          file.bytes!,
+          bytes,
           file.name,
         );
       } else {
@@ -933,31 +945,11 @@ class _PathologyBookingDetailsScreenState extends State<PathologyBookingDetailsS
 
       print('🔵 Opening report: $fullUrl');
 
-      // Try to open in browser/viewer
       final Uri uri = Uri.parse(fullUrl);
-      
-      // For web, use window.open
-      if (kIsWeb) {
-        // Use dart:html for web
-        try {
-          // ignore: avoid_web_libraries_in_flutter
-          import 'dart:html' as html;
-          html.window.open(fullUrl, '_blank');
-        } catch (e) {
-          print('Web open error: $e');
-          ToastUtils.showError('Could not open report');
-        }
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        // For mobile/desktop, use url_launcher
-        try {
-          // ignore: avoid_print
-          print('Attempting to launch: $uri');
-          // You would need to add url_launcher package for this
-          ToastUtils.showInfo('Report URL: $fullUrl');
-        } catch (e) {
-          print('Launch error: $e');
-          ToastUtils.showError('Could not open report: $e');
-        }
+        ToastUtils.showError('Could not launch $fullUrl');
       }
     } catch (e) {
       print('❌ View report error: $e');

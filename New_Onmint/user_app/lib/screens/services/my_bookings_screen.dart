@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:intl/intl.dart';
-import '../../utils/app_colors.dart';
 import '../bookings/booking_details_screen.dart';
-import '../medicines/order_history_screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -13,55 +11,69 @@ class MyBookingsScreen extends StatefulWidget {
 }
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
-  late final OnMintApiClient _apiClient;
+  final PatientService _patientService = PatientService();
   
-  List<Booking> _myBookings = [];
-  List<Booking> _medicineOrders = [];
+  List<Map<String, dynamic>> _myBookings = [];
+  List<Map<String, dynamic>> _medicineOrders = [];
   bool _isLoading = false;
-  int _selectedTabIndex = 0; // 0: My Bookings, 1: Medicine Orders
-  
-  // Filters
-  String _bookingsFilter = 'all';
-  String _medicineFilter = 'all';
-  bool _showOnlyActiveServices = false;
+  int _selectedTabIndex = 0; // 0: Medicine Orders, 1: Bookings
 
   @override
   void initState() {
     super.initState();
-    _apiClient = OnMintApiClient();
-    _loadBookings();
+    _loadData();
   }
 
-  Future<void> _loadBookings({bool refresh = false}) async {
+  int _getStatusRank(String status) {
+    status = status.toLowerCase();
+    if (['requested', 'pending', 'waiting for pharmacist'].contains(status)) return 1;
+    if (['accepted', 'in_progress', 'processing'].contains(status)) return 2;
+    if (['on_the_way', 'shipped'].contains(status)) return 3;
+    if (['completed', 'delivered', 'confirmed'].contains(status)) return 4;
+    return 5; // cancelled, expired, etc.
+  }
+
+  Future<void> _loadData() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
 
     try {
-      await _apiClient.initialize();
+      final bookingsData = await _patientService.getBookings(page: 1, limit: 100);
+      final medicinesData = await _patientService.getMedicineOrders(page: 1, limit: 100);
       
-      // Get ALL bookings
-      final allServicesResponse = await _apiClient.patient.getBookings(
-        page: 1,
-        limit: 100,
-        status: 'all',
-        serviceType: 'all',
-      );
-      
-      List<Booking> allBookingsList = [];
-      if (allServicesResponse['data'] is List) {
-        allBookingsList = (allServicesResponse['data'] as List)
-            .map((e) => Booking.fromJson(e))
-            .toList();
-      }
-      
-      // Separate into tabs
-      final myBookings = allBookingsList.where((b) => b.serviceType.toLowerCase() != 'pharmacist').toList();
-      final medicineOrders = allBookingsList.where((b) => b.serviceType.toLowerCase() == 'pharmacist').toList();
+      var filteredBookings = bookingsData.where((b) {
+        final type = b['serviceType']?.toString().toLowerCase() ?? '';
+        return type != 'pharmacist' && type != 'medicine';
+      }).toList();
+
+      var medicines = medicinesData;
+
+      // Sort Bookings: Status first (active -> completed), then Most recent Date
+      filteredBookings.sort((a, b) {
+        final rankA = _getStatusRank(a['status']?.toString() ?? '');
+        final rankB = _getStatusRank(b['status']?.toString() ?? '');
+        if (rankA != rankB) return rankA.compareTo(rankB);
         
+        final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
+        final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
+        return dateB.compareTo(dateA); // descending
+      });
+
+      // Sort Medicines: Same logic
+      medicines.sort((a, b) {
+        final rankA = _getStatusRank(a['status']?.toString() ?? '');
+        final rankB = _getStatusRank(b['status']?.toString() ?? '');
+        if (rankA != rankB) return rankA.compareTo(rankB);
+        
+        final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
+        final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
+        return dateB.compareTo(dateA); // descending
+      });
+
       if (mounted) {
         setState(() {
-          _myBookings = myBookings;
-          _medicineOrders = medicineOrders;
+          _myBookings = filteredBookings;
+          _medicineOrders = medicines;
           _isLoading = false;
         });
       }
@@ -69,7 +81,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading bookings: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text('Error loading data: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -78,352 +90,387 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('My Bookings'),
-        backgroundColor: const Color(0xFF4CAF50),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            onPressed: () => _loadBookings(refresh: true),
-            icon: const Icon(Icons.refresh),
+        title: const Text(
+          'My Orders',
+          style: TextStyle(
+            color: Color(0xFF0E2038),
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
-        ],
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
       ),
       body: Column(
         children: [
-          // 2 Tabs
+          // Top Tabs Toggle
           Container(
-            color: const Color(0xFF4CAF50),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                _buildTab('My Bookings', 0),
-                _buildTab('Medicine Orders', 1),
-              ],
-            ),
-          ),
-          // CONTROLS SECTION
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            height: 50,
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1)),
             ),
             child: Row(
               children: [
-                if (_selectedTabIndex == 0) ...[
-                  // Active Services Button for My Bookings
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _showOnlyActiveServices = !_showOnlyActiveServices;
-                        // Reset filter if active services is checked to avoid conflict
-                        if (_showOnlyActiveServices) _bookingsFilter = 'all';
-                      });
-                    },
-                    icon: Icon(
-                      _showOnlyActiveServices ? Icons.check_circle : Icons.radio_button_unchecked,
-                      size: 18,
-                    ),
-                    label: const Text('Active Services'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _showOnlyActiveServices ? const Color(0xFF4CAF50) : Colors.grey[200],
-                      foregroundColor: _showOnlyActiveServices ? Colors.white : Colors.black87,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                      elevation: 0,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                ],
-                const Text(
-                  'Filter:',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
-                  child: Container(
-                    height: 36,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedTabIndex == 0 ? _bookingsFilter : _medicineFilter,
-                        isExpanded: true,
-                        iconSize: 20,
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All', style: TextStyle(fontSize: 13))),
-                          DropdownMenuItem(value: 'requested', child: Text('Requested', style: TextStyle(fontSize: 13))),
-                          DropdownMenuItem(value: 'accepted', child: Text('Accepted', style: TextStyle(fontSize: 13))),
-                          DropdownMenuItem(value: 'in_progress', child: Text('In Progress', style: TextStyle(fontSize: 13))),
-                          DropdownMenuItem(value: 'completed', child: Text('Completed', style: TextStyle(fontSize: 13))),
-                        ],
-                        onChanged: (value) {
-                          if (value == null) return;
-                          setState(() {
-                            if (_selectedTabIndex == 0) {
-                              _bookingsFilter = value;
-                              _showOnlyActiveServices = false;
-                            } else {
-                              _medicineFilter = value;
-                            }
-                          });
-                        },
-                      ),
-                    ),
+                  child: _buildTab(
+                    title: 'Medicine Orders',
+                    icon: Icons.medical_services_outlined,
+                    index: 0,
                   ),
                 ),
-                if (_selectedTabIndex == 1) ...[
-                  const SizedBox(width: 8),
-                  // Order History Icon for Medicine Orders
-                  IconButton(
-                    icon: const Icon(Icons.history, color: Color(0xFF4CAF50)),
-                    tooltip: 'Order History',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const OrderHistoryScreen()),
-                      );
-                    },
+                Expanded(
+                  child: _buildTab(
+                    title: 'Bookings',
+                    icon: Icons.calendar_today_outlined,
+                    index: 1,
                   ),
-                ],
+                ),
               ],
             ),
           ),
+          
+          const SizedBox(height: 16),
+          
+          // Section Title
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  _selectedTabIndex == 0 ? 'Medicine Orders' : 'Bookings',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0E2038),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {},
+                  child: const Text(
+                    'View All',
+                    style: TextStyle(
+                      color: Colors.blue,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // List
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF4CAF50)))
-                : _selectedTabIndex == 0
-                    ? _buildBookingsList()
-                    : _buildMedicineList(),
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+                    onRefresh: _loadData,
+                    child: _selectedTabIndex == 0
+                        ? _buildMedicineList()
+                        : _buildBookingsList(),
+                  ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTab(String title, int index) {
-    final isSelected = _selectedTabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedTabIndex = index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-          ),
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: isSelected ? const Color(0xFF4CAF50) : Colors.white,
-            ),
-          ),
+  Widget _buildTab({required String title, required IconData icon, required int index}) {
+    bool isSelected = _selectedTabIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedTabIndex = index),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue.withOpacity(0.05) : Colors.transparent,
+          border: isSelected 
+              ? const Border(bottom: BorderSide(color: Colors.blue, width: 2))
+              : const Border(bottom: BorderSide(color: Colors.transparent, width: 2)),
         ),
-      ),
-    );
-  }
-
-  Widget _buildBookingsList() {
-    List<Booking> items = _myBookings;
-    
-    if (_showOnlyActiveServices) {
-      items = items.where((b) => ['requested', 'accepted', 'in_progress'].contains(b.status.toLowerCase())).toList();
-    } else if (_bookingsFilter != 'all') {
-      items = items.where((b) => b.status.toLowerCase() == _bookingsFilter).toList();
-    }
-
-    if (items.isEmpty) {
-      return Center(
-        child: Column(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text('No bookings found', style: TextStyle(color: Colors.grey[600])),
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.blue : Colors.black87,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected ? Colors.blue : Colors.black87,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                fontSize: 13,
+              ),
+            ),
           ],
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () => _loadBookings(refresh: true),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return _buildBookingCard(items[index]);
-        },
       ),
     );
   }
 
   Widget _buildMedicineList() {
-    List<Booking> items = _medicineOrders;
+    if (_medicineOrders.isEmpty) {
+      return Center(child: Text('No medicine orders found', style: TextStyle(color: Colors.grey.shade600)));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _medicineOrders.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _medicineOrders.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF0F5FF),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'View All Medicine Orders',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        
+        final order = _medicineOrders[index];
+        return _buildMedicineCard(order);
+      },
+    );
+  }
+
+  Widget _buildBookingsList() {
+    if (_myBookings.isEmpty) {
+      return Center(child: Text('No bookings found', style: TextStyle(color: Colors.grey.shade600)));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: _myBookings.length + 1,
+      itemBuilder: (context, index) {
+        if (index == _myBookings.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF0F5FF),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'View All Bookings',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+        
+        final booking = _myBookings[index];
+        return _buildBookingCard(booking);
+      },
+    );
+  }
+
+  Widget _buildMedicineCard(Map<String, dynamic> order) {
+    final orderId = order['_id']?.toString().substring(0, 6).toUpperCase() ?? '12456';
+    final items = order['medicines'] as List? ?? [];
+    final amount = order['price'] ?? order['totalAmount'] ?? 0;
+    final status = order['status']?.toString().toLowerCase() ?? 'pending';
+    final createdAtStr = order['createdAt']?.toString() ?? '';
     
-    if (_medicineFilter != 'all') {
-      items = items.where((b) => b.status.toLowerCase() == _medicineFilter).toList();
+    DateTime date = DateTime.now();
+    if (createdAtStr.isNotEmpty) {
+      date = DateTime.tryParse(createdAtStr) ?? DateTime.now();
+    }
+    final formattedDate = DateFormat('dd MMM yyyy').format(date);
+    final itemsCount = items.length;
+    
+    String imageUrl = '';
+    if (items.isNotEmpty && items[0] is Map) {
+      final med = items[0]['medicineId'] ?? items[0]['medicine'];
+      if (med != null && med is Map) {
+        if (med['images'] != null && med['images'] is List && med['images'].isNotEmpty) {
+          imageUrl = med['images'][0].toString();
+        } else if (med['imageUrl'] != null) {
+          imageUrl = med['imageUrl'].toString();
+        }
+      }
     }
 
-    if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    Color statusBgColor;
+    Color statusTextColor;
+    String displayStatus;
+
+    if (['completed', 'delivered'].contains(status)) {
+      statusBgColor = Colors.green.shade50;
+      statusTextColor = Colors.green;
+      displayStatus = 'Delivered';
+    } else if (['shipped', 'on_the_way'].contains(status)) {
+      statusBgColor = Colors.blue.shade50;
+      statusTextColor = Colors.blue;
+      displayStatus = 'Shipped';
+    } else {
+      statusBgColor = Colors.orange.shade50;
+      statusTextColor = Colors.orange;
+      displayStatus = 'Processing';
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.shade100),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(Icons.medication_outlined, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text('No medicine orders found', style: TextStyle(color: Colors.grey[600])),
+            // Image box
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: imageUrl.isNotEmpty
+                    ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.medication, color: Colors.blue))
+                    : const Icon(Icons.medication, color: Colors.blue, size: 24),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Order #MED$orderId',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$formattedDate • $itemsCount Item${itemsCount > 1 ? 's' : ''}',
+                    style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹$amount',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                  ),
+                ],
+              ),
+            ),
+            // Status and Chevron
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusBgColor,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    displayStatus,
+                    style: TextStyle(color: statusTextColor, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+              ],
+            ),
           ],
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () => _loadBookings(refresh: true),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return _buildBookingCard(items[index]);
-        },
       ),
     );
   }
 
-  Widget _buildBookingCard(Booking booking) {
-    try {
-      final providerName = booking.providerDetails != null
-          ? '${booking.providerDetails!.firstName} ${booking.providerDetails!.lastName}'.trim()
-          : (booking.provider.isNotEmpty ? 'Provider assigned' : 'Waiting for provider...');
-      final serviceType = booking.serviceType.toLowerCase();
-      final status = booking.status.toLowerCase();
-      
-      // Build description based on service type
-      String description;
-      if (serviceType == 'bloodbank') {
-        final bloodGroup = booking.bloodGroup ?? 'N/A';
-        final units = booking.unitsRequired ?? 0;
-        description = 'Blood Group: $bloodGroup | Units: $units';
-      } else if (serviceType == 'pathology' || serviceType == 'lab') {
-        if (booking.tests != null && booking.tests!.isNotEmpty) {
-          final testNames = booking.tests!.map((t) => t['name'] ?? 'Test').join(', ');
-          description = 'Tests: $testNames';
-        } else {
-          description = booking.notes ?? 'Lab test booking';
-        }
-      } else if (serviceType == 'doctor') {
-        final consultationType = booking.consultationType ?? 'consultation';
-        final urgency = booking.urgency ?? '';
-        description = 'Type: ${consultationType.replaceAll('_', ' ').toUpperCase()}${urgency.isNotEmpty ? ' | $urgency' : ''}';
-      } else {
-        description = booking.notes ?? 'No description';
-      }
-      
-      final totalAmount = booking.price ?? 0.0;
-      
-      DateTime displayTime;
-      String timeLabel;
-      if (booking.scheduledTime != null) {
-        displayTime = booking.scheduledTime!.toLocal();
-        timeLabel = 'Scheduled for';
-      } else {
-        displayTime = booking.createdAt.toLocal();
-        timeLabel = 'Booked on';
-      }
-      
-      Color cardBgColor;
-      Color iconColor;
-      IconData serviceIcon;
-      String displayServiceType;
+  Widget _buildBookingCard(Map<String, dynamic> booking) {
+    final serviceType = booking['serviceType']?.toString().toLowerCase() ?? '';
+    final status = booking['status']?.toString().toLowerCase() ?? 'pending';
+    final scheduledTimeStr = booking['scheduledTime']?.toString() ?? booking['createdAt']?.toString() ?? '';
     
-    switch (serviceType) {
-      case 'doctor':
-        cardBgColor = const Color(0xFFE3F2FD); 
-        iconColor = const Color(0xFF2196F3);
-        serviceIcon = Icons.medical_services;
-        displayServiceType = 'Doctor Consultation';
-        break;
-      case 'bloodbank':
-        cardBgColor = const Color(0xFFFCE4EC); 
-        iconColor = const Color(0xFFE91E63);
-        serviceIcon = Icons.bloodtype;
-        displayServiceType = 'Blood Bank';
-        break;
-      case 'nurse':
-        cardBgColor = const Color(0xFFFCE4EC); 
-        iconColor = const Color(0xFFE91E63);
-        serviceIcon = Icons.local_hospital;
-        displayServiceType = 'Nurse';
-        break;
-      case 'pathology':
-      case 'lab':
-        cardBgColor = const Color(0xFFF3E5F5); 
-        iconColor = const Color(0xFF7B1FA2);
-        serviceIcon = Icons.science;
-        displayServiceType = 'Lab Tests';
-        break;
-      case 'ambulance':
-        cardBgColor = const Color(0xFFFFEBEE); 
-        iconColor = const Color(0xFFF44336);
-        serviceIcon = Icons.local_shipping;
-        displayServiceType = 'Ambulance';
-        break;
-      case 'pharmacist':
-        cardBgColor = const Color(0xFFFFF3E0); 
-        iconColor = const Color(0xFFFF9800);
-        serviceIcon = Icons.medication;
-        displayServiceType = 'Medicine Order';
-        break;
-      default:
-        cardBgColor = Colors.grey[100]!;
-        iconColor = Colors.grey[700]!;
-        serviceIcon = Icons.medical_services;
-        displayServiceType = serviceType.toUpperCase();
+    DateTime date = DateTime.now();
+    if (scheduledTimeStr.isNotEmpty) {
+      date = DateTime.tryParse(scheduledTimeStr) ?? DateTime.now();
+    }
+    final formattedDate = DateFormat('dd MMM yyyy').format(date);
+    final formattedTime = DateFormat('hh:mm a').format(date);
+    
+    String locationText = 'Shivaji Nagar, Jhansi'; // fallback
+    if (booking['location'] != null && booking['location'] is Map) {
+      if (booking['location']['address'] != null) {
+        locationText = booking['location']['address'].toString();
+      }
     }
 
-    Color statusColor;
-    Color statusBgColor;
-    String statusText;
+    String title;
+    Widget iconWidget;
     
-    switch (status) {
-      case 'confirmed':
-      case 'accepted':
-        statusColor = const Color(0xFF2196F3);
-        statusBgColor = const Color(0xFFE3F2FD);
-        statusText = 'Accepted';
-        break;
-      case 'completed':
-        statusColor = const Color(0xFF4CAF50);
-        statusBgColor = const Color(0xFFE8F5E9);
-        statusText = 'Completed';
-        break;
-      case 'expired':
-        statusColor = const Color(0xFFF44336);
-        statusBgColor = const Color(0xFFFFEBEE);
-        statusText = 'Expired';
-        break;
-      case 'in_progress':
-        statusColor = const Color(0xFFFF9800);
-        statusBgColor = const Color(0xFFFFF3E0);
-        statusText = 'In Progress';
-        break;
-      case 'pending':
-      case 'requested':
-      case 'waiting for pharmacist':
-        statusColor = const Color(0xFFFF9800);
-        statusBgColor = const Color(0xFFFFF3E0);
-        statusText = 'Requested';
-        break;
-      default:
-        statusColor = const Color(0xFFFF9800);
-        statusBgColor = const Color(0xFFFFF3E0);
-        statusText = status.toUpperCase();
+    if (serviceType == 'ambulance') {
+      title = 'Ambulance';
+      iconWidget = Image.asset('assets/images/ambulance.png', width: 32, height: 32, errorBuilder: (_,__,___) => const Icon(Icons.local_shipping, color: Colors.red));
+    } else if (serviceType == 'nurse') {
+      title = 'Nursing Care';
+      iconWidget = Image.asset('assets/images/nurse.png', width: 32, height: 32, errorBuilder: (_,__,___) => const Icon(Icons.local_hospital, color: Colors.blue));
+    } else if (serviceType == 'elderly_care' || serviceType == 'elderly care' || serviceType == 'elderly') {
+      title = 'Elderly Care';
+      iconWidget = const Icon(Icons.elderly, color: Colors.orange, size: 32);
+    } else {
+      title = serviceType.isNotEmpty ? serviceType[0].toUpperCase() + serviceType.substring(1) : 'Service';
+      iconWidget = const Icon(Icons.medical_services, color: Colors.blue, size: 32);
+    }
+
+    Color statusBgColor;
+    Color statusTextColor;
+    String displayStatus;
+
+    if (['completed', 'delivered'].contains(status)) {
+      statusBgColor = Colors.green.shade50;
+      statusTextColor = Colors.green;
+      displayStatus = 'Completed';
+    } else if (['confirmed', 'accepted'].contains(status)) {
+      statusBgColor = Colors.blue.shade50;
+      statusTextColor = Colors.blue;
+      displayStatus = 'Confirmed';
+    } else {
+      statusBgColor = Colors.orange.shade50;
+      statusTextColor = Colors.orange;
+      displayStatus = 'Upcoming';
     }
 
     return GestureDetector(
@@ -431,193 +478,89 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookingDetailsScreen(bookingId: booking.id),
+            builder: (context) => BookingDetailsScreen(bookingId: booking['_id'] ?? booking['id'] ?? ''),
           ),
         );
       },
       child: Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.only(bottom: 8),
+        elevation: 0,
         color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey.shade100),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      displayServiceType,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusBgColor,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      statusText,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              Text(
-                providerName,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
+              // Icon box
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade100),
                 ),
+                child: Center(child: iconWidget),
               ),
-              const SizedBox(height: 8),
-              
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(serviceIcon, size: 18, color: iconColor),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
+              const SizedBox(width: 12),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 4),
+                    Text(
+                      '$formattedDate • $formattedTime',
+                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
                       children: [
-                        Text(
-                          timeLabel,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[400],
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          DateFormat('dd MMM yyyy, hh:mm a').format(displayTime),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
+                        Icon(Icons.location_on_outlined, size: 12, color: Colors.grey.shade500),
+                        const SizedBox(width: 2),
+                        Expanded(
+                          child: Text(
+                            locationText,
+                            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '₹${totalAmount.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      color: iconColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+                  ],
+                ),
+              ),
+              // Status and Chevron
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusBgColor,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      displayStatus,
+                      style: TextStyle(color: statusTextColor, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
                 ],
               ),
-              
-              if (serviceType == 'doctor' && 
-                  status == 'accepted' && 
-                  (booking.consultationType?.toLowerCase() == 'video_call' ||
-                   booking.consultationType?.toLowerCase() == 'video-call' ||
-                   booking.consultationType?.toLowerCase() == 'video call')) ...[
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: booking.videoCallCompleted == true
-                      ? ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookingDetailsScreen(bookingId: booking.id),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.hourglass_empty, size: 18),
-                          label: const Text('In Progress'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        )
-                      : ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookingDetailsScreen(bookingId: booking.id),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.videocam, size: 18),
-                          label: const Text('Join Video Call'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        ),
-                ),
-              ],
             ],
           ),
         ),
       ),
     );
-    } catch (e) {
-      return Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        color: Colors.red[50],
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.red),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Error displaying booking: ${booking.id}',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
   }
 }

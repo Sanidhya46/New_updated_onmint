@@ -155,6 +155,21 @@ class PatientApiService {
     }
   }
 
+  // Alias for getBookings to support existing UI code
+  Future<Map<String, dynamic>> getUserBookings({
+    int page = 1,
+    int limit = 10,
+    String? status,
+    String? serviceType,
+  }) {
+    return getBookings(
+      page: page,
+      limit: limit,
+      status: status,
+      serviceType: serviceType,
+    );
+  }
+
   Future<List<Booking>> getActiveBookings() async {
     try {
       final response = await _client.get('/patient/bookings/active');

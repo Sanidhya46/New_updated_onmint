@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:api_client/api_client.dart';
+import 'package:ui_components/ui_components.dart';
 
 class ConfirmBloodRequestScreen extends StatefulWidget {
   final String patientName;
@@ -26,19 +28,46 @@ class ConfirmBloodRequestScreen extends StatefulWidget {
 }
 
 class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
+  bool _isLoading = false;
+  final _apiClient = OnMintApiClient();
+
+  Future<void> _submitRequest() async {
+    setState(() => _isLoading = true);
+    try {
+      final requestData = {
+        'serviceType': 'bloodbank',
+        'title': 'Blood Request - ${widget.bloodGroup}',
+        'description': widget.emergencyNote.isEmpty ? 'Need ${widget.unitsRequired} units of ${widget.bloodGroup} blood' : widget.emergencyNote,
+        'patientName': widget.patientName,
+        'patientPhone': widget.contactNumber,
+        'hospitalName': widget.hospitalName,
+        'bloodGroup': widget.bloodGroup,
+        'unitsRequired': int.tryParse(widget.unitsRequired) ?? 1,
+        'isEmergency': true,
+        'address': widget.address,
+        'coordinates': [0, 0], // Optional or get actual if needed
+      };
+
+      await _apiClient.patient.createRealtimeBooking(requestData);
+
+      if (mounted) {
+        ToastUtils.showSuccess('Blood request sent to nearby blood banks');
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastUtils.showError(e.toString().replaceAll('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       backgroundColor: Colors.white,
       bottomNavigationBar: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -60,9 +89,7 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
                 width: double.infinity,
                 height: 44,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                  onPressed: _isLoading ? null : _submitRequest,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC62828), // Dark Red matching UI
                     shape: RoundedRectangleBorder(
@@ -70,7 +97,9 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: Stack(
+                  child: _isLoading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : Stack(
                     alignment: Alignment.center,
                     children: [
                       const Align(
@@ -124,18 +153,30 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Section
-            Image.asset(
-              'assets/images/bloodbank/bloodbank_confirm_booking.png',
-              width: double.infinity,
-              fit: BoxFit.fitWidth,
-              alignment: Alignment.topCenter,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: double.infinity,
-                height: 150,
-                color: Colors.red[50],
-                alignment: Alignment.center,
-                child: const Text('Banner Missing', style: TextStyle(color: Colors.red)),
-              ),
+            Stack(
+              children: [
+                Image.asset(
+                  'assets/images/bloodbank/bloodbank_confirm_booking.png',
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
+                  alignment: Alignment.topCenter,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    width: double.infinity,
+                    height: 150,
+                    color: Colors.red[50],
+                    alignment: Alignment.center,
+                    child: const Text('Banner Missing', style: TextStyle(color: Colors.red)),
+                  ),
+                ),
+                Positioned(
+                  top: MediaQuery.of(context).padding.top > 0 ? MediaQuery.of(context).padding.top - 5 : 10,
+                  left: 10,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 24),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             // Request Summary

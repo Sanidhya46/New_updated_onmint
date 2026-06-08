@@ -17,8 +17,25 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  
+  String? _selectedGender;
+  final ScrollController _scrollController = ScrollController();
 
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _dateController.dispose();
+    _timeController.dispose();
+    _notesController.dispose();
+    _ageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -77,7 +94,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         );
         return;
       }
-      
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -85,6 +101,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             address: _addressController.text,
             name: _nameController.text,
             phone: _phoneController.text,
+            age: _ageController.text.isNotEmpty ? int.tryParse(_ageController.text) ?? 0 : 0,
+            gender: _selectedGender ?? 'Other',
             notes: _notesController.text,
             selectedCares: _selectedCares,
             preferredDate: _selectedDate,
@@ -93,7 +111,11 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                 : null,
           ),
         ),
-      );
+      ).then((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
+      });
     }
   }
 
@@ -109,6 +131,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
       ),
       extendBodyBehindAppBar: true,
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           children: [
             Stack(
@@ -212,6 +235,58 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                       ),
                       const SizedBox(height: 16),
 
+                      // Row 1.5: Age | Gender
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Age'),
+                                _buildTextField(
+                                  controller: _ageController,
+                                  hintText: 'Enter Age',
+                                  prefixIcon: Icons.calendar_today_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Gender'),
+                                DropdownButtonFormField<String>(
+                                  value: _selectedGender,
+                                  isDense: true,
+                                  isExpanded: true,
+                                  decoration: _buildInputDecoration('Gender', Icons.person_outline),
+                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 16),
+                                  items: ['Male', 'Female', 'Other'].map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value, style: const TextStyle(fontSize: 12)),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _selectedGender = newValue;
+                                    });
+                                  },
+                                  validator: (v) => v == null ? 'Required' : null,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
                       // Row 2: Select Nursing Care
                       _buildFieldLabel('Select Nursing Care'),
                       InkWell(
@@ -281,7 +356,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   readOnly: true,
                                   onTap: () => _selectDate(context),
                                   style: const TextStyle(fontSize: 12),
-                                  decoration: _buildInputDecoration('Select Date', Icons.calendar_today_outlined, suffixIcon: Icons.keyboard_arrow_right),
+                                  decoration: _buildInputDecoration('Date', Icons.calendar_today_outlined, suffixIcon: Icons.keyboard_arrow_right),
                                   validator: (v) => v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
@@ -298,7 +373,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   readOnly: true,
                                   onTap: () => _selectTime(context),
                                   style: const TextStyle(fontSize: 12),
-                                  decoration: _buildInputDecoration('Select Time', Icons.access_time_outlined, suffixIcon: Icons.keyboard_arrow_right),
+                                  decoration: _buildInputDecoration('Time', Icons.access_time_outlined, suffixIcon: Icons.keyboard_arrow_right),
                                   validator: (v) => v!.isEmpty ? 'Required' : null,
                                 ),
                               ],

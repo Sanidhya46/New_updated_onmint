@@ -227,7 +227,7 @@ class Booking {
         location: location,
         timeSlot: timeSlot,
         notes: json['notes'],
-        price: (json['price'] ?? 0).toDouble(),
+        price: (json['price'] ?? json['fees'] ?? json['totalAmount'] ?? json['amount'] ?? 0).toDouble(),
         rating: rating,
         createdAt: _parseDateTime(json['createdAt']),
         updatedAt: _parseDateTime(json['updatedAt']),

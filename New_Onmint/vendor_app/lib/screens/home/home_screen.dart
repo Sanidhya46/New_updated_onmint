@@ -10,9 +10,11 @@ import 'dashboards/ambulance_dashboard.dart';
 import 'dashboards/bloodbank_dashboard.dart';
 import 'dashboards/pathology_dashboard.dart';
 import '../profile/edit_profile_screen.dart';
+import '../profile/profile_screen.dart';
 import '../ambulance/ride_requests_screen.dart';
 import '../doctor/bookings_screen.dart';
 import '../doctor/appointments_screen.dart';
+import '../doctor/doctor_main_screen.dart';
 import '../pharmacist/order_management_screen.dart';
 import '../nurse/bookings_screen.dart' as nurse_bookings;
 import '../pathology/pathology_bookings_screen.dart';
@@ -41,17 +43,24 @@ class _HomeScreenState extends State<HomeScreen> {
     final role = user.role.toLowerCase();
     final roleColor = AppColors.getRoleColor(role);
 
+    if (role == 'doctor') {
+      return const DoctorMainScreen();
+    }
+
     // Get role-specific dashboard
     final dashboardWidget = _getDashboardForRole(role);
 
     final screens = [
       dashboardWidget,
       _getBookingsScreenForRole(role),
-      EditProfileScreen(user: user),
+      const Center(child: Text('Messages', style: TextStyle(fontSize: 18))),
+      const ProfileScreen(),
     ];
 
+    bool hideAppBar = _selectedIndex == 3 || (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse'));
+
     return Scaffold(
-      appBar: AppBar(
+      appBar: hideAppBar ? null : AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -98,20 +107,29 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: screens[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         selectedItemColor: roleColor,
         unselectedItemColor: AppColors.textSecondary,
+        showUnselectedLabels: true,
+        selectedFontSize: 12,
+        unselectedFontSize: 12,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home),
+            label: 'Home',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today_outlined),
             activeIcon: Icon(Icons.calendar_today),
-            label: 'Bookings',
+            label: 'Appointments',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble_outline),
+            activeIcon: Icon(Icons.chat_bubble),
+            label: 'Messages',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

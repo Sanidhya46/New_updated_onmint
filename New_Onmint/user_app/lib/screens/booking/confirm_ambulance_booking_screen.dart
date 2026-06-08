@@ -6,6 +6,8 @@ class ConfirmAmbulanceBookingScreen extends StatefulWidget {
   final String dropoffLocation;
   final String name;
   final String phone;
+  final int age;
+  final String gender;
   final String notes;
   final List<double> coordinates;
 
@@ -15,6 +17,8 @@ class ConfirmAmbulanceBookingScreen extends StatefulWidget {
     required this.dropoffLocation,
     required this.name,
     required this.phone,
+    required this.age,
+    required this.gender,
     required this.notes,
     required this.coordinates,
   }) : super(key: key);
@@ -43,6 +47,8 @@ class _ConfirmAmbulanceBookingScreenState extends State<ConfirmAmbulanceBookingS
         'dropOffLocation': widget.dropoffLocation,
         'name': widget.name,
         'phone': widget.phone,
+        'patientAge': widget.age,
+        'patientGender': widget.gender,
         'notes': widget.notes,
         'urgency': 'high', // ambulance usually high urgency
         'isEmergency': true,
@@ -211,6 +217,8 @@ class _ConfirmAmbulanceBookingScreenState extends State<ConfirmAmbulanceBookingS
                               _buildSummaryRow(Icons.location_on_outlined, 'Drop-off Location', widget.dropoffLocation.isEmpty ? 'Not specified' : widget.dropoffLocation, iconColor: Colors.red[600], valueColor: Colors.red[700]),
                               _buildSummaryRow(Icons.person_outline, 'Contact Name', widget.name),
                               _buildSummaryRow(Icons.phone_outlined, 'Phone Number', widget.phone),
+                              _buildSummaryRow(Icons.calendar_today_outlined, 'Age', widget.age.toString()),
+                              _buildSummaryRow(Icons.person_outline, 'Gender', widget.gender),
                                 _buildSummaryRow(Icons.note_alt_outlined, 'Additional Details', widget.notes.isEmpty ? 'None' : widget.notes, isLast: true),
                                 
                                 const SizedBox(height: 12),

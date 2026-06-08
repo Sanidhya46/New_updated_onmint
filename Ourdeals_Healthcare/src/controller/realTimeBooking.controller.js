@@ -186,7 +186,7 @@ const acceptBookingRequest = async (req, res) => {
       )
     );
   } catch (error) {
-    const statusCode = error.message.includes("already been accepted") ? 409 : 500;
+    const statusCode = error.status || (error.message.includes("already been accepted") ? 409 : 500);
     res.status(statusCode).json(errorResponse(error.message || "Failed to accept booking"));
   }
 };
@@ -202,7 +202,7 @@ const updateStatus = async (req, res) => {
       return res.status(400).json(errorResponse("Status is required"));
     }
 
-    const validStatuses = ["on_the_way", "in_progress", "completed", "cancelled"];
+    const validStatuses = ["on_the_way", "reached", "in_progress", "completed", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json(errorResponse("Invalid status"));
     }

@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
-import 'create_prescription_screen.dart';
-import '../consultation/video_call_screen.dart';
 
-/// Appointment details screen for doctors
+import 'package:vendor_app/screens/doctor/doctor_active_consultation_screen.dart';
+
 class AppointmentDetailsScreen extends StatefulWidget {
   final String appointmentId;
 
@@ -39,9 +38,17 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading appointment: $e')),
-        );
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('404') || errorMsg.contains('not found')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This appointment is no longer available.')),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading appointment: $e')),
+          );
+        }
       }
     }
   }
@@ -54,27 +61,44 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Appointment accepted')),
         );
-        Navigator.pop(context, true);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DoctorActiveConsultationScreen(
+              appointmentId: widget.appointmentId,
+            ),
+          ),
+        );
       }
     } catch (e) {
       setState(() => _isProcessing = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        final errorMsg = e.toString().toLowerCase();
+        if (errorMsg.contains('404') ||
+            errorMsg.contains('409') ||
+            errorMsg.contains('410') ||
+            errorMsg.contains('not found') ||
+            errorMsg.contains('already been accepted') ||
+            errorMsg.contains('expired')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('This appointment has already been accepted or is no longer available.')),
+          );
+          Navigator.pop(context, true);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
       }
     }
   }
 
   Future<void> _rejectAppointment() async {
-    final reason = await _showRejectDialog();
-    if (reason == null) return;
-
     setState(() => _isProcessing = true);
     try {
       await _apiClient.doctor.rejectAppointment(
         widget.appointmentId,
-        reason: reason,
+        reason: 'Provider busy',
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -92,151 +116,22 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
     }
   }
 
-  Future<String?> _showRejectDialog() async {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reject Appointment'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Reason for rejection',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Reject'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _completeAppointment() async {
-    setState(() => _isProcessing = true);
-    try {
-      await _apiClient.doctor.completeAppointment(widget.appointmentId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Appointment completed')),
-        );
-        Navigator.pop(context, true);
-      }
-    } catch (e) {
-      setState(() => _isProcessing = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    }
-  }
-
-  void _joinVideoCall() async {
-    if (_appointment == null) return;
-    
-    final doctorName = 'Dr. ${_appointment!['doctor']?['firstName'] ?? 'Doctor'} ${_appointment!['doctor']?['lastName'] ?? ''}';
-    
-    try {
-      setState(() => _isProcessing = true);
-      
-      // Mark video call as started locally
-      setState(() {
-        _appointment!['videoCallStarted'] = true;
-        _appointment!['status'] = 'in_progress';
-        _isProcessing = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Video consultation started'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error updating appointment status: $e');
-      setState(() => _isProcessing = false);
-      
-      // Continue with video call even if status update fails
-      setState(() {
-        _appointment!['videoCallStarted'] = true;
-      });
-    }
-    
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => VideoCallScreen(
-          meetingId: widget.appointmentId,
-          userName: doctorName,
-          bookingId: widget.appointmentId,
-        ),
-      ),
-    );
-    
-    // When returning from video call, mark it as completed and show prescription option
-    if (mounted) {
-      setState(() {
-        _appointment!['videoCallCompleted'] = true;
-        _appointment!['videoCallStarted'] = false; // Hide join button
-        // Keep status as is from backend
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Video consultation completed. Please create a prescription.'),
-          backgroundColor: Colors.blue,
-          duration: Duration(seconds: 3),
-        ),
-      );
-      
-      // Reload appointment data to get fresh data from backend
-      _loadAppointment();
-    }
-  }
-
-  void _createPrescription() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CreatePrescriptionScreen(
-          bookingId: widget.appointmentId,
-        ),
-      ),
-    );
-    if (result == true) {
-      // Reload appointment data to get updated prescription
-      await _loadAppointment();
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Prescription created successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F7FF),
       appBar: AppBar(
-        title: const Text('Appointment Details'),
+        title: const Text(
+          'Booking Request Details',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: const Color(0xFF1565C0),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1565C0)))
           : _appointment == null
               ? const Center(child: Text('Appointment not found'))
               : SingleChildScrollView(
@@ -244,440 +139,232 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSection('Patient Information', [
-                        _buildInfoRow('Name', _appointment!['patient']?['fullName'] ?? 'N/A'),
-                        _buildInfoRow('Phone', _appointment!['patient']?['phone'] ?? 'N/A'),
-                        _buildInfoRow('Age', _calculateAge(_appointment!['patient'])),
-                        _buildInfoRow('Gender', _appointment!['patient']?['gender'] ?? 'N/A'),
-                      ]),
-                      
-                      const SizedBox(height: 20),
-                      
-                      _buildSection('Appointment Details', [
-                        _buildInfoRow('Date', _formatDate(_appointment!['scheduledTime'])),
-                        _buildInfoRow('Time', _formatTime(_appointment!['scheduledTime'])),
-                        _buildInfoRow('Type', _appointment!['consultationType'] ?? 'N/A'),
-                        _buildInfoRow('Status', _appointment!['status'] ?? 'N/A'),
-                        if (_appointment!['fees'] != null)
-                          _buildInfoRow('Fees', '₹${_appointment!['fees']}'),
-                      ]),
-                      
-                      if (_appointment!['notes'] != null) ...[
-                        const SizedBox(height: 20),
-                        _buildSection('Patient Notes', [
-                          Text(_appointment!['notes']),
-                        ]),
-                      ],
-                      
-                      if (_appointment!['prescription'] != null) ...[
-                        const SizedBox(height: 20),
-                        _buildSection('Prescription', [
-                          const Text('Prescription already created'),
-                          const SizedBox(height: 8),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              // View prescription
-                            },
-                            icon: const Icon(Icons.visibility),
-                            label: const Text('View Prescription'),
-                          ),
-                        ]),
-                      ],
-                      
+                      _buildRequestSummary(),
+                      const SizedBox(height: 16),
+                      _buildPatientDetails(),
+                      const SizedBox(height: 16),
+                      _buildBookingDetails(),
                       const SizedBox(height: 24),
-                      
-                      // Action Buttons
-                      if (_appointment!['status'] == 'requested') ...[
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: _isProcessing ? null : _acceptAppointment,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                ),
-                                child: _isProcessing
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                        ),
-                                      )
-                                    : const Text('Accept'),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: OutlinedButton(
-                                onPressed: _isProcessing ? null : _rejectAppointment,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.red,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                ),
-                                child: const Text('Reject'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                      
-                      if (_appointment!['status'] == 'accepted') ...[
-                        // Sequential flow: First show video call, then prescription, then complete
-                        if (_appointment!['consultationType'] == 'video-call' || 
-                            _appointment!['consultationType'] == 'VIDEO_CALL' ||
-                            _appointment!['consultationType'] == 'video_call') ...[
-                          // Show video call button first (if not completed)
-                          if (_appointment!['videoCallCompleted'] != true)
-                            ElevatedButton.icon(
-                              onPressed: _isProcessing ? null : _joinVideoCall,
-                              icon: _isProcessing 
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                      ),
-                                    )
-                                  : const Icon(Icons.videocam),
-                              label: Text(_isProcessing ? 'Starting...' : 'Join Video Call'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                minimumSize: const Size(double.infinity, 50),
-                              ),
-                            ),
-                          
-                          // Show completion message if video call is done
-                          if (_appointment!['videoCallCompleted'] == true) ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.green.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.green),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Video consultation completed successfully. You can now create a prescription.',
-                                      style: TextStyle(
-                                        color: Colors.green[800],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          
-                          if (_appointment!['videoCallCompleted'] == true || _appointment!['videoCallStarted'] == true)
-                            const SizedBox(height: 12),
-                        ],
-                        
-                        // Show prescription option after video call has started/completed (for video consultations)
-                        // or immediately for in-person consultations
-                        if ((_appointment!['consultationType'] != 'video-call' && 
-                             _appointment!['consultationType'] != 'VIDEO_CALL' &&
-                             _appointment!['consultationType'] != 'video_call') ||
-                            _appointment!['videoCallCompleted'] == true) ...[
-                          // Show prescription card only if prescription doesn't exist yet
-                          if (_appointment!['prescription'] == null)
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.note_add, color: Colors.orange, size: 24),
-                                      const SizedBox(width: 12),
-                                      const Text(
-                                        'Create Prescription',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.orange,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Please create a prescription for this consultation. You can add multiple medicines.',
-                                    style: TextStyle(
-                                      color: Colors.orange[800],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  ElevatedButton.icon(
-                                    onPressed: _createPrescription,
-                                    icon: const Icon(Icons.note_add),
-                                    label: const Text('Create Prescription'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          
-                          // Show prescription created message if prescription exists
-                          if (_appointment!['prescription'] != null) ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.green.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.green, size: 24),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Prescription Created',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Prescription has been created and sent to the patient.',
-                                          style: TextStyle(
-                                            color: Colors.green[800],
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                          
-                          const SizedBox(height: 12),
-                        ],
-                        
-                        // Show complete appointment only after prescription is created
-                        if (_appointment!['prescription'] != null)
-                          ElevatedButton.icon(
-                            onPressed: _isProcessing ? null : _completeAppointment,
-                            icon: const Icon(Icons.check_circle),
-                            label: const Text('Complete Appointment'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              minimumSize: const Size(double.infinity, 50),
-                            ),
-                          ),
-                        
-                        // Show complete appointment only after prescription is created
-                        if (_appointment!['prescription'] != null)
-                          ElevatedButton.icon(
-                            onPressed: _isProcessing ? null : _completeAppointment,
-                            icon: const Icon(Icons.check_circle),
-                            label: const Text('Complete Appointment'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              minimumSize: const Size(double.infinity, 50),
-                            ),
-                          ),
-                      ],
-                      
-                      if (_appointment!['status'] == 'in_progress') ...[
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info_outline, color: Colors.blue),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Consultation is in progress. Create prescription when ready.',
-                                  style: TextStyle(
-                                    color: Colors.blue[800],
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Show prescription option only if prescription doesn't exist yet
-                        if (_appointment!['prescription'] == null)
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.orange.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(Icons.note_add, color: Colors.orange, size: 24),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Create Prescription',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.orange,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Please create a prescription for this consultation. You can add multiple medicines.',
-                                  style: TextStyle(
-                                    color: Colors.orange[800],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                ElevatedButton.icon(
-                                  onPressed: _createPrescription,
-                                  icon: const Icon(Icons.note_add),
-                                  label: const Text('Create Prescription'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.orange,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        
-                        // Show prescription created message if prescription exists
-                        if (_appointment!['prescription'] != null) ...[
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.green.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.check_circle, color: Colors.green, size: 24),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Prescription Created',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.green,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Prescription has been created and sent to the patient.',
-                                        style: TextStyle(
-                                          color: Colors.green[800],
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        
-                        // Show complete appointment only after prescription is created
-                        if (_appointment!['prescription'] != null)
-                          ElevatedButton.icon(
-                            onPressed: _isProcessing ? null : _completeAppointment,
-                            icon: const Icon(Icons.check_circle),
-                            label: const Text('Complete Appointment'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              minimumSize: const Size(double.infinity, 50),
-                            ),
-                          ),
-                      ],
+                      if (_appointment!['status'] == 'requested' ||
+                          _appointment!['status'] == 'pending')
+                        _buildActionButtons(),
                     ],
                   ),
                 ),
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+  Widget _buildRequestSummary() {
+    final patient = _appointment!['patient'] ?? {};
+    final patientName = patient['fullName'] ??
+        '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim();
+    final gender = patient['gender'] ?? 'Not specified';
+    final age = _calculateAge(patient['dateOfBirth']);
+
+    final formattedDate = _formatDateFull(_appointment!['createdAt'] ?? _appointment!['scheduledTime']);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(height: 12),
-        ...children,
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Request Summary',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue.shade50,
+                ),
+                child: patient['profilePicture'] != null
+                    ? ClipOval(
+                        child: Image.network(
+                          patient['profilePicture'],
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : const Icon(Icons.person, color: Color(0xFF1565C0), size: 30),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      patientName.isEmpty ? 'Patient' : patientName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$gender • $age',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Requested On',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    formattedDate,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.right,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildPatientDetails() {
+    final patient = _appointment!['patient'] ?? {};
+    final patientName = patient['fullName'] ??
+        '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim();
+    final age = _calculateAge(patient['dateOfBirth']);
+    final gender = patient['gender'] ?? 'Not specified';
+    final phone = patient['phone']?.toString() ?? 'N/A';
+    final address = patient['address'] ??
+        _appointment!['location']?['address'] ??
+        'Online Consultation';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Patient Details',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(Icons.person_outline, 'Name', patientName.isEmpty ? 'N/A' : patientName),
+          _buildDivider(),
+          _buildDetailRow(Icons.calendar_today_outlined, 'Age / Gender', '$age / $gender'),
+          _buildDivider(),
+          _buildDetailRow(Icons.phone_outlined, 'Phone', phone),
+          _buildDivider(),
+          _buildDetailRow(Icons.location_on_outlined, 'Address', address, isLast: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingDetails() {
+    final scheduledDate = _formatDate(_appointment!['scheduledTime']);
+    final scheduledTime = _formatTime(_appointment!['scheduledTime']);
+    final serviceType = _appointment!['serviceType'] ?? 'Doctor Consultation';
+    final consultationType = _appointment!['consultationType'] ?? 'video-call';
+    final purpose = _appointment!['requirements']?['description'] ??
+        _appointment!['notes'] ??
+        'General Consultation';
+    final isEmergency = _appointment!['isEmergency'] == true;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Booking Details',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              if (isEmergency) ...[
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: const Text(
+                    '🚨 Emergency',
+                    style: TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildDetailRow(Icons.medical_services_outlined, 'Service Type', serviceType),
+          _buildDivider(),
+          _buildDetailRow(Icons.video_call_outlined, 'Consultation', consultationType),
+          _buildDivider(),
+          _buildDetailRow(Icons.health_and_safety_outlined, 'Purpose', purpose),
+          _buildDivider(),
+          _buildDetailRow(Icons.calendar_month_outlined, 'Date', scheduledDate),
+          _buildDivider(),
+          _buildDetailRow(Icons.access_time_outlined, 'Time', scheduledTime, isLast: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value, {bool isLast = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Icon(icon, size: 18, color: const Color(0xFF1565C0)),
+          const SizedBox(width: 12),
           SizedBox(
-            width: 100,
+            width: 130,
             child: Text(
               label,
-              style: TextStyle(
-                color: Colors.grey[600],
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -685,9 +372,11 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
+              style: TextStyle(
+                color: Colors.grey[800],
+                fontSize: 13,
               ),
+              textAlign: TextAlign.right,
             ),
           ),
         ],
@@ -695,32 +384,152 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
     );
   }
 
+  Widget _buildDivider() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Divider(color: Colors.grey[200], height: 1),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _isProcessing ? null : _rejectAppointment,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Color(0xFFE52329)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isProcessing
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE52329)),
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.close, color: Color(0xFFE52329), size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Reject Request',
+                            style: TextStyle(
+                              color: Color(0xFFE52329),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _isProcessing ? null : _acceptAppointment,
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  side: const BorderSide(color: Colors.green),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: _isProcessing
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.check, color: Colors.green, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Accept Request',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'You can accept or reject this booking request.\nOnce accepted, the patient will be notified.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  String _formatDateFull(String? dateStr) {
+    if (dateStr == null) return 'N/A';
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final hour = date.hour > 12 ? date.hour - 12 : date.hour == 0 ? 12 : date.hour;
+      final period = date.hour >= 12 ? 'PM' : 'AM';
+      return '${date.day} ${months[date.month - 1]}\n${hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} $period';
+    } catch (e) {
+      return 'N/A';
+    }
+  }
+
   String _formatDate(String? dateStr) {
     if (dateStr == null) return 'N/A';
-    final date = DateTime.parse(dateStr);
-    return '${date.day}/${date.month}/${date.year}';
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+    } catch (e) {
+      return 'N/A';
+    }
   }
 
   String _formatTime(String? dateStr) {
     if (dateStr == null) return 'N/A';
-    final date = DateTime.parse(dateStr);
-    return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    try {
+      final date = DateTime.parse(dateStr).toLocal();
+      final hour = date.hour > 12 ? date.hour - 12 : date.hour == 0 ? 12 : date.hour;
+      final period = date.hour >= 12 ? 'PM' : 'AM';
+      return '${hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} $period';
+    } catch (e) {
+      return 'N/A';
+    }
   }
 
-  String _calculateAge(Map<String, dynamic>? patient) {
-    if (patient == null) return 'N/A';
-    
-    final dateOfBirthStr = patient['dateOfBirth'];
-    if (dateOfBirthStr == null) return 'N/A';
-    
+  String _calculateAge(dynamic dateOfBirth) {
+    if (dateOfBirth == null) return 'N/A';
     try {
-      final birthDate = DateTime.parse(dateOfBirthStr);
+      final birthDate = DateTime.parse(dateOfBirth.toString());
       final today = DateTime.now();
       int age = today.year - birthDate.year;
-      if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+      if (today.month < birthDate.month ||
+          (today.month == birthDate.month && today.day < birthDate.day)) {
         age--;
       }
-      return '$age years';
+      return '$age Years';
     } catch (e) {
       return 'N/A';
     }

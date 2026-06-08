@@ -12,6 +12,7 @@ const SERVICE_TYPE_TO_ROLE = {
   pharmacist: "pharmacist",
   bloodbank: "bloodbank",
   pathology: "pathology",
+  labtest: "pathology",
 };
 
 const createRealTimeBooking = async (bookingData) => {
@@ -244,15 +245,18 @@ const acceptBooking = async (bookingId, providerId) => {
       // Booking was already accepted by another provider or doesn't exist
       const existingBooking = await RealTimeBooking.findById(bookingId);
       if (!existingBooking) {
-        throw new Error("Booking not found");
+        const error = new Error("Booking not found");
+        error.status = 404;
+        throw error;
       }
       if (existingBooking.acceptedProvider) {
-        throw new Error("This booking has already been accepted by another provider");
+        const error = new Error("This booking has already been accepted by another provider");
+        error.status = 409;
+        throw error;
       }
-      if (existingBooking.expiresAt && existingBooking.expiresAt < new Date()) {
-        throw new Error("This booking has expired");
-      }
-      throw new Error("Unable to accept booking");
+      const error = new Error("Booking request has expired or is no longer valid");
+      error.status = 410;
+      throw error;
     }
 
     const socketHandler = getSocketHandler();
@@ -318,7 +322,8 @@ const updateBookingStatus = async (bookingId, providerId, newStatus) => {
     // Validate status transitions
     const validTransitions = {
       accepted: ["on_the_way", "cancelled"],
-      on_the_way: ["in_progress", "cancelled"],
+      on_the_way: ["reached", "in_progress", "cancelled"],
+      reached: ["in_progress", "completed", "cancelled"],
       in_progress: ["completed", "cancelled"],
     };
 
@@ -359,6 +364,7 @@ const updateBookingStatus = async (bookingId, providerId, newStatus) => {
     // Notify patient of status change
     const statusMessages = {
       on_the_way: "Your provider is on the way!",
+      reached: "Your provider has reached the location",
       in_progress: "Service has started",
       completed: "Service completed successfully",
       cancelled: "Booking has been cancelled",
@@ -487,6 +493,7 @@ const getPatientBookings = async (patientId, filters = {}) => {
     const [bookings, total] = await Promise.all([
       RealTimeBooking.find(query)
         .populate("acceptedProvider", "firstName lastName phone specialization")
+        .populate("medicines.medicineId")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -511,11 +518,22 @@ const getProviderBookings = async (providerId, filters = {}) => {
     const { status, page = 1, limit = 20 } = filters;
     
     // Get bookings where provider was notified OR accepted
+    // CRITICAL: Only show "requested" bookings that are NOT expired and NOT accepted by someone else
     const query = {
       $or: [
         { acceptedProvider: providerId },
-        { "notifiedProviders.provider": providerId, status: "pending" },
+        { 
+          "notifiedProviders.provider": providerId, 
+          status: { $in: ["pending", "requested"] },
+          acceptedProvider: null,
+          $or: [
+            { expiresAt: { $exists: false } },
+            { expiresAt: { $gt: new Date() } },
+          ],
+        },
       ],
+      // Always exclude cancelled and expired bookings from the list
+      status: { $nin: ["cancelled", "expired"] },
     };
 
     if (status) {

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
+import 'package:user_app/screens/booking/user_active_nurse_tracking_screen.dart';
+import 'package:user_app/screens/booking/user_active_consultation_screen.dart';
 
 /// Unified My Bookings Screen with 3 tabs:
 /// 1. Active Orders - Active service bookings
@@ -273,9 +275,29 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
         statusText = status;
     }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: status.toLowerCase() == 'confirmed' ? Colors.blue[50] : Colors.red[50],
+    final bookingId = booking['_id'] ?? booking['id'] ?? '';
+
+    return GestureDetector(
+      onTap: () {
+        if (serviceType.toLowerCase() == 'nurse') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserActiveNurseTrackingScreen(bookingId: bookingId),
+            ),
+          ).then((_) => _loadActiveBookings());
+        } else if (serviceType.toLowerCase() == 'doctor') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserActiveConsultationScreen(bookingId: bookingId),
+            ),
+          ).then((_) => _loadActiveBookings());
+        }
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: status.toLowerCase() == 'confirmed' ? Colors.blue[50] : Colors.red[50],
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -346,6 +368,7 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
           ],
         ),
       ),
+    ),
     );
   }
 

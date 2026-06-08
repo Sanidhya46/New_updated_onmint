@@ -18,7 +18,10 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TextEditingController _ageController = TextEditingController();
+  String? _selectedGender;
 
+  final ScrollController _scrollController = ScrollController();
   final _formKey = GlobalKey<FormState>();
   Position? _currentPosition;
   bool _isFetchingLocation = false;
@@ -30,6 +33,18 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
   void initState() {
     super.initState();
     _fetchCurrentLocation();
+  }
+
+  @override
+  void dispose() {
+    _pickupController.dispose();
+    _dropoffController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _notesController.dispose();
+    _ageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchCurrentLocation() async {
@@ -105,13 +120,19 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
             dropoffLocation: _dropoffController.text,
             name: _nameController.text,
             phone: _phoneController.text,
+            age: _ageController.text.isNotEmpty ? int.tryParse(_ageController.text) ?? 0 : 0,
+            gender: _selectedGender ?? 'Other',
             notes: _notesController.text,
             coordinates: _currentPosition != null 
                 ? [_currentPosition!.longitude, _currentPosition!.latitude] 
                 : [0.0, 0.0],
           ),
         ),
-      );
+      ).then((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
+      });
     }
   }
 
@@ -120,6 +141,7 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFFF5F5), // Ice Red color
       body: SingleChildScrollView(
+        controller: _scrollController,
         child: Column(
           children: [
             // Top Banner Section
@@ -247,6 +269,75 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
                                           if (!RegExp(r'^[0-9]+$').hasMatch(v)) return 'Digits only';
                                           return null;
                                         },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                ],
+                              ),
+                            const SizedBox(height: 12),
+
+                            // Row 1.5: Age | Gender
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildFieldLabel('Age'),
+                                      _buildTextField(
+                                        controller: _ageController,
+                                        hintText: 'Enter Age',
+                                        prefixIcon: Icons.calendar_today_outlined,
+                                        keyboardType: TextInputType.number,
+                                        validator: (v) => v!.isEmpty ? 'Required' : null,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildFieldLabel('Gender'),
+                                      DropdownButtonFormField<String>(
+                                        value: _selectedGender,
+                                        isDense: true,
+                                        isExpanded: true,
+                                        decoration: InputDecoration(
+                                          hintText: 'Select Gender',
+                                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+                                          prefixIcon: Padding(
+                                            padding: const EdgeInsets.only(bottom: 0),
+                                            child: Icon(Icons.person_outline, color: Colors.red[700], size: 18),
+                                          ),
+                                          filled: true,
+                                          fillColor: Colors.white,
+                                          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: Colors.grey[200]!),
+                                          ),
+                                          focusedBorder: OutlineInputBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
+                                          ),
+                                        ),
+                                        style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 16),
+                                        items: ['Male', 'Female', 'Other'].map((String value) {
+                                          return DropdownMenuItem<String>(
+                                            value: value,
+                                            child: Text(value, style: const TextStyle(fontSize: 12)),
+                                          );
+                                        }).toList(),
+                                        onChanged: (newValue) {
+                                          setState(() {
+                                            _selectedGender = newValue;
+                                          });
+                                        },
+                                        validator: (v) => v == null ? 'Required' : null,
                                       ),
                                     ],
                                   ),
