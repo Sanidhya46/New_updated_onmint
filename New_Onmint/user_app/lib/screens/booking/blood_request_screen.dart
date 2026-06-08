@@ -101,10 +101,10 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
+        leading: Navigator.canPop(context) ? IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
-        ),
+        ) : null,
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       backgroundColor: Colors.white,

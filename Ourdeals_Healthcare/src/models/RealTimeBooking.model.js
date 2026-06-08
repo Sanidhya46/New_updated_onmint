@@ -208,6 +208,18 @@ const RealTimeBookingSchema = new mongoose.Schema(
       type: Date,
     },
 
+    onTheWayAt: {
+      type: Date,
+    },
+
+    atPickupAt: {
+      type: Date,
+    },
+
+    atDropAt: {
+      type: Date,
+    },
+
     startTime: {
       type: Date,
     },

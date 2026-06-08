@@ -75,8 +75,8 @@ const findAvailableProviders = async (serviceType, coordinates, isEmergency, cat
     let limit = 50;
 
     if (role === 'ambulance') {
-      maxDistance = 50000; // 50km for ambulance
-      limit = 2; // Only most to most two ambulance visible
+      maxDistance = 500000; // 500km for ambulance (increased range)
+      limit = 10; // Increase limit to see more ambulances
     }
 
     const [longitude, latitude] = coordinates;

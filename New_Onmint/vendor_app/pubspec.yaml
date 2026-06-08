@@ -37,10 +37,10 @@ dependencies:
   connectivity_plus: ^5.0.1
   
   # UI
-  material_design_icons_flutter: ^7.0.7296
   flutter_spinkit: ^5.2.0
   fluttertoast: ^8.2.4
   cached_network_image: ^3.3.0
+  intl: ^0.18.1
   jitsi_meet_flutter_sdk: ^11.6.0
   webview_flutter: ^4.4.2
   

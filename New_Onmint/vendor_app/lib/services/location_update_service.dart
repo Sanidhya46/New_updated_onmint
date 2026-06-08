@@ -92,7 +92,8 @@ class LocationUpdateService {
 
       print('📍 Location sent: ${position.latitude}, ${position.longitude}');
     } catch (e) {
-      print('❌ Error getting location: $e');
+      // Silently swallow location errors - don't crash the app
+      print('⚠️ Location update skipped: $e');
     }
   }
 

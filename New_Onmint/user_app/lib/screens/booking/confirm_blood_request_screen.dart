@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
 
@@ -51,8 +50,9 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
       await _apiClient.patient.createRealtimeBooking(requestData);
 
       if (mounted) {
-        ToastUtils.showSuccess('Blood request sent to nearby blood banks');
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        ToastUtils.showSuccess('Booking successfully created and sent to nearby blood banks');
+        // Use pushAndRemoveUntil to avoid glitchy pop animations and ensure we go to the root
+        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
@@ -343,7 +343,7 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                                  child: Icon(MdiIcons.whatsapp, color: Colors.green, size: 20),
+                                  child: Icon(Icons.chat, color: Colors.green, size: 20),
                                 ),
                                 const SizedBox(height: 4),
                                 Text('WhatsApp', style: TextStyle(fontSize: 10, color: Colors.grey[800], fontWeight: FontWeight.bold)),

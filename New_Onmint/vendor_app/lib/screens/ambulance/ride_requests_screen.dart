@@ -14,7 +14,7 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
   final _apiClient = OnMintApiClient();
   List<dynamic> _rides = [];
   bool _isLoading = true;
-  String _selectedStatus = 'pending'; // Default to pending (requested) bookings
+  String _selectedStatus = 'all'; // Show all by default
 
   @override
   void initState() {
@@ -134,6 +134,13 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
     );
   }
 
+  String _getPatientName(Map<String, dynamic> patient) {
+    if (patient['firstName'] != null || patient['lastName'] != null) {
+      return '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim();
+    }
+    return patient['fullName'] ?? patient['name'] ?? 'Unknown Patient';
+  }
+
   Widget _buildRideCard(Map<String, dynamic> ride) {
     final patient = ride['patient'] ?? {};
     final createdAt = DateTime.parse(ride['createdAt']);
@@ -201,12 +208,12 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isEmergency ? Colors.red.shade50 : Colors.blue.shade50,
+                      color: isEmergency ? Colors.red.shade50 : Colors.red.shade50,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
                       isEmergency ? Icons.emergency : Icons.local_shipping,
-                      color: isEmergency ? Colors.red : Colors.blue,
+                      color: Colors.red,
                       size: 24,
                     ),
                   ),
@@ -217,18 +224,22 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              patient['fullName'] ?? 'Unknown Patient',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                _getPatientName(patient),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             if (isEmergency) ...[
                               const SizedBox(width: 8),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
+                                  horizontal: 6,
                                   vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
@@ -238,7 +249,7 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                                 child: const Text(
                                   'EMERGENCY',
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 9,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
                                   ),
@@ -254,17 +265,18 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusColor.withOpacity(0.3)),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                     ),
                     child: Text(
                       statusLabel.toUpperCase(),
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
                         color: statusColor,
                       ),
@@ -281,7 +293,9 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      ride['pickupLocation']?['address'] ?? 'Location not available',
+                      ride['location']?['address'] ??
+                      ride['pickupLocation']?['address'] ??
+                      'Location not available',
                       style: TextStyle(color: Colors.grey[600]),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -289,23 +303,6 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                   ),
                 ],
               ),
-              if (ride['dropLocation'] != null) ...[
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Icon(Icons.flag, size: 16, color: Colors.grey[600]),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        ride['dropLocation']['address'] ?? 'Destination not set',
-                        style: TextStyle(color: Colors.grey[600]),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -316,9 +313,9 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                     style: TextStyle(color: Colors.grey[600]),
                   ),
                   const Spacer(),
-                  if (ride['estimatedFare'] != null)
+                  if (ride['price'] != null || ride['totalAmount'] != null)
                     Text(
-                      '₹${ride['estimatedFare']}',
+                      '₹${ride['price'] ?? ride['totalAmount'] ?? 0}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -327,6 +324,34 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
                     ),
                 ],
               ),
+              // Show tap to view hint for pending requests
+              if (status == 'requested') ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.touch_app, size: 16, color: Colors.red),
+                      SizedBox(width: 6),
+                      Text(
+                        'Tap to Accept or Reject',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ],
           ),
         ),
