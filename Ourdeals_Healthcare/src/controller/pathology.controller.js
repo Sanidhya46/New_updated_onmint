@@ -1,4 +1,4 @@
-﻿import { Pathology } from '../models/Pathology.model.js';
+import { Pathology } from '../models/Pathology.model.js';
 import { Booking } from '../models/Booking.model.js';
 import { bookingService } from '../services/booking.service.js';
 import { notificationService } from '../services/notification.service.js';
@@ -105,6 +105,35 @@ const acceptBooking = async (req, res) => {
   } catch (error) {
     res.status(error.statusCode || 500)
       .json(errorResponse(error.message || 'Failed to accept booking'));
+  }
+};
+
+const rejectBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pathologyId = req.user.userId;
+    const { reason } = req.body;
+
+    const booking = await Booking.findById(id);
+
+    if (!booking) {
+      return res.status(404).json(errorResponse('Booking not found'));
+    }
+
+    if (booking.provider && booking.provider.toString() !== pathologyId) {
+      return res.status(403).json(errorResponse('Not authorized'));
+    }
+
+    booking.status = 'rejected';
+    if (reason) {
+      booking.notes = reason;
+    }
+    
+    await booking.save();
+
+    res.json(successResponse('Booking rejected successfully', booking));
+  } catch (error) {
+    res.status(500).json(errorResponse(error.message || 'Failed to reject booking'));
   }
 };
 
@@ -311,6 +340,7 @@ export {
   getBookings,
   getBookingDetails,
   acceptBooking,
+  rejectBooking,
   scheduleSampleCollection,
   uploadReport,
   getDashboard,

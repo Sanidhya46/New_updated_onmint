@@ -1,600 +1,371 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
-import '../../config/app_colors.dart';
+import 'package:ui_components/ui_components.dart';
 
-/// Enhanced Booking details screen for nurses with review functionality
 class BookingDetailsScreenEnhanced extends StatefulWidget {
   final String bookingId;
+  final Map<String, dynamic>? bookingData;
 
   const BookingDetailsScreenEnhanced({
     super.key,
     required this.bookingId,
+    this.bookingData,
   });
 
   @override
-  State<BookingDetailsScreenEnhanced> createState() => _BookingDetailsScreenEnhancedState();
+  State<BookingDetailsScreenEnhanced> createState() =>
+      _BookingDetailsScreenEnhancedState();
 }
 
-class _BookingDetailsScreenEnhancedState extends State<BookingDetailsScreenEnhanced> {
+class _BookingDetailsScreenEnhancedState
+    extends State<BookingDetailsScreenEnhanced> {
   final _apiClient = OnMintApiClient();
-  Map<String, dynamic>? _booking;
+  Map<String, dynamic>? _bookingDetails;
   bool _isLoading = true;
-  bool _isProcessing = false;
-  bool _showReviewForm = false;
-  int _selectedRating = 0;
-  final _reviewController = TextEditingController();
+  bool _isActing = false;
 
   @override
   void initState() {
     super.initState();
-    _loadBooking();
+    if (widget.bookingData != null) {
+      _bookingDetails = widget.bookingData;
+      _isLoading = false;
+    } else {
+      _fetchDetails();
+    }
   }
 
-  Future<void> _loadBooking() async {
-    setState(() => _isLoading = true);
+  Future<void> _fetchDetails() async {
     try {
-      final data = await _apiClient.nurse.getBookingDetails(widget.bookingId);
-      setState(() {
-        _booking = data;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
+      await _apiClient.initialize();
+      final response = await _apiClient.nurse.getBookingDetails(widget.bookingId);
       if (mounted) {
-        final errorMsg = e.toString().toLowerCase();
-        if (errorMsg.contains('404') || errorMsg.contains('not found')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('This request is no longer available.')),
-          );
-          Navigator.pop(context, true);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error loading booking: $e')),
-          );
-        }
+        setState(() {
+          _bookingDetails = response['data'] ?? response;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ToastUtils.showError('Failed to load details');
       }
     }
   }
 
   Future<void> _acceptBooking() async {
-    setState(() => _isProcessing = true);
+    setState(() => _isActing = true);
     try {
+      await _apiClient.initialize();
       await _apiClient.nurse.acceptBooking(widget.bookingId);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking accepted')),
-        );
-        _loadBooking();
-      }
-    } catch (e) {
-      if (mounted) {
-        final errorMsg = e.toString().toLowerCase();
-        if (errorMsg.contains('404') ||
-            errorMsg.contains('409') ||
-            errorMsg.contains('410') ||
-            errorMsg.contains('not found') ||
-            errorMsg.contains('already been accepted') ||
-            errorMsg.contains('expired')) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('This request has already been accepted or is no longer available.')),
-          );
-          Navigator.pop(context, true);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
-          );
-        }
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  Future<void> _rejectBooking() async {
-    final reason = await _showRejectDialog();
-    if (reason == null) return;
-
-    setState(() => _isProcessing = true);
-    try {
-      await _apiClient.nurse.rejectBooking(widget.bookingId, reason: reason);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Booking rejected')),
-        );
+        ToastUtils.showSuccess('Booking accepted successfully');
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        setState(() => _isActing = false);
+        ToastUtils.showError('Failed to accept booking. Please try again.');
       }
-    } finally {
-      setState(() => _isProcessing = false);
     }
   }
 
-  Future<void> _startService() async {
-    setState(() => _isProcessing = true);
+  Future<void> _rejectBooking() async {
+    setState(() => _isActing = true);
     try {
-      await _apiClient.nurse.startVisit(widget.bookingId);
+      await _apiClient.initialize();
+      await _apiClient.nurse.rejectBooking(widget.bookingId, reason: 'Rejected by nurse');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Service started')),
-        );
-        _loadBooking();
+        ToastUtils.showSuccess('Booking rejected');
+        Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        setState(() => _isActing = false);
+        ToastUtils.showError('Failed to reject booking. Please try again.');
       }
-    } finally {
-      setState(() => _isProcessing = false);
     }
-  }
-
-  Future<void> _completeService() async {
-    setState(() => _isProcessing = true);
-    try {
-      await _apiClient.nurse.completeVisit(widget.bookingId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Service completed')),
-        );
-        _loadBooking();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    } finally {
-      setState(() => _isProcessing = false);
-    }
-  }
-
-  Future<String?> _showRejectDialog() async {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reject Booking'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Reason for rejection',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Reject'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Booking Details'),
-        backgroundColor: AppColors.nurse,
-        foregroundColor: Colors.white,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _booking == null
-              ? const Center(child: Text('Booking not found'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatusCard(),
-                      const SizedBox(height: 20),
-                      _buildStatusTracker(),
-                      const SizedBox(height: 20),
-                      _buildPatientSection(),
-                      const SizedBox(height: 20),
-                      _buildBookingDetailsSection(),
-                      const SizedBox(height: 20),
-                      _buildActionButtons(),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                ),
-    );
-  }
-
-  Widget _buildStatusCard() {
-    final status = _booking!['status'] ?? 'unknown';
-    Color statusColor;
-    IconData statusIcon;
-
-    switch (status) {
-      case 'requested':
-        statusColor = Colors.orange;
-        statusIcon = Icons.schedule;
-        break;
-      case 'accepted':
-        statusColor = Colors.blue;
-        statusIcon = Icons.check_circle;
-        break;
-      case 'in_progress':
-        statusColor = Colors.purple;
-        statusIcon = Icons.hourglass_bottom;
-        break;
-      case 'completed':
-        statusColor = Colors.green;
-        statusIcon = Icons.done_all;
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusIcon = Icons.info;
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: statusColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: statusColor.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(statusIcon, color: statusColor, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Booking Status',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  status.toUpperCase().replaceAll('_', ' '),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    final booking = _bookingDetails ?? {};
+    final patientData = booking['patient'] ?? {};
+    
+    String patientName = patientData['fullName'] ?? '${patientData['firstName'] ?? ''} ${patientData['lastName'] ?? ''}'.trim();
+    if (patientName.isEmpty) patientName = 'Patient';
+    
+    final int age = patientData['age'] ?? 35; // Default age if missing
+    final String gender = patientData['gender'] ?? 'Male';
+    final String profilePicture = patientData['profilePicture']?.toString() ?? '';
+    final String address = booking['location']?['address'] ?? 'Not specified';
+    final String status = booking['status']?.toString() ?? 'Pending';
+    final String notes = booking['notes']?.toString() ?? 'Nursing Service';
+    final String emergencyType = booking['isEmergency'] == true ? 'Urgent' : 'Normal';
 
-  Widget _buildStatusTracker() {
-    final status = _booking!['status'] ?? 'requested';
-    final stages = ['Requested', 'Accepted', 'In Progress', 'Completed'];
-    final stageValues = ['requested', 'accepted', 'in_progress', 'completed'];
-    final currentIndex = stageValues.indexOf(status);
+    String requestedOn = 'Just Now';
+    if (booking['createdAt'] != null) {
+      final dt = DateTime.tryParse(booking['createdAt'].toString());
+      if (dt != null) {
+        final h = dt.hour > 12 ? dt.hour - 12 : (dt.hour == 0 ? 12 : dt.hour);
+        final period = dt.hour >= 12 ? 'PM' : 'AM';
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final monthStr = months[dt.month - 1];
+        requestedOn = '${dt.day.toString().padLeft(2, '0')} $monthStr ${dt.year}, ${h.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} $period';
+      }
+    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Service Progress',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F8FB),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0F4CBA),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 60,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: stages.length,
-            itemBuilder: (context, index) {
-              final isCompleted = index <= currentIndex;
-              final isCurrent = index == currentIndex;
-
-              return Expanded(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isCompleted ? AppColors.nurse : Colors.grey[300],
-                        border: isCurrent
-                            ? Border.all(color: AppColors.nurse, width: 3)
-                            : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            color: isCompleted ? Colors.white : Colors.grey[600],
+        title: const Text(
+          'Nurse Request Details',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: Column(
+          children: [
+            // Request Summary
+            _buildCard(
+              title: 'Request Summary',
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.blue.shade100,
+                    backgroundImage: profilePicture.isNotEmpty ? NetworkImage(profilePicture) : null,
+                    child: profilePicture.isEmpty ? const Icon(Icons.person, size: 35, color: Colors.blue) : null,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          patientName,
+                          style: const TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$gender • $age Years',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      stages[index],
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isCompleted ? AppColors.nurse : Colors.grey[600],
-                        fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        'Requested On',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
+                      const SizedBox(height: 4),
+                      Text(
+                        requestedOn,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Patient Details
+            _buildCard(
+              title: 'Patient Details',
+              child: Column(
+                children: [
+                  _buildDetailRow(Icons.person_outline, 'Name', patientName),
+                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  _buildDetailRow(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender'),
+                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  _buildDetailRow(Icons.medical_services_outlined, 'Service Required', notes),
+                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  _buildDetailRow(Icons.location_on_outlined, 'Address', address),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Service Request Details
+            _buildCard(
+              title: 'Service Request Details',
+              child: Column(
+                children: [
+                  _buildDetailRow(Icons.health_and_safety_outlined, 'Service Type', 'Home Care Nursing'),
+                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  _buildDetailRow(Icons.warning_amber_rounded, 'Emergency Type', emergencyType),
+                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  _buildDetailRow(Icons.assignment_outlined, 'Request Status', status.toUpperCase()),
+                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  _buildDetailRow(Icons.note_alt_outlined, 'Patient Note', notes),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Actions
+            if (status.toLowerCase() == 'requested' || status.toLowerCase() == 'pending')
+              _isActing
+                  ? const Center(child: CircularProgressIndicator())
+                  : Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _rejectBooking,
+                            icon: const Icon(Icons.close, color: Color(0xFFE53935)),
+                            label: const Text(
+                              'Reject Request',
+                              style: TextStyle(color: Color(0xFFE53935), fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _acceptBooking,
+                            icon: const Icon(Icons.check, color: Color(0xFF2E7D32)),
+                            label: const Text(
+                              'Accept Request',
+                              style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            },
+                    
+            const SizedBox(height: 24),
+            
+            const Text(
+              'Once accepted, your details will be shared with\nthe patient and request status can be updated.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 12,
+                height: 1.5,
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCard({required String title, required Widget child}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 20, color: const Color(0xFF3B82F6)),
+        const SizedBox(width: 12),
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF1E293B),
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       ],
     );
-  }
-
-  Widget _buildPatientSection() {
-    final patient = _booking!['patient'] ?? {};
-    final age = _calculateAge(patient['dateOfBirth']);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Patient Information',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: AppColors.nurse.withOpacity(0.1),
-                child: Text(
-                  (patient['fullName'] ?? 'P')[0].toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.nurse,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      patient['fullName'] ?? 'Unknown',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$age • ${patient['gender'] ?? 'N/A'}',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      patient['phone'] ?? 'N/A',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (patient['address'] != null) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.location_on, size: 16, color: AppColors.nurse),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    patient['address'],
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBookingDetailsSection() {
-    final scheduledTime = DateTime.parse(_booking!['scheduledTime']);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Service Details',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          _buildDetailRow('Date', '${scheduledTime.day}/${scheduledTime.month}/${scheduledTime.year}'),
-          _buildDetailRow('Time', '${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}'),
-          _buildDetailRow('Service Type', _booking!['serviceType'] ?? 'N/A'),
-          if (_booking!['duration'] != null)
-            _buildDetailRow('Duration', '${_booking!['duration']} hours'),
-          if (_booking!['fees'] != null || _booking!['price'] != null)
-            _buildDetailRow(
-              'Fees',
-              '₹${_booking!['fees'] ?? _booking!['price'] ?? 0}',
-              color: Colors.green,
-            ),
-          if (_booking!['notes'] != null) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 12),
-            const Text(
-              'Patient Notes',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _booking!['notes'],
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(color: Colors.grey[600], fontSize: 12),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 12,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    final status = _booking!['status'] ?? 'requested';
-
-    return Column(
-      children: [
-        if (status == 'requested') ...[
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _isProcessing ? null : _acceptBooking,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: _isProcessing
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : const Text('Accept'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _isProcessing ? null : _rejectBooking,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text('Reject'),
-                ),
-              ),
-            ],
-          ),
-        ],
-        if (status == 'accepted') ...[
-          ElevatedButton.icon(
-            onPressed: _isProcessing ? null : _startService,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Start Service'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.nurse,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-        ],
-        if (status == 'in_progress') ...[
-          ElevatedButton.icon(
-            onPressed: _isProcessing ? null : _completeService,
-            icon: const Icon(Icons.check_circle),
-            label: const Text('Complete Service'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  String _calculateAge(String? dateOfBirth) {
-    if (dateOfBirth == null) return 'N/A';
-    try {
-      final birthDate = DateTime.parse(dateOfBirth);
-      final now = DateTime.now();
-      int age = now.year - birthDate.year;
-      if (now.month < birthDate.month || 
-          (now.month == birthDate.month && now.day < birthDate.day)) {
-        age--;
-      }
-      return '$age years';
-    } catch (e) {
-      return 'N/A';
-    }
-  }
-
-  @override
-  void dispose() {
-    _reviewController.dispose();
-    super.dispose();
   }
 }

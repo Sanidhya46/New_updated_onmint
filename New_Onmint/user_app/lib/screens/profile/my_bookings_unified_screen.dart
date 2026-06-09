@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
+import 'package:user_app/screens/booking/active_service_tracking_screen.dart';
 import 'package:user_app/screens/booking/user_active_nurse_tracking_screen.dart';
 import 'package:user_app/screens/booking/user_active_consultation_screen.dart';
+import 'package:user_app/screens/bookings/booking_details_screen.dart';
 
 /// Unified My Bookings Screen with 3 tabs:
 /// 1. Active Orders - Active service bookings
@@ -279,6 +281,20 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
 
     return GestureDetector(
       onTap: () {
+        final currentStatus = status.toLowerCase();
+        if (currentStatus == 'requested' || currentStatus == 'pending') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ActiveServiceTrackingScreen(
+                serviceType: serviceType.toLowerCase(),
+                bookingDetails: booking,
+              ),
+            ),
+          ).then((_) => _loadActiveBookings());
+          return;
+        }
+
         if (serviceType.toLowerCase() == 'nurse') {
           Navigator.push(
             context,
@@ -291,6 +307,14 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
             context,
             MaterialPageRoute(
               builder: (context) => UserActiveConsultationScreen(bookingId: bookingId),
+            ),
+          ).then((_) => _loadActiveBookings());
+        } else {
+          // Open the general booking details page for ambulance, pathology, bloodbank, pharmacist
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingDetailsScreen(bookingId: bookingId),
             ),
           ).then((_) => _loadActiveBookings());
         }

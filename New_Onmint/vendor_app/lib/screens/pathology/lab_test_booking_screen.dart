@@ -3,31 +3,34 @@ import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
 import 'package:intl/intl.dart';
 
-class ActiveBookingScreen extends StatefulWidget {
+class LabTestBookingScreen extends StatefulWidget {
   final String bookingId;
   final Map<String, dynamic>? bookingData;
 
-  const ActiveBookingScreen({
+  const LabTestBookingScreen({
     super.key,
     required this.bookingId,
     this.bookingData,
   });
 
   @override
-  State<ActiveBookingScreen> createState() => _ActiveBookingScreenState();
+  State<LabTestBookingScreen> createState() => _LabTestBookingScreenState();
 }
 
-class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
+class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
   final _apiClient = OnMintApiClient();
-  Map<String, dynamic>? _bookingDetails;
   bool _isLoading = true;
   bool _isActing = false;
+  Map<String, dynamic>? _bookingDetails;
+  String _currentStatus = 'accepted'; 
 
   @override
   void initState() {
     super.initState();
     if (widget.bookingData != null) {
       _bookingDetails = widget.bookingData;
+      _currentStatus = _bookingDetails?['status']?.toString().toLowerCase() ?? 'accepted';
+      if (_currentStatus == 'requested') _currentStatus = 'accepted';
       _isLoading = false;
     } else {
       _fetchDetails();
@@ -37,10 +40,11 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
   Future<void> _fetchDetails() async {
     try {
       await _apiClient.initialize();
-      final response = await _apiClient.nurse.getBookingDetails(widget.bookingId);
+      final response = await _apiClient.pathology.getBookingDetails(widget.bookingId);
       if (mounted) {
         setState(() {
           _bookingDetails = response['data'] ?? response;
+          _currentStatus = _bookingDetails?['status']?.toString().toLowerCase() ?? 'accepted';
           _isLoading = false;
         });
       }
@@ -56,18 +60,10 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
     setState(() => _isActing = true);
     try {
       await _apiClient.initialize();
-      if (newStatus == 'completed') {
-        await _apiClient.nurse.completeVisit(widget.bookingId);
-      } else if (newStatus == 'reached') {
-        await _apiClient.nurse.startVisit(widget.bookingId); 
-      } else if (newStatus == 'on_the_way') {
-        try {
-          await _apiClient.nurse.startVisit(widget.bookingId);
-        } catch (e) {}
-      }
-      
+      await _apiClient.pathology.updateBookingStatus(widget.bookingId, newStatus);
       if (mounted) {
         setState(() {
+          _currentStatus = newStatus;
           if (_bookingDetails != null) {
             _bookingDetails!['status'] = newStatus;
           }
@@ -76,7 +72,7 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ToastUtils.showError('Failed to update status');
+        ToastUtils.showError('Failed to update status.');
       }
     } finally {
       if (mounted) {
@@ -85,13 +81,15 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
     }
   }
 
-  int _getStatusStep(String status) {
-    status = status.toLowerCase();
-    if (status == 'accepted') return 0;
-    if (status == 'on_the_way') return 1;
-    if (status == 'reached') return 2;
-    if (status == 'completed') return 3;
-    return 0;
+  int get _statusStep {
+    switch (_currentStatus) {
+      case 'accepted': return 0;
+      case 'on_the_way': return 1;
+      case 'sample_collected': return 2;
+      case 'report_ready': return 3;
+      case 'completed': return 4;
+      default: return 0;
+    }
   }
 
   String _formatTime(DateTime date) {
@@ -104,7 +102,7 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
+    if (_isLoading && _bookingDetails == null) {
       return const Scaffold(
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
@@ -119,11 +117,10 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
     
     final String profilePicture = patientData['profilePicture']?.toString() ?? '';
     final String gender = patientData['gender']?.toString().toLowerCase() ?? 'male';
-    final String status = booking['status']?.toString() ?? 'accepted';
     
-    final currentStep = _getStatusStep(status);
+    final currentStep = _statusStep;
     final bookingTime = booking['createdAt'] != null ? DateTime.tryParse(booking['createdAt'].toString()) : DateTime.now();
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -255,7 +252,7 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
                   date: bookingTime != null ? _formatDate(bookingTime) : '13 May',
                   isCompleted: currentStep >= 0,
                   isLast: false,
-                  onTap: () {}, // First step usually done
+                  onTap: () {},
                 ),
                 _buildTimelineStep(
                   title: 'On The Way',
@@ -269,25 +266,36 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
                   },
                 ),
                 _buildTimelineStep(
-                  title: 'Reached',
-                  subtitle: 'You have reached the location',
+                  title: 'Sample Collected',
+                  subtitle: 'You have collected the sample',
                   time: currentStep >= 2 ? _formatTime(DateTime.now()) : '--:--',
                   date: currentStep >= 2 ? _formatDate(DateTime.now()) : '--',
                   isCompleted: currentStep >= 2,
                   isLast: false,
                   onTap: () {
-                    if (currentStep < 2) _updateStatus('reached');
+                    if (currentStep < 2) _updateStatus('sample_collected');
+                  },
+                ),
+                _buildTimelineStep(
+                  title: 'Report Ready',
+                  subtitle: 'The lab report is ready to view',
+                  time: currentStep >= 3 ? _formatTime(DateTime.now()) : '--:--',
+                  date: currentStep >= 3 ? _formatDate(DateTime.now()) : '--',
+                  isCompleted: currentStep >= 3,
+                  isLast: false,
+                  onTap: () {
+                    if (currentStep < 3) _updateStatus('report_ready');
                   },
                 ),
                 _buildTimelineStep(
                   title: 'Completed',
                   subtitle: 'Thank you for choosing our service',
-                  time: currentStep >= 3 ? _formatTime(DateTime.now()) : '--:--',
-                  date: currentStep >= 3 ? _formatDate(DateTime.now()) : '--',
-                  isCompleted: currentStep >= 3,
+                  time: currentStep >= 4 ? _formatTime(DateTime.now()) : '--:--',
+                  date: currentStep >= 4 ? _formatDate(DateTime.now()) : '--',
+                  isCompleted: currentStep >= 4,
                   isLast: true,
                   onTap: () {
-                    if (currentStep < 3) _updateStatus('completed');
+                    if (currentStep < 4) _updateStatus('completed');
                   },
                 ),
                 

@@ -34,7 +34,7 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
       final requestsData = await _apiClient.ambulance.getRideRequests(
         page: 1,
         limit: 20,
-        status: 'all', 
+        status: 'requested', 
       );
       if (mounted) {
         setState(() {

@@ -3,7 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:auth_service/auth_service.dart';
 import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
+import '../widgets/active_booking_floating_widget.dart';
 import '../../nurse/booking_details_screen_enhanced.dart';
+import '../../nurse/active_booking_screen.dart';
+import '../../nurse/bookings_screen.dart';
 
 class NurseDashboard extends StatefulWidget {
   const NurseDashboard({super.key});
@@ -31,8 +34,8 @@ class _NurseDashboardState extends State<NurseDashboard> {
       await _apiClient.initialize();
 
       final dashboardFuture = _apiClient.nurse.getDashboard();
-      final regularBookingsFuture = _apiClient.nurse.getBookings();
-      final realtimeBookingsFuture = _apiClient.nurse.getRealtimeBookings();
+      final regularBookingsFuture = _apiClient.nurse.getBookings(status: 'requested');
+      final realtimeBookingsFuture = _apiClient.nurse.getRealtimeBookings(status: 'pending');
 
       final results = await Future.wait(
           [dashboardFuture, regularBookingsFuture, realtimeBookingsFuture]);
@@ -96,13 +99,15 @@ class _NurseDashboardState extends State<NurseDashboard> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF2F4F8),
-      body: RefreshIndicator(
-        onRefresh: _loadDashboard,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: Stack(
+        children: [
+          RefreshIndicator(
+            onRefresh: _loadDashboard,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // ─── BLUE HEADER + STATS CARD ──────────────────────────────
               SizedBox(
                 height: 250,
@@ -427,6 +432,50 @@ class _NurseDashboardState extends State<NurseDashboard> {
           ),
         ),
       ),
+      // Active Service Widget
+          if (_pendingBookings.isNotEmpty || (_dashboardData?['accepted'] ?? 0) > 0)
+            Positioned(
+              bottom: 24,
+              right: 24,
+              child: ActiveBookingFloatingWidget(
+                serviceType: 'nurse',
+                bookingDetails: const {
+                  'serviceType': 'nurse',
+                  'status': 'accepted',
+                  'provider': {'name': 'Care Plus', 'rating': 4.9},
+                },
+                onTap: () {
+                  final activeBookings = _pendingBookings.where((b) => b['status'] != 'requested').toList();
+                  
+                  if (activeBookings.length > 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const BookingsScreen(),
+                      ),
+                    ).then((_) => _loadDashboard());
+                    return;
+                  }
+                  
+                  final targetBookingData = activeBookings.isNotEmpty 
+                      ? activeBookings.first 
+                      : _pendingBookings.first;
+                      
+                  final targetBookingId = targetBookingData['_id'].toString();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ActiveBookingScreen(
+                        bookingId: targetBookingId,
+                        bookingData: targetBookingData,
+                      ),
+                    ),
+                  ).then((_) => _loadDashboard());
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -522,17 +571,15 @@ class _NurseDashboardState extends State<NurseDashboard> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.grey[200],
-                  image: patientImage != null
-                      ? DecorationImage(
-                          image: NetworkImage(patientImage),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
+                  image: DecorationImage(
+                    image: (patientImage != null && patientImage.isNotEmpty)
+                        ? NetworkImage(patientImage)
+                        : AssetImage((patientData is Map && patientData['gender']?.toString().toLowerCase() == 'female')
+                            ? 'assets/images/female_profile.png'
+                            : 'assets/images/male_profile.png') as ImageProvider,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: patientImage == null
-                    ? const Icon(Icons.person,
-                        color: Colors.grey, size: 26)
-                    : null,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -629,7 +676,10 @@ class _NurseDashboardState extends State<NurseDashboard> {
                   context,
                   MaterialPageRoute(
                     builder: (context) =>
-                        BookingDetailsScreenEnhanced(bookingId: bookingId),
+                        BookingDetailsScreenEnhanced(
+                          bookingId: bookingId,
+                          bookingData: booking,
+                        ),
                   ),
                 ).then((_) => _loadDashboard());
               },

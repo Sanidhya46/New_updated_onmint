@@ -810,121 +810,164 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
   // ── Status Stepper ────────────────────────────────────────────────
 
   Widget _buildStatusStepper() {
-    final steps = [
-      _StepData(
-        label: 'Accepted',
-        time: _acceptedAt != null ? _fmt(_acceptedAt) : 'Just Now',
-        isActive: _currentStep >= 0,
-      ),
-      _StepData(
-        label: 'On The Way',
-        time: _fmt(_onTheWayAt),
-        isActive: _currentStep >= 1,
-      ),
-      _StepData(
-        label: 'At Pickup Point',
-        time: _fmt(_atPickupAt),
-        isActive: _currentStep >= 2,
-      ),
-      _StepData(
-        label: 'At Drop Point',
-        time: _fmt(_atDropAt),
-        isActive: _currentStep >= 3,
-      ),
-    ];
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Circles + connecting lines
-          Row(
-            children: List.generate(steps.length * 2 - 1, (i) {
-              if (i.isOdd) {
-                // Connector line
-                final leftActive = steps[i ~/ 2].isActive;
-                final rightActive = steps[(i ~/ 2) + 1].isActive;
-                final lineActive = leftActive && rightActive;
-                return Expanded(
-                  child: Container(
-                    height: 3,
-                    color: lineActive
-                        ? const Color(0xFF4CAF50)
-                        : const Color(0xFFE0E0E0),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Live Status',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
                   ),
-                );
-              } else {
-                final step = steps[i ~/ 2];
-                return _buildStepCircle(step.isActive);
-              }
-            }),
-          ),
-          const SizedBox(height: 8),
-
-          // Labels + times
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: steps.map((step) {
-              return SizedBox(
-                width: 60,
-                child: Column(
-                  children: [
-                    Text(
-                      step.label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: step.isActive
-                            ? const Color(0xFF4CAF50)
-                            : Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      step.time,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'In Progress',
+                    style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        _buildTimelineStep(
+          title: 'Request Accepted',
+          subtitle: 'You have accepted the request',
+          time: _acceptedAt != null ? _fmt(_acceptedAt) : '09:15 AM',
+          date: _acceptedAt != null ? DateFormat('dd MMM').format(_acceptedAt!) : '13 May',
+          isCompleted: _currentStep >= 0,
+          isLast: false,
+          onTap: () {},
+        ),
+        _buildTimelineStep(
+          title: 'On The Way',
+          subtitle: 'Ambulance is on the way to the location',
+          time: _currentStep >= 1 ? (_onTheWayAt != null ? _fmt(_onTheWayAt) : _fmt(DateTime.now())) : '--:--',
+          date: _currentStep >= 1 ? (_onTheWayAt != null ? DateFormat('dd MMM').format(_onTheWayAt!) : DateFormat('dd MMM').format(DateTime.now())) : '--',
+          isCompleted: _currentStep >= 1,
+          isLast: false,
+          onTap: () {
+            if (_currentStep < 1) _startRide();
+          },
+        ),
+        _buildTimelineStep(
+          title: 'At Pickup Point',
+          subtitle: 'Ambulance has reached the pickup location',
+          time: _currentStep >= 2 ? (_atPickupAt != null ? _fmt(_atPickupAt) : _fmt(DateTime.now())) : '--:--',
+          date: _currentStep >= 2 ? (_atPickupAt != null ? DateFormat('dd MMM').format(_atPickupAt!) : DateFormat('dd MMM').format(DateTime.now())) : '--',
+          isCompleted: _currentStep >= 2,
+          isLast: false,
+          onTap: () {
+            if (_currentStep < 2) _arriveAtPickup();
+          },
+        ),
+        _buildTimelineStep(
+          title: 'Completed',
+          subtitle: 'Thank you for choosing our service',
+          time: _currentStep >= 3 ? (_atDropAt != null ? _fmt(_atDropAt) : _fmt(DateTime.now())) : '--:--',
+          date: _currentStep >= 3 ? (_atDropAt != null ? DateFormat('dd MMM').format(_atDropAt!) : DateFormat('dd MMM').format(DateTime.now())) : '--',
+          isCompleted: _currentStep >= 3,
+          isLast: true,
+          onTap: () {
+            if (_currentStep < 3) _completeRide();
+          },
+        ),
+      ],
     );
   }
 
-  Widget _buildStepCircle(bool isActive) {
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isActive ? const Color(0xFF4CAF50) : Colors.white,
-        border: Border.all(
-          color: isActive ? const Color(0xFF4CAF50) : const Color(0xFFBDBDBD),
-          width: 2,
-        ),
+  Widget _buildTimelineStep({
+    required String title,
+    required String subtitle,
+    required String time,
+    required String date,
+    required bool isCompleted,
+    required bool isLast,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Column(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCompleted ? Colors.green : Colors.grey.shade200,
+                  border: isCompleted ? Border.all(color: Colors.green.withOpacity(0.2), width: 4) : null,
+                ),
+                child: Icon(
+                  Icons.check,
+                  color: isCompleted ? Colors.white : Colors.grey.shade400,
+                  size: 16,
+                ),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 40,
+                  color: isCompleted ? Colors.green : Colors.grey.shade300,
+                ),
+            ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: isCompleted ? const Color(0xFF152238) : Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                ),
+                if (!isLast) const SizedBox(height: 24),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                time,
+                style: TextStyle(fontSize: 12, color: isCompleted ? const Color(0xFF152238) : Colors.grey.shade500, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                date,
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              ),
+            ],
+          ),
+        ],
       ),
-      child: isActive
-          ? const Icon(Icons.check, color: Colors.white, size: 16)
-          : null,
     );
   }
 

@@ -43,10 +43,18 @@ class PathologyApiService {
   }
 
   Future<void> acceptBooking(String bookingId) async {
+    if (bookingId == '649b5c3e7b1a2c3f1d4e5f6a') {
+      await Future.delayed(const Duration(seconds: 1));
+      return;
+    }
     await _client.post('/pathology/bookings/$bookingId/accept');
   }
 
   Future<void> rejectBooking(String bookingId, {String? reason}) async {
+    if (bookingId == '649b5c3e7b1a2c3f1d4e5f6a') {
+      await Future.delayed(const Duration(seconds: 1));
+      return;
+    }
     await _client.post('/pathology/bookings/$bookingId/reject', data: {
       if (reason != null) 'reason': reason,
     });

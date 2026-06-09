@@ -8,7 +8,6 @@ import 'dashboards/nurse_dashboard.dart';
 import 'dashboards/pharmacist_dashboard.dart';
 import 'dashboards/ambulance_dashboard.dart';
 import 'dashboards/bloodbank_dashboard.dart';
-import 'dashboards/pathology_dashboard.dart';
 import '../profile/edit_profile_screen.dart';
 import '../profile/profile_screen.dart';
 import '../ambulance/ride_requests_screen.dart';
@@ -18,6 +17,7 @@ import '../doctor/doctor_main_screen.dart';
 import '../pharmacist/order_management_screen.dart';
 import '../nurse/bookings_screen.dart' as nurse_bookings;
 import '../pathology/pathology_bookings_screen.dart';
+import '../pathology/pathology_home_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,11 +53,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final screens = [
       dashboardWidget,
       _getBookingsScreenForRole(role),
-      const Center(child: Text('Messages', style: TextStyle(fontSize: 18))),
+      const Center(child: Text('Earnings', style: TextStyle(fontSize: 18))),
       const ProfileScreen(),
     ];
 
-    bool hideAppBar = _selectedIndex == 3 || (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse'));
+    bool hideAppBar = _selectedIndex == 3 || (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse' || role == 'pathology'));
 
     return Scaffold(
       appBar: hideAppBar ? null : AppBar(
@@ -127,9 +127,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Appointments',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
-            activeIcon: Icon(Icons.chat_bubble),
-            label: 'Messages',
+            icon: Icon(Icons.account_balance_wallet_outlined),
+            activeIcon: Icon(Icons.account_balance_wallet),
+            label: 'Earnings',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
@@ -154,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'bloodbank':
         return const BloodBankDashboard();
       case 'pathology':
-        return const PathologyDashboard();
+        return const PathologyHomeScreen();
       default:
         return const Center(child: Text('Unknown role'));
     }
