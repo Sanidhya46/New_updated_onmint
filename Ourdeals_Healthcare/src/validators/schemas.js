@@ -89,7 +89,7 @@ const registerSchema = Joi.object({
       'Stomach & Digestion',
       'Pediatrics',
       'Orthodpedic'
-    ).required(),
+    ).optional().default('General Physician'),
   }),
 
   qualifications: Joi.when("role", {
@@ -115,7 +115,7 @@ const registerSchema = Joi.object({
   consultationTypes: Joi.when("role", {
     is: "doctor",
     then: Joi.array().items(
-      Joi.string().valid("video-call")
+      Joi.string().valid("video-call", "audio-call")
     ).min(1).default(["video-call"]),
   }),
 
@@ -177,6 +177,11 @@ const registerSchema = Joi.object({
     then: Joi.string(),
   }),
 
+  inchargeName: Joi.when("role", {
+    is: "bloodbank",
+    then: Joi.string().required(),
+  }),
+
   testsOffered: Joi.when("role", {
     is: "pathology",
     then: Joi.array().items(Joi.object()),
@@ -208,6 +213,21 @@ const registerSchema = Joi.object({
     then: Joi.string().required(),
   }),
 
+  pharmacistName: Joi.when("role", {
+    is: "pharmacist",
+    then: Joi.string().required(),
+  }),
+
+  pharmacistRegistrationNumber: Joi.when("role", {
+    is: "pharmacist",
+    then: Joi.string().required(),
+  }),
+
+  servicesAvailable: Joi.when("role", {
+    is: Joi.valid("pharmacist", "bloodbank"),
+    then: Joi.array().items(Joi.string()).min(1).required(),
+  }),
+
   vehicleNumber: Joi.when("role", {
     is: "ambulance",
     then: Joi.string().required(),
@@ -222,7 +242,14 @@ const registerSchema = Joi.object({
 
   driverName: Joi.when("role", {
     is: "ambulance",
-    then: Joi.string(),
+    then: Joi.string().required(),
+  }),
+
+  driverMobileNumber: Joi.when("role", {
+    is: "ambulance",
+    then: Joi.string()
+      .pattern(/^\+?[1-9]\d{9,14}$/)
+      .required(),
   }),
 
   driverLicense: Joi.when("role", {

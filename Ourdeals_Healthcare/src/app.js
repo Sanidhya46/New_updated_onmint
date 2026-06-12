@@ -33,25 +33,25 @@ const app = express();
 // ============================================
 
 // 1. Helmet - Security Headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", 'https://api.razorpay.com'],
-    },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-  frameguard: { action: 'deny' },
-  noSniff: true,
-  xssFilter: true,
-}));
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       styleSrc: ["'self'", "'unsafe-inline'"],
+//       scriptSrc: ["'self'"],
+//       imgSrc: ["'self'", 'data:', 'https:'],
+//       connectSrc: ["'self'", 'https://api.razorpay.com'],
+//     },
+//   },
+//   hsts: {
+//     maxAge: 31536000,
+//     includeSubDomains: true,
+//     preload: true,
+//   },
+//   frameguard: { action: 'deny' },
+//   noSniff: true,
+//   xssFilter: true,
+// }));
 
 // 2. CORS - Whitelist Origins (CRITICAL FIX)
 // const allowedOrigins = process.env.CORS_ORIGIN?.split(',') || [

@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       
       final success = await authProvider.login(
-        _phoneController.text.trim(),
+        '$_selectedCountryCode${_phoneController.text.trim()}',
         _passwordController.text,
       );
 
@@ -122,31 +122,25 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
-      body: Stack(
+      body: Column(
         children: [
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            height: MediaQuery.of(context).size.height * 0.35,
-            child: Image.asset(
-              'images/register_login/top_banner.jpeg',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.blue.shade50,
-                  child: const Center(child: Text('Onmint', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0033CC)))),
-                );
-              },
-            ),
+          Image.asset(
+            'images/register_login/top_banner.jpeg',
+            width: double.infinity,
+            fit: BoxFit.fitWidth,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: MediaQuery.of(context).size.height * 0.3,
+                color: Colors.blue.shade50,
+                child: const Center(child: Text('Onmint', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF0033CC)))),
+              );
+            },
           ),
           
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.35,
-            left: 8,
-            right: 8,
-            bottom: 8,
-            child: Container(
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -189,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       
                       Expanded(
                         child: SingleChildScrollView(
-                          physics: const NeverScrollableScrollPhysics(),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -206,9 +199,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                     DropdownButtonHideUnderline(
                                       child: DropdownButton<String>(
                                         value: _selectedCountryCode,
-                                        items: _countryCodes.map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0033CC), fontSize: 12)))).toList(),
+                                        items: _countryCodes.map((c) => DropdownMenuItem(value: c, child: Text(c, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0033CC), fontSize: 12)))).toList(),
                                         onChanged: (v) => setState(() => _selectedCountryCode = v!),
-                                        icon: const SizedBox.shrink(),
+                                        icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.grey),
                                       ),
                                     ),
                                     const SizedBox(width: 4),
@@ -216,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 validator: (v) => v!.length != 10 ? 'Enter valid 10 digit number' : null,
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: 16),
                               
                               _buildTextField(
                                 controller: _passwordController,
@@ -226,11 +219,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 obscureText: _obscurePassword,
                                 suffixWidget: GestureDetector(
                                   onTap: () => setState(() => _obscurePassword = !_obscurePassword),
-                                  child: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.black87, size: 18),
+                                  child: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey, size: 20),
                                 ),
                                 validator: (v) => v!.isEmpty ? 'Required' : null,
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 16),
                               
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,8 +240,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
-                                      const Text('Remember me', style: TextStyle(fontSize: 10, color: Colors.black87)),
+                                      const SizedBox(width: 8),
+                                      const Text('Remember me', style: TextStyle(fontSize: 12, color: Colors.black87, fontWeight: FontWeight.w500)),
                                     ],
                                   ),
                                   TextButton(
@@ -258,49 +251,66 @@ class _LoginScreenState extends State<LoginScreen> {
                                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
                                     onPressed: () {},
-                                    child: const Text('Forgot Password?', style: TextStyle(color: Color(0xFF0033CC), fontSize: 10, fontWeight: FontWeight.bold)),
+                                    child: const Text('Forgot Password?', style: TextStyle(color: Color(0xFF0033CC), fontSize: 12, fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
+                              const SizedBox(height: 24),
+                              
+                              SizedBox(
+                                height: 45,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0033CC),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    elevation: 0,
+                                  ),
+                                  onPressed: _isLoading ? null : _login,
+                                  child: _isLoading 
+                                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                      : const Text('LOGIN', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              
+                              Row(
+                                children: [
+                                  const Expanded(child: Divider(color: Colors.grey, thickness: 0.5)),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Text('OR', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                  ),
+                                  const Expanded(child: Divider(color: Colors.grey, thickness: 0.5)),
+                                ],
+                              ),
+                              const SizedBox(height: 24),
+                              
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text('Don\'t have an account? ', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size.zero,
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
+                                    child: const Text('Sign Up', style: TextStyle(color: Color(0xFF0033CC), fontWeight: FontWeight.bold, fontSize: 13)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
                             ],
                           ),
                         ),
                       ),
-                      
-                      SizedBox(
-                        height: 40,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0033CC),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            elevation: 0,
-                          ),
-                          onPressed: _login,
-                          child: const Text('LOGIN', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text('Don\'t have an account? ', style: TextStyle(color: Colors.grey, fontSize: 11)),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
-                            child: const Text('Sign Up', style: TextStyle(color: Color(0xFF0033CC), fontWeight: FontWeight.bold, fontSize: 11, decoration: TextDecoration.underline)),
-                          ),
-                        ],
-                      )
                     ],
                   ),
                 ),
               ),
             ),
+          ),
           ),
         ],
       ),

@@ -62,9 +62,10 @@ const DoctorSchema = new mongoose.Schema(
         'Sexology',
         'Stomach & Digestion',
         'Pediatrics',
-        'Orthodpedic'
+        'Orthodpedic',
+        'Internal Medicine'
       ],
-      required: true,
+      default: 'General Physician'
     },
 
     qualifications: {
@@ -87,7 +88,7 @@ const DoctorSchema = new mongoose.Schema(
     // Consultation types offered by doctor
     consultationTypes: {
       type: [String],
-      enum: ['video-call'],
+      enum: ['video-call', 'audio-call'],
       required: true,
       default: ['video-call'],
     },
