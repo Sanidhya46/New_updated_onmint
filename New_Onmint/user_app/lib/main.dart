@@ -46,7 +46,8 @@ class OnMintUserApp extends StatelessWidget {
           if (settings.name == '/medicine-detail') {
             final medicineId = settings.arguments as String;
             return MaterialPageRoute(
-              builder: (context) => MedicineDetailScreen(medicineId: medicineId),
+              builder: (context) =>
+                  MedicineDetailScreen(medicineId: medicineId),
             );
           }
           if (settings.name == '/medicines-list') {

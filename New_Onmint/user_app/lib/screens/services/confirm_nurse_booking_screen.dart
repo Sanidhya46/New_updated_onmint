@@ -28,7 +28,8 @@ class ConfirmNurseBookingScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ConfirmNurseBookingScreen> createState() => _ConfirmNurseBookingScreenState();
+  State<ConfirmNurseBookingScreen> createState() =>
+      _ConfirmNurseBookingScreenState();
 }
 
 class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
@@ -53,9 +54,12 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
         'patientAge': widget.age,
         'patientGender': widget.gender,
         'notes': widget.notes,
-        'nursingCares': widget.selectedCares.map((c) => {'name': c.name}).toList(),
-        if (widget.preferredDate != null) 'preferredDate': widget.preferredDate!.toIso8601String(),
-        if (widget.preferredTime != null) 'preferredTime': widget.preferredTime!.toIso8601String(),
+        'nursingCares':
+            widget.selectedCares.map((c) => {'name': c.name}).toList(),
+        if (widget.preferredDate != null)
+          'preferredDate': widget.preferredDate!.toIso8601String(),
+        if (widget.preferredTime != null)
+          'preferredTime': widget.preferredTime!.toIso8601String(),
         'urgency': 'medium',
         'isEmergency': false,
         'paymentMethod': _selectedPayment,
@@ -112,15 +116,23 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                   ),
                 ),
                 child: _isBooking
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
                     : const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.lock_outline, color: Colors.white, size: 16),
+                          Icon(Icons.lock_outline,
+                              color: Colors.white, size: 16),
                           SizedBox(width: 6),
                           Text(
                             'Pay Rs. 499 & Confirm Booking',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
                           ),
                         ],
                       ),
@@ -130,7 +142,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.check_circle_outline, color: Colors.grey[500], size: 14),
+                Icon(Icons.check_circle_outline,
+                    color: Colors.grey[500], size: 14),
                 const SizedBox(width: 6),
                 Text(
                   'By proceeding, you agree to our ',
@@ -138,11 +151,14 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                 ),
                 const Text(
                   'Terms & Conditions',
-                  style: TextStyle(color: Colors.blue, fontSize: 11, decoration: TextDecoration.underline),
+                  style: TextStyle(
+                      color: Colors.blue,
+                      fontSize: 11,
+                      decoration: TextDecoration.underline),
                 ),
               ],
             ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 4), 
+            SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 4),
           ],
         ),
       ),
@@ -162,7 +178,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                   top: 25,
                   left: 5,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 24),
+                    icon: const Icon(Icons.arrow_back,
+                        color: Colors.black87, size: 24),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -191,7 +208,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.receipt_long_outlined, color: Colors.blue[900], size: 18),
+                            Icon(Icons.receipt_long_outlined,
+                                color: Colors.blue[900], size: 18),
                             const SizedBox(width: 6),
                             const Text(
                               'Booking Summary',
@@ -206,30 +224,33 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                         const SizedBox(height: 6),
                         const Divider(height: 1),
                         const SizedBox(height: 10),
-                        
-                        _buildSummaryRow(Icons.person_outline, 'Contact Name', widget.name),
-                        _buildSummaryRow(Icons.phone_outlined, 'Phone Number', widget.phone),
-                        _buildSummaryRow(Icons.calendar_today_outlined, 'Age', widget.age.toString()),
-                        _buildSummaryRow(Icons.person_outline, 'Gender', widget.gender),
                         _buildSummaryRow(
-                          Icons.medical_services_outlined, 
-                          'Nursing Cares', 
-                          widget.selectedCares.map((c) => c.name).join('\n')
-                        ),
+                            Icons.person_outline, 'Contact Name', widget.name),
+                        _buildSummaryRow(
+                            Icons.phone_outlined, 'Phone Number', widget.phone),
+                        _buildSummaryRow(Icons.calendar_today_outlined, 'Age',
+                            widget.age.toString()),
+                        _buildSummaryRow(
+                            Icons.person_outline, 'Gender', widget.gender),
+                        _buildSummaryRow(
+                            Icons.medical_services_outlined,
+                            'Nursing Cares',
+                            widget.selectedCares.map((c) => c.name).join('\n')),
                         if (widget.preferredDate != null)
                           _buildSummaryRow(
-                            Icons.calendar_today_outlined, 
-                            'Preferred Date', 
-                            DateFormat('dd MMM yyyy').format(widget.preferredDate!)
-                          ),
+                              Icons.calendar_today_outlined,
+                              'Preferred Date',
+                              DateFormat('dd MMM yyyy')
+                                  .format(widget.preferredDate!)),
                         if (widget.preferredTime != null)
                           _buildSummaryRow(
-                            Icons.access_time_outlined, 
-                            'Preferred Time', 
-                            DateFormat('hh:mm a').format(widget.preferredTime!)
-                          ),
-                        _buildSummaryRow(Icons.note_alt_outlined, 'Notes', widget.notes.isEmpty ? 'None' : widget.notes, isLast: true),
-                        
+                              Icons.access_time_outlined,
+                              'Preferred Time',
+                              DateFormat('hh:mm a')
+                                  .format(widget.preferredTime!)),
+                        _buildSummaryRow(Icons.note_alt_outlined, 'Notes',
+                            widget.notes.isEmpty ? 'None' : widget.notes,
+                            isLast: true),
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -241,7 +262,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.info_outline, color: Colors.blue[900], size: 14),
+                              Icon(Icons.info_outline,
+                                  color: Colors.blue[900], size: 14),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
@@ -259,9 +281,9 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 0),
-                
+
                 // Payment Details Card
                 Container(
                   margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -283,7 +305,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.credit_card, color: Colors.blue[900], size: 18),
+                            Icon(Icons.credit_card,
+                                color: Colors.blue[900], size: 18),
                             const SizedBox(width: 6),
                             const Text(
                               'Payment Details',
@@ -296,9 +319,9 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 8),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.blue[200]!),
                             borderRadius: BorderRadius.circular(6),
@@ -311,11 +334,14 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                                 children: [
                                   const Text(
                                     'Total Amount',
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 11),
                                   ),
                                   Text(
                                     'Service Fee (Non-Refundable)',
-                                    style: TextStyle(color: Colors.grey[600], fontSize: 9),
+                                    style: TextStyle(
+                                        color: Colors.grey[600], fontSize: 9),
                                   ),
                                 ],
                               ),
@@ -331,7 +357,6 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        
                         const Text(
                           'Select Payment Method',
                           style: TextStyle(
@@ -340,11 +365,10 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        
                         _buildPaymentOption(
                           id: 'upi',
                           title: 'UPI',
-                          icon: Icons.account_balance_wallet, 
+                          icon: Icons.account_balance_wallet,
                         ),
                         _buildPaymentOption(
                           id: 'card',
@@ -357,7 +381,6 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                           title: 'Bank Transfer',
                           icon: Icons.account_balance,
                         ),
-                        
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.all(8),
@@ -367,7 +390,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.verified_user, color: Colors.green[600], size: 16),
+                              Icon(Icons.verified_user,
+                                  color: Colors.green[600], size: 16),
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Column(
@@ -375,16 +399,22 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                                   children: [
                                     Text(
                                       '100% Secure Payment',
-                                      style: TextStyle(color: Colors.green[800], fontWeight: FontWeight.bold, fontSize: 10),
+                                      style: TextStyle(
+                                          color: Colors.green[800],
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10),
                                     ),
                                     Text(
                                       'Your payment information is safe and encrypted',
-                                      style: TextStyle(color: Colors.green[700], fontSize: 9),
+                                      style: TextStyle(
+                                          color: Colors.green[700],
+                                          fontSize: 9),
                                     ),
                                   ],
                                 ),
                               ),
-                              Icon(Icons.lock_outline, color: Colors.green[600], size: 14),
+                              Icon(Icons.lock_outline,
+                                  color: Colors.green[600], size: 14),
                             ],
                           ),
                         ),
@@ -401,7 +431,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
     );
   }
 
-  Widget _buildSummaryRow(IconData icon, String label, String value, {bool isLast = false}) {
+  Widget _buildSummaryRow(IconData icon, String label, String value,
+      {bool isLast = false}) {
     return Column(
       children: [
         Row(
@@ -413,7 +444,10 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
               flex: 2,
               child: Text(
                 label,
-                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 11),
+                style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11),
               ),
             ),
             Expanded(
@@ -421,7 +455,10 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.normal, fontSize: 11),
+                style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.normal,
+                    fontSize: 11),
               ),
             ),
           ],
@@ -439,14 +476,15 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
     bool trailingIcon = false,
   }) {
     final isSelected = _selectedPayment == id;
-    
+
     return GestureDetector(
       onTap: () => setState(() => _selectedPayment = id),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          border: Border.all(color: isSelected ? Colors.blue : Colors.grey[300]!),
+          border:
+              Border.all(color: isSelected ? Colors.blue : Colors.grey[300]!),
           borderRadius: BorderRadius.circular(8),
           color: isSelected ? Colors.blue[50] : Colors.transparent,
         ),
@@ -469,22 +507,31 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
               ),
             ),
             if (trailingIcon)
               Row(
                 children: [
                   Container(
-                    width: 24, height: 14,
+                    width: 24,
+                    height: 14,
                     color: Colors.blue[800],
                     alignment: Alignment.center,
-                    child: const Text('VISA', style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold)),
+                    child: const Text('VISA',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 6,
+                            fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 4),
                   Container(
-                    width: 24, height: 14,
-                    decoration: BoxDecoration(color: Colors.orange[200], borderRadius: BorderRadius.circular(2)),
+                    width: 24,
+                    height: 14,
+                    decoration: BoxDecoration(
+                        color: Colors.orange[200],
+                        borderRadius: BorderRadius.circular(2)),
                   ),
                 ],
               ),

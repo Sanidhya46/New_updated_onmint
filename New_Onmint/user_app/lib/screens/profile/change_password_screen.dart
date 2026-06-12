@@ -15,7 +15,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _isLoading = false;
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
@@ -223,9 +223,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               // Cancel Button
               CustomButton(
                 text: 'Cancel',
-                onPressed: _isLoading
-                    ? null
-                    : () => Navigator.pop(context),
+                onPressed: _isLoading ? null : () => Navigator.pop(context),
                 isOutlined: true,
               ),
             ],

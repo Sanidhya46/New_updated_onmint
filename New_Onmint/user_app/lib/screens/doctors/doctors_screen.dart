@@ -13,14 +13,14 @@ class DoctorsScreen extends StatefulWidget {
 class _DoctorsScreenState extends State<DoctorsScreen> {
   final PatientService _patientService = PatientService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Map<String, dynamic>> _doctors = [];
   List<Map<String, dynamic>> _filteredDoctors = [];
   bool _isLoading = false;
   String? _selectedSpecialization;
   String? _selectedCity;
   String? _selectedConsultationType; // NEW: Consultation type filter
-  
+
   final List<String> _specializations = [
     'General Physician',
     'Cardiology',
@@ -49,7 +49,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
 
   Future<void> _loadDoctors() async {
     if (!mounted) return;
-    
+
     if (mounted) {
       setState(() => _isLoading = true);
     }
@@ -57,9 +57,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
     try {
       final response = await _patientService.searchDoctors(
         limit: 100,
-        consultationType: _selectedConsultationType, // Pass consultation type filter
+        consultationType:
+            _selectedConsultationType, // Pass consultation type filter
       );
-      
+
       final doctors = response['data'] ?? [];
       if (mounted) {
         setState(() {
@@ -85,27 +86,28 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
 
   void _filterDoctors() {
     final query = _searchController.text.toLowerCase();
-    
+
     setState(() {
       _filteredDoctors = _doctors.where((doctor) {
-        final name = '${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'.toLowerCase();
+        final name = '${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'
+            .toLowerCase();
         final specialization = (doctor['specialization'] ?? '').toLowerCase();
         final city = (doctor['city'] ?? '').toLowerCase();
-        
+
         // Text search filter
-        final matchesSearch = query.isEmpty || 
-            name.contains(query) || 
+        final matchesSearch = query.isEmpty ||
+            name.contains(query) ||
             specialization.contains(query) ||
             city.contains(query);
-        
+
         // Specialization filter
         final matchesSpecialization = _selectedSpecialization == null ||
             specialization.contains(_selectedSpecialization!.toLowerCase());
-        
+
         // City filter
         final matchesCity = _selectedCity == null ||
             city.contains(_selectedCity!.toLowerCase());
-        
+
         return matchesSearch && matchesSpecialization && matchesCity;
       }).toList();
     });
@@ -158,9 +160,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     fillColor: Colors.white,
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Filter Row
                 Row(
                   children: [
@@ -175,10 +177,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                           fillColor: Colors.white,
                         ),
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('All')),
-                          ..._specializations.map((spec) => 
-                            DropdownMenuItem(value: spec, child: Text(spec))
-                          ),
+                          const DropdownMenuItem(
+                              value: null, child: Text('All')),
+                          ..._specializations.map((spec) =>
+                              DropdownMenuItem(value: spec, child: Text(spec))),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -188,9 +190,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                         },
                       ),
                     ),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // City Filter
                     Expanded(
                       child: TextField(
@@ -210,9 +212,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Consultation Type Filter
                 DropdownButtonFormField<String>(
                   value: _selectedConsultationType,
@@ -263,9 +265,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     _loadDoctors(); // Reload with new filter
                   },
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Instant Doctor Appointment Button
                 GestureDetector(
                   onTap: () {
@@ -345,7 +347,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
               ],
             ),
           ),
-          
+
           // Results Count
           if (!_isLoading)
             Container(
@@ -363,11 +365,12 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 ],
               ),
             ),
-          
+
           // Doctors List
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF667EEA)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF667EEA)))
                 : _filteredDoctors.isEmpty
                     ? Center(
                         child: Column(
@@ -429,14 +432,16 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: const Color(0xFF667EEA),
-                  backgroundImage: doctor['profilePicture'] != null && 
-                      doctor['profilePicture'].toString().isNotEmpty
+                  backgroundImage: doctor['profilePicture'] != null &&
+                          doctor['profilePicture'].toString().isNotEmpty
                       ? NetworkImage(doctor['profilePicture'])
                       : null,
-                  child: doctor['profilePicture'] == null || 
-                      doctor['profilePicture'].toString().isEmpty
+                  child: doctor['profilePicture'] == null ||
+                          doctor['profilePicture'].toString().isEmpty
                       ? Text(
-                          (doctor['firstName']?.toString() ?? 'D').substring(0, 1).toUpperCase(),
+                          (doctor['firstName']?.toString() ?? 'D')
+                              .substring(0, 1)
+                              .toUpperCase(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 20,
@@ -445,23 +450,25 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                         )
                       : null,
                 ),
-                
+
                 const SizedBox(width: 16),
-                
+
                 // Doctor Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'.trim(),
+                        'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'
+                            .trim(),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        doctor['specialization']?.toString() ?? 'General Physician',
+                        doctor['specialization']?.toString() ??
+                            'General Physician',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -483,10 +490,12 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                       ),
                       Row(
                         children: [
-                          Icon(Icons.location_on, size: 16, color: Colors.grey[500]),
+                          Icon(Icons.location_on,
+                              size: 16, color: Colors.grey[500]),
                           const SizedBox(width: 4),
                           Text(
-                            '${doctor['city'] ?? ''}, ${doctor['state'] ?? ''}'.replaceAll(RegExp(r'^,\s*|,\s*$'), ''),
+                            '${doctor['city'] ?? ''}, ${doctor['state'] ?? ''}'
+                                .replaceAll(RegExp(r'^,\s*|,\s*$'), ''),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[500],
@@ -497,7 +506,7 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     ],
                   ),
                 ),
-                
+
                 // Consultation Fee
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -521,17 +530,19 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 ),
               ],
             ),
-            
+
             // Qualifications
-            if (doctor['qualifications'] is List && 
+            if (doctor['qualifications'] is List &&
                 (doctor['qualifications'] as List).isNotEmpty) ...[
               const SizedBox(height: 12),
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
-                children: (doctor['qualifications'] as List).map((qualification) {
+                children:
+                    (doctor['qualifications'] as List).map((qualification) {
                   return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFF667EEA).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -548,14 +559,15 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 }).toList(),
               ),
             ],
-            
+
             // Consultation Types
-            if (doctor['consultationTypes'] is List && 
+            if (doctor['consultationTypes'] is List &&
                 (doctor['consultationTypes'] as List).isNotEmpty) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Icon(Icons.medical_services, size: 16, color: Colors.grey[600]),
+                  Icon(Icons.medical_services,
+                      size: 16, color: Colors.grey[600]),
                   const SizedBox(width: 6),
                   Text(
                     'Available: ',
@@ -569,11 +581,12 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     child: Wrap(
                       spacing: 6,
                       runSpacing: 4,
-                      children: (doctor['consultationTypes'] as List).map((type) {
+                      children:
+                          (doctor['consultationTypes'] as List).map((type) {
                         IconData icon;
                         Color color;
                         String label;
-                        
+
                         switch (type.toString()) {
                           case 'video-call':
                             icon = Icons.videocam;
@@ -595,9 +608,10 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                             color = Colors.grey;
                             label = type.toString();
                         }
-                        
+
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: color.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -625,9 +639,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 ],
               ),
             ],
-            
+
             // Languages
-            if (doctor['languages'] is List && 
+            if (doctor['languages'] is List &&
                 (doctor['languages'] as List).isNotEmpty) ...[
               const SizedBox(height: 8),
               Row(
@@ -644,9 +658,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 ],
               ),
             ],
-            
+
             const SizedBox(height: 16),
-            
+
             // Action Buttons
             Row(
               children: [
@@ -708,9 +722,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Doctor Header
                 Row(
                   children: [
@@ -718,7 +732,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                       radius: 40,
                       backgroundColor: const Color(0xFF667EEA),
                       child: Text(
-                        (doctor['firstName']?.toString() ?? 'D').substring(0, 1).toUpperCase(),
+                        (doctor['firstName']?.toString() ?? 'D')
+                            .substring(0, 1)
+                            .toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -732,14 +748,16 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'.trim(),
+                            'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'
+                                .trim(),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            doctor['specialization']?.toString() ?? 'General Physician',
+                            doctor['specialization']?.toString() ??
+                                'General Physician',
                             style: const TextStyle(
                               fontSize: 16,
                               color: Color(0xFF667EEA),
@@ -750,11 +768,12 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // About
-                if (doctor['about'] != null && doctor['about'].toString().isNotEmpty) ...[
+                if (doctor['about'] != null &&
+                    doctor['about'].toString().isNotEmpty) ...[
                   const Text(
                     'About',
                     style: TextStyle(
@@ -769,15 +788,21 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                   ),
                   const SizedBox(height: 20),
                 ],
-                
+
                 // Details
-                _buildDetailSection('Experience', '${doctor['experience'] ?? 0} years'),
-                _buildDetailSection('Consultation Fee', '₹${doctor['consultationFee'] ?? 500}'),
-                _buildDetailSection('License Number', doctor['licenseNumber']?.toString() ?? 'Not provided'),
-                _buildDetailSection('Location', '${doctor['city'] ?? ''}, ${doctor['state'] ?? ''}'.replaceAll(RegExp(r'^,\s*|,\s*$'), '')),
-                
+                _buildDetailSection(
+                    'Experience', '${doctor['experience'] ?? 0} years'),
+                _buildDetailSection(
+                    'Consultation Fee', '₹${doctor['consultationFee'] ?? 500}'),
+                _buildDetailSection('License Number',
+                    doctor['licenseNumber']?.toString() ?? 'Not provided'),
+                _buildDetailSection(
+                    'Location',
+                    '${doctor['city'] ?? ''}, ${doctor['state'] ?? ''}'
+                        .replaceAll(RegExp(r'^,\s*|,\s*$'), '')),
+
                 const SizedBox(height: 20),
-                
+
                 // Book Button
                 SizedBox(
                   width: double.infinity,

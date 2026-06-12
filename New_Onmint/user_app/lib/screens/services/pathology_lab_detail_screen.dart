@@ -13,13 +13,14 @@ class PathologyLabDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<PathologyLabDetailScreen> createState() => _PathologyLabDetailScreenState();
+  State<PathologyLabDetailScreen> createState() =>
+      _PathologyLabDetailScreenState();
 }
 
 class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
   final _apiClient = OnMintApiClient();
   final _searchController = TextEditingController();
-  
+
   Map<String, dynamic>? _lab;
   List<dynamic> _tests = [];
   List<dynamic> _filteredTests = [];
@@ -45,7 +46,8 @@ class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
     });
 
     try {
-      final response = await _apiClient.patient.getPathologyLabDetails(widget.labId);
+      final response =
+          await _apiClient.patient.getPathologyLabDetails(widget.labId);
 
       setState(() {
         _lab = response;
@@ -70,7 +72,8 @@ class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
           final name = (test['name'] ?? '').toLowerCase();
           final description = (test['description'] ?? '').toLowerCase();
           final searchQuery = query.toLowerCase();
-          return name.contains(searchQuery) || description.contains(searchQuery);
+          return name.contains(searchQuery) ||
+              description.contains(searchQuery);
         }).toList();
       }
     });
@@ -126,7 +129,7 @@ class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
     final rating = _lab!['rating']?.toDouble() ?? 0.0;
     final reviewCount = _lab!['reviewCount'] ?? 0;
     final isOpen = _lab!['isOpen'] ?? false;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -269,7 +272,7 @@ class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
     final price = test['price']?.toDouble() ?? 0.0;
     final preparationRequired = test['preparationRequired'] ?? false;
     final reportTime = test['reportTime'] ?? 'N/A';
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -328,7 +331,8 @@ class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                          const Icon(Icons.access_time,
+                              size: 14, color: Colors.grey),
                           const SizedBox(width: 4),
                           Text(
                             'Report: $reportTime',
@@ -343,7 +347,8 @@ class _PathologyLabDetailScreenState extends State<PathologyLabDetailScreen> {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(Icons.warning_amber, size: 14, color: Colors.orange),
+                            const Icon(Icons.warning_amber,
+                                size: 14, color: Colors.orange),
                             const SizedBox(width: 4),
                             Text(
                               'Preparation required',

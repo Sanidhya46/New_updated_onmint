@@ -35,7 +35,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       client.initialize(); // Uses existing token
       // Fetch bookings count (limit 1 just to get total count if paginated, or limit 100 to count)
       final response = await client.patient.getUserBookings(limit: 1);
-      
+
       if (mounted) {
         setState(() {
           _totalOrders = response['total'] ?? 0;
@@ -75,7 +75,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20),
+          icon:
+              const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
@@ -129,17 +130,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             CircleAvatar(
                               radius: 30,
                               backgroundColor: Colors.blue[100],
-                              child: user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
+                              child: user.profilePictureUrl != null &&
+                                      user.profilePictureUrl!.isNotEmpty
                                   ? ClipOval(
                                       child: Image.network(
                                         user.profilePictureUrl!,
                                         width: 60,
                                         height: 60,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) => Icon(Icons.person, size: 40, color: Colors.blue[300]),
+                                        errorBuilder:
+                                            (context, error, stackTrace) =>
+                                                Icon(Icons.person,
+                                                    size: 40,
+                                                    color: Colors.blue[300]),
                                       ),
                                     )
-                                  : Icon(Icons.person, size: 40, color: Colors.blue[300]),
+                                  : Icon(Icons.person,
+                                      size: 40, color: Colors.blue[300]),
                             ),
                             Positioned(
                               bottom: 0,
@@ -156,7 +163,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                                   ],
                                 ),
-                                child: const Icon(Icons.camera_alt, size: 14, color: Colors.grey),
+                                child: const Icon(Icons.camera_alt,
+                                    size: 14, color: Colors.grey),
                               ),
                             ),
                           ],
@@ -168,7 +176,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     user.fullName,
@@ -178,12 +187,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       color: Colors.black87,
                                     ),
                                   ),
-                                  const Icon(Icons.chevron_right, color: Colors.grey),
+                                  const Icon(Icons.chevron_right,
+                                      color: Colors.grey),
                                 ],
                               ),
                               const SizedBox(height: 4),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.blue[50],
                                   borderRadius: BorderRadius.circular(4),
@@ -191,7 +202,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.verified, size: 12, color: Colors.blue[700]),
+                                    Icon(Icons.verified,
+                                        size: 12, color: Colors.blue[700]),
                                     const SizedBox(width: 4),
                                     Text(
                                       'Verified',
@@ -207,7 +219,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.mail_outline, size: 14, color: Colors.grey[600]),
+                                  Icon(Icons.mail_outline,
+                                      size: 14, color: Colors.grey[600]),
                                   const SizedBox(width: 6),
                                   Text(
                                     user.email,
@@ -221,7 +234,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 4),
                               Row(
                                 children: [
-                                  Icon(Icons.phone_outlined, size: 14, color: Colors.grey[600]),
+                                  Icon(Icons.phone_outlined,
+                                      size: 14, color: Colors.grey[600]),
                                   const SizedBox(width: 6),
                                   Text(
                                     user.phone,
@@ -242,7 +256,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const SizedBox(height: 10),
                     // Stats
                     Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF0F8FF), // Ice blue
                         borderRadius: BorderRadius.circular(12),
@@ -254,16 +269,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: Icons.water_drop_outlined,
                             iconColor: Colors.red[400]!,
                             label: 'Blood Group',
-                            value: user.bloodGroup?.isNotEmpty == true ? user.bloodGroup! : 'N/A',
+                            value: user.bloodGroup?.isNotEmpty == true
+                                ? user.bloodGroup!
+                                : 'N/A',
                           ),
-                          Container(width: 1, height: 24, color: const Color(0xFFD6E4F0)),
+                          Container(
+                              width: 1,
+                              height: 24,
+                              color: const Color(0xFFD6E4F0)),
                           _buildStatItem(
                             icon: Icons.calendar_today_outlined,
                             iconColor: Colors.blue[400]!,
                             label: 'Member Since',
                             value: memberSince,
                           ),
-                          Container(width: 1, height: 24, color: const Color(0xFFD6E4F0)),
+                          Container(
+                              width: 1,
+                              height: 24,
+                              color: const Color(0xFFD6E4F0)),
                           _buildStatItem(
                             icon: Icons.receipt_long_outlined,
                             iconColor: Colors.green[400]!,
@@ -311,7 +334,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const PersonalDetailsViewScreen()),
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const PersonalDetailsViewScreen()),
                         );
                       },
                     ),
@@ -328,7 +353,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const AddressViewScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const AddressViewScreen()),
                         );
                       },
                     ),
@@ -382,7 +408,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const ChangePasswordScreen()),
                         );
                       },
                     ),
@@ -399,7 +427,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const HelpSupportScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const HelpSupportScreen()),
                         );
                       },
                     ),

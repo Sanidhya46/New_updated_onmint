@@ -44,7 +44,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _lastNameController.text = user.lastName ?? '';
       _emailController.text = user.email ?? '';
       _phoneController.text = user.phone ?? '';
-      
+
       if (user.address != null) {
         _streetController.text = user.address!.street ?? '';
         _cityController.text = user.address!.city ?? '';
@@ -55,7 +55,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (user.emergencyContact != null) {
         _emergencyNameController.text = user.emergencyContact!['name'] ?? '';
         _emergencyPhoneController.text = user.emergencyContact!['phone'] ?? '';
-        _emergencyRelationController.text = user.emergencyContact!['relation'] ?? '';
+        _emergencyRelationController.text =
+            user.emergencyContact!['relation'] ?? '';
       }
     }
   }
@@ -85,7 +86,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       final data = {
         'firstName': _firstNameController.text,
         'lastName': _lastNameController.text,
@@ -108,7 +109,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       // Update local user data
       await authProvider.refreshProfile();
-      
+
       if (mounted) {
         ToastUtils.showSuccess('Profile updated successfully');
         Navigator.pop(context);
@@ -178,7 +179,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your email';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(value)) {
                     return 'Please enter a valid email';
                   }
                   return null;
@@ -329,9 +331,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Cancel Button
               CustomButton(
                 text: 'Cancel',
-                onPressed: _isLoading
-                    ? null
-                    : () => Navigator.pop(context),
+                onPressed: _isLoading ? null : () => Navigator.pop(context),
                 isOutlined: true,
               ),
             ],

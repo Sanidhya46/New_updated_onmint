@@ -31,13 +31,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       await _apiClient.initialize();
-      
+
       if (_selectedService == 'doctor') {
         final result = await _apiClient.patient.searchDoctors();
         setState(() {
           _searchResults = (result['doctors'] as List?)
-              ?.map((e) => User.fromJson(e))
-              .toList() ?? [];
+                  ?.map((e) => User.fromJson(e))
+                  .toList() ??
+              [];
           _isLoading = false;
         });
       }
@@ -86,18 +87,22 @@ class _SearchScreenState extends State<SearchScreen> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildServiceChip('doctor', 'Doctors', Icons.medical_services),
-                      _buildServiceChip('nurse', 'Nurses', Icons.local_hospital),
-                      _buildServiceChip('pharmacy', 'Pharmacy', Icons.medication),
+                      _buildServiceChip(
+                          'doctor', 'Doctors', Icons.medical_services),
+                      _buildServiceChip(
+                          'nurse', 'Nurses', Icons.local_hospital),
+                      _buildServiceChip(
+                          'pharmacy', 'Pharmacy', Icons.medication),
                       _buildServiceChip('lab', 'Labs', Icons.science),
-                      _buildServiceChip('bloodbank', 'Blood Bank', Icons.bloodtype),
+                      _buildServiceChip(
+                          'bloodbank', 'Blood Bank', Icons.bloodtype),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          
+
           // Results
           Expanded(
             child: _isLoading
@@ -106,7 +111,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     ? const EmptyStateWidget(
                         icon: Icons.search_off,
                         title: 'No Results',
-                        message: 'Try searching for doctors, medicines, or services',
+                        message:
+                            'Try searching for doctors, medicines, or services',
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
@@ -159,8 +165,7 @@ class _SearchScreenState extends State<SearchScreen> {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (provider.specialization != null)
-              Text(provider.specialization!),
+            if (provider.specialization != null) Text(provider.specialization!),
             if (provider.consultationFee != null)
               Text('₹${provider.consultationFee}/consultation'),
           ],

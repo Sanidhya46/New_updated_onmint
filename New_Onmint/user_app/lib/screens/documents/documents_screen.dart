@@ -11,17 +11,18 @@ class DocumentsScreen extends StatefulWidget {
   State<DocumentsScreen> createState() => _DocumentsScreenState();
 }
 
-class _DocumentsScreenState extends State<DocumentsScreen> with SingleTickerProviderStateMixin {
+class _DocumentsScreenState extends State<DocumentsScreen>
+    with SingleTickerProviderStateMixin {
   final _apiClient = OnMintApiClient();
   late TabController _tabController;
-  
+
   final Map<String, List<dynamic>> _documents = {
     'all': [],
     'prescription': [],
     'medical_report': [],
     'lab_report': [],
   };
-  
+
   bool _isLoading = true;
 
   @override

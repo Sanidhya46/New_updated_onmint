@@ -101,7 +101,11 @@ class OnMintApiClient {
   Future<dynamic> put(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
     return await _client.put(path, data: data, queryParameters: queryParameters);
   }
-  
+
+  Future<dynamic> patch(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+    return await _client.patch(path, data: data, queryParameters: queryParameters);
+  }
+
   Future<dynamic> delete(String path, {Map<String, dynamic>? queryParameters}) async {
     return await _client.delete(path, queryParameters: queryParameters);
   }

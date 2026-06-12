@@ -14,7 +14,7 @@ class PharmaciesScreen extends StatefulWidget {
 class _PharmaciesScreenState extends State<PharmaciesScreen> {
   final _apiClient = OnMintApiClient();
   final _searchController = TextEditingController();
-  
+
   List<dynamic> _pharmacies = [];
   bool _isLoading = true;
   String? _error;
@@ -39,7 +39,7 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
 
     try {
       await _apiClient.initialize();
-      
+
       final result = await _apiClient.patient.searchPharmacies(
         city: _searchController.text.isEmpty ? null : _searchController.text,
       );
@@ -123,7 +123,7 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
     final rating = pharmacy['rating']?.toDouble() ?? 0.0;
     final reviewCount = pharmacy['reviewCount'] ?? 0;
     final isOpen = pharmacy['isOpen'] ?? false;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -131,7 +131,8 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => PharmacyDetailScreen(pharmacyId: pharmacy['_id']),
+              builder: (context) =>
+                  PharmacyDetailScreen(pharmacyId: pharmacy['_id']),
             ),
           );
         },
@@ -157,7 +158,7 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Pharmacy Info
                   Expanded(
                     child: Column(
@@ -195,11 +196,12 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Rating
                         Row(
                           children: [
-                            const Icon(Icons.star, size: 16, color: Colors.amber),
+                            const Icon(Icons.star,
+                                size: 16, color: Colors.amber),
                             const SizedBox(width: 4),
                             Text(
                               rating.toStringAsFixed(1),
@@ -218,12 +220,13 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Location
                         if (pharmacy['address'] != null)
                           Row(
                             children: [
-                              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                              const Icon(Icons.location_on,
+                                  size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -239,12 +242,13 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
                             ],
                           ),
                         const SizedBox(height: 8),
-                        
+
                         // Contact
                         if (pharmacy['phone'] != null)
                           Row(
                             children: [
-                              const Icon(Icons.phone, size: 16, color: Colors.grey),
+                              const Icon(Icons.phone,
+                                  size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
                               Text(
                                 pharmacy['phone'],
@@ -260,7 +264,7 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
                   ),
                 ],
               ),
-              
+
               // Delivery Info
               if (pharmacy['deliveryAvailable'] == true) ...[
                 const SizedBox(height: 12),

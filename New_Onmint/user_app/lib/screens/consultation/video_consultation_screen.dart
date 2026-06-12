@@ -35,15 +35,17 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
       });
 
       await _apiClient.loadToken();
-      
+
       // Try to get video call link from booking details first
       try {
         final onMintClient = OnMintApiClient();
         await onMintClient.initialize();
-        final booking = await onMintClient.patient.getBookingDetails(widget.bookingId);
-        
+        final booking =
+            await onMintClient.patient.getBookingDetails(widget.bookingId);
+
         // Check if booking has video call link from backend
-        if (booking.videoCallLink != null && booking.videoCallLink!.isNotEmpty) {
+        if (booking.videoCallLink != null &&
+            booking.videoCallLink!.isNotEmpty) {
           // Store video link for display
           setState(() {
             _meetingConfig = {'videoCallLink': booking.videoCallLink};
@@ -61,14 +63,15 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
           'bookingId': widget.bookingId,
           'role': 'patient', // Patient role
         });
-        
+
         if (response.data['success'] == true) {
           setState(() {
             _meetingConfig = response.data['data'];
             _isLoading = false;
           });
         } else {
-          throw Exception(response.data['message'] ?? 'Failed to create video room');
+          throw Exception(
+              response.data['message'] ?? 'Failed to create video room');
         }
       } catch (e) {
         print('Video room creation failed: $e');
@@ -171,7 +174,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
     // Check if we have meeting config data
     final hasVideoData = _meetingConfig != null && _meetingConfig!.isNotEmpty;
     final joinUrl = _meetingConfig?['joinUrl'] as String?;
-    
+
     return SingleChildScrollView(
       child: Container(
         padding: const EdgeInsets.all(20),
@@ -183,11 +186,13 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFF667eea).withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF667eea).withOpacity(0.3), width: 2),
+                border: Border.all(
+                    color: const Color(0xFF667eea).withOpacity(0.3), width: 2),
               ),
               child: Column(
                 children: [
-                  const Icon(Icons.videocam, color: Color(0xFF667eea), size: 64),
+                  const Icon(Icons.videocam,
+                      color: Color(0xFF667eea), size: 64),
                   const SizedBox(height: 16),
                   const Text(
                     '🏥 Video Consultation',
@@ -210,9 +215,10 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Show meeting details if available
-            if (hasVideoData && _meetingConfig!.containsKey('participants')) ...[
+            if (hasVideoData &&
+                _meetingConfig!.containsKey('participants')) ...[
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -221,7 +227,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.check_circle, color: Colors.green, size: 32),
+                    const Icon(Icons.check_circle,
+                        color: Colors.green, size: 32),
                     const SizedBox(height: 12),
                     const Text(
                       '✅ Video Room Created',
@@ -232,14 +239,24 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    _buildInfoRow('Doctor', _meetingConfig!['participants']?['doctor']?['name'] ?? 'Doctor'),
-                    _buildInfoRow('Patient', _meetingConfig!['participants']?['patient']?['name'] ?? 'Patient'),
-                    _buildInfoRow('Meeting ID', _meetingConfig!['meetingId']?.toString() ?? 'N/A'),
-                    _buildInfoRow('Status', _meetingConfig!['appointmentDetails']?['status'] ?? 'Ready'),
+                    _buildInfoRow(
+                        'Doctor',
+                        _meetingConfig!['participants']?['doctor']?['name'] ??
+                            'Doctor'),
+                    _buildInfoRow(
+                        'Patient',
+                        _meetingConfig!['participants']?['patient']?['name'] ??
+                            'Patient'),
+                    _buildInfoRow('Meeting ID',
+                        _meetingConfig!['meetingId']?.toString() ?? 'N/A'),
+                    _buildInfoRow(
+                        'Status',
+                        _meetingConfig!['appointmentDetails']?['status'] ??
+                            'Ready'),
                   ],
                 ),
               ),
-              
+
               // Join URL Button
               if (joinUrl != null && joinUrl.isNotEmpty) ...[
                 const SizedBox(height: 24),
@@ -260,7 +277,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Click the link below to join the video consultation:'),
+                            const Text(
+                                'Click the link below to join the video consultation:'),
                             const SizedBox(height: 16),
                             SelectableText(
                               joinUrl,
@@ -272,7 +290,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                             const SizedBox(height: 16),
                             const Text(
                               'Note: The link will open in a new window.',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                           ],
                         ),
@@ -293,7 +312,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                                 );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Opening video call in browser...'),
+                                    content: Text(
+                                        'Opening video call in browser...'),
                                     backgroundColor: Colors.blue,
                                   ),
                                 );
@@ -318,11 +338,13 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                     );
                   },
                   icon: const Icon(Icons.videocam, size: 28),
-                  label: const Text('Join Video Call', style: TextStyle(fontSize: 18)),
+                  label: const Text('Join Video Call',
+                      style: TextStyle(fontSize: 18)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 20),
                     minimumSize: const Size(double.infinity, 60),
                   ),
                 ),
@@ -359,7 +381,7 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -377,7 +399,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF667eea),
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
                     ),
                   ),
                 ),
@@ -390,7 +413,8 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey[700],
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 16),
                     ),
                   ),
                 ),

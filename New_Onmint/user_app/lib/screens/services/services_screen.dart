@@ -14,7 +14,7 @@ class ServicesScreen extends StatefulWidget {
 
 class _ServicesScreenState extends State<ServicesScreen> {
   late final PatientService _patientService;
-  
+
   String _selectedServiceType = 'doctor';
   String _selectedSpecialization = '';
   List<Map<String, dynamic>> _services = [];
@@ -27,7 +27,11 @@ class _ServicesScreenState extends State<ServicesScreen> {
   final List<Map<String, dynamic>> _serviceTypes = [
     {'type': 'doctor', 'label': 'Doctors', 'icon': Icons.medical_services},
     {'type': 'nurse', 'label': 'Nurses', 'icon': Icons.health_and_safety},
-    {'type': 'pharmacist', 'label': 'Pharmacists', 'icon': Icons.local_pharmacy},
+    {
+      'type': 'pharmacist',
+      'label': 'Pharmacists',
+      'icon': Icons.local_pharmacy
+    },
     {'type': 'pathology', 'label': 'Pathology', 'icon': Icons.science},
     {'type': 'ambulance', 'label': 'Ambulance', 'icon': Icons.emergency},
     {'type': 'bloodbank', 'label': 'Blood Bank', 'icon': Icons.bloodtype},
@@ -58,7 +62,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
     try {
       // Use searchDoctors for doctors, for other services we'll use mock data for now
       List<Map<String, dynamic>> newServices = [];
-      
+
       if (_selectedServiceType == 'doctor') {
         final response = await _patientService.searchDoctors(
           page: _currentPage,
@@ -111,7 +115,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
       return _services;
     }
     return _services
-        .where((service) => service['specialization']?.toString() == _selectedSpecialization)
+        .where((service) =>
+            service['specialization']?.toString() == _selectedSpecialization)
         .toList();
   }
 
@@ -136,8 +141,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                 itemCount: _serviceTypes.length,
                 itemBuilder: (context, index) {
                   final serviceType = _serviceTypes[index];
-                  final isSelected = _selectedServiceType == serviceType['type'];
-                  
+                  final isSelected =
+                      _selectedServiceType == serviceType['type'];
+
                   return GestureDetector(
                     onTap: () {
                       setState(() {
@@ -149,10 +155,13 @@ class _ServicesScreenState extends State<ServicesScreen> {
                       width: 80,
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primary : Colors.grey[100],
+                        color:
+                            isSelected ? AppColors.primary : Colors.grey[100],
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? AppColors.primary : Colors.grey[300]!,
+                          color: isSelected
+                              ? AppColors.primary
+                              : Colors.grey[300]!,
                         ),
                       ),
                       child: Column(
@@ -160,7 +169,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         children: [
                           Icon(
                             serviceType['icon'],
-                            color: isSelected ? Colors.white : AppColors.textSecondary,
+                            color: isSelected
+                                ? Colors.white
+                                : AppColors.textSecondary,
                             size: 28,
                           ),
                           const SizedBox(height: 4),
@@ -170,7 +181,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? Colors.white : AppColors.textSecondary,
+                              color: isSelected
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
                             ),
                           ),
                         ],
@@ -182,15 +195,18 @@ class _ServicesScreenState extends State<ServicesScreen> {
             ),
 
             // Specialization Filter (for doctors)
-            if (_selectedServiceType == 'doctor' && _specializations.isNotEmpty) ...[
+            if (_selectedServiceType == 'doctor' &&
+                _specializations.isNotEmpty) ...[
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'Filter by Specialization',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -239,9 +255,12 @@ class _ServicesScreenState extends State<ServicesScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.error, size: 48, color: AppColors.error),
+                              const Icon(Icons.error,
+                                  size: 48, color: AppColors.error),
                               const SizedBox(height: 16),
-                              Text(_error!, style: const TextStyle(color: AppColors.error)),
+                              Text(_error!,
+                                  style:
+                                      const TextStyle(color: AppColors.error)),
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: () => _loadServices(refresh: true),
@@ -296,8 +315,10 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   Widget _buildServiceCard(Map<String, dynamic> service) {
-    final name = '${service['firstName'] ?? ''} ${service['lastName'] ?? ''}'.trim();
-    final specialization = service['specialization']?.toString() ?? 'Service Provider';
+    final name =
+        '${service['firstName'] ?? ''} ${service['lastName'] ?? ''}'.trim();
+    final specialization =
+        service['specialization']?.toString() ?? 'Service Provider';
     final experience = service['experience']?.toString() ?? '0';
     final consultationFee = service['consultationFee']?.toString() ?? '0';
     final rating = service['rating']?['average']?.toStringAsFixed(1) ?? '0.0';
@@ -355,7 +376,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.star, color: AppColors.warning, size: 16),
+                        const Icon(Icons.star,
+                            color: AppColors.warning, size: 16),
                         const SizedBox(width: 4),
                         Text(
                           rating,
@@ -438,7 +460,9 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: hasAvailability ? AppColors.success : AppColors.error,
+                          color: hasAvailability
+                              ? AppColors.success
+                              : AppColors.error,
                         ),
                       ),
                     ],
@@ -450,7 +474,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
             const SizedBox(height: 12),
 
             // About
-            if (service['about'] != null && (service['about'] as String).isNotEmpty) ...[
+            if (service['about'] != null &&
+                (service['about'] as String).isNotEmpty) ...[
               Text(
                 service['about'],
                 maxLines: 2,

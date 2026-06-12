@@ -60,8 +60,15 @@ class _NurseDashboardState extends State<NurseDashboard> {
                 regularBookings.map((e) => Map<String, dynamic>.from(e)));
           }
 
+          List realtimeList = [];
           if (realtimeBookings is List) {
-            allBookings.addAll(realtimeBookings.map((e) => {
+            realtimeList = realtimeBookings;
+          } else if (realtimeBookings is Map && realtimeBookings['bookings'] is List) {
+            realtimeList = realtimeBookings['bookings'];
+          }
+
+          if (realtimeList.isNotEmpty) {
+            allBookings.addAll(realtimeList.map((e) => {
                   ...Map<String, dynamic>.from(e),
                   'isRealtimeBooking': true,
                 }));
@@ -101,382 +108,333 @@ class _NurseDashboardState extends State<NurseDashboard> {
       backgroundColor: const Color(0xFFF2F4F8),
       body: Stack(
         children: [
-          RefreshIndicator(
-            onRefresh: _loadDashboard,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              // ─── BLUE HEADER + STATS CARD ──────────────────────────────
-              SizedBox(
-                height: 250,
-                child: Stack(
-                  clipBehavior: Clip.none,
+          Column(
+            children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadDashboard,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
                   children: [
-                    // Blue header
-                    Container(
-                      width: double.infinity,
-                      height: 200,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF1565C0),
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(24),
-                          bottomRight: Radius.circular(24),
-                        ),
-                      ),
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.only(
-                              left: 24, right: 24, bottom: 20),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Circular profile image
-                              Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white,
-                                  border: Border.all(
-                                      color: Colors.white.withOpacity(0.8),
-                                      width: 2.5),
-                                  image: user?.profilePicture != null
-                                      ? DecorationImage(
-                                          image: NetworkImage(
-                                              user!.profilePicture!),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
-                                ),
-                                child: user?.profilePicture == null
-                                    ? const Icon(Icons.person,
-                                        size: 44, color: Color(0xFF1565C0))
-                                    : null,
+                  // ─── BLUE HEADER + STATS CARD ──────────────────────────────
+                  SizedBox(
+                    height: 250,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Blue header
+                        Container(
+                          width: double.infinity,
+                          height: 200,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF1565C0),
+                            borderRadius: BorderRadius.only(
+                              bottomLeft: Radius.circular(24),
+                              bottomRight: Radius.circular(24),
+                            ),
+                          ),
+                          child: SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 24, right: 24, bottom: 20),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Circular profile image
+                                  Container(
+                                    width: 80,
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.white,
+                                      border: Border.all(
+                                          color: Colors.white.withOpacity(0.8),
+                                          width: 2.5),
+                                      image: user?.profilePicture != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(
+                                                  user!.profilePicture!),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: user?.profilePicture == null
+                                        ? const Icon(Icons.person,
+                                            size: 44, color: Color(0xFF1565C0))
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 18),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          user?.fullName ?? 'Nurse',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          user?.specializations?.isNotEmpty == true
+                                              ? user!.specializations!.first
+                                              : 'B.Sc Nursing',
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 18),
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      user?.fullName ?? 'Nurse',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.3,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      user?.specializations?.isNotEmpty == true
-                                          ? user!.specializations!.first
-                                          : 'B.Sc Nursing',
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                      ),
-                                    ),
-                                  ],
+                            ),
+                          ),
+                        ),
+
+                        // Stats card
+                        Positioned(
+                          bottom: 0,
+                          left: 20,
+                          right: 20,
+                          child: Container(
+                            height: 90,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.08),
+                                  blurRadius: 16,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                _buildStatItem(
+                                  '${_pendingBookings.length}',
+                                  "Today's Requests",
+                                ),
+                                _buildDivider(),
+                                _buildStatItem(
+                                  '${_dashboardData?['activeVisits'] ?? 0}',
+                                  "Accepted",
+                                ),
+                                _buildDivider(),
+                                _buildStatItem(
+                                  '${_dashboardData?['totalVisits'] ?? 0}',
+                                  "Completed",
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── NURSING REQUESTS HEADER ───────────────────────────────
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                    padding: const EdgeInsets.only(top: 24, bottom: 30),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Row(
+                            children: [
+                              const Text(
+                                'Nursing Requests',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF152238),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF1565C0),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const Spacer(),
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _showAllRequests = !_showAllRequests;
+                                  });
+                                },
+                                child: Text(
+                                  _showAllRequests ? 'View Less' : 'View All',
+                                  style: const TextStyle(
+                                    color: Color(0xFF1565C0),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                    ),
+                        const SizedBox(height: 10),
 
-                  // Stats card
-                    Positioned(
-                      bottom: 0,
-                      left: 20,
-                      right: 20,
-                      child: Container(
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
-                              blurRadius: 16,
-                              offset: const Offset(0, 4),
+                        // ─── BOOKING CARDS ─────────────────────────────────────────
+                        if (_pendingBookings.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(20.0),
+                            child: Center(
+                              child: Text(
+                                'No requests right now.',
+                                style: TextStyle(color: Colors.grey.shade500),
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            _buildStatItem(
-                              '${_pendingBookings.length}',
-                              "Today's Requests",
-                            ),
-                            _buildDivider(),
-                            _buildStatItem(
-                              '${_dashboardData?['activeVisits'] ?? 0}',
-                              "Accepted",
-                            ),
-                            _buildDivider(),
-                            _buildStatItem(
-                              '${_dashboardData?['totalVisits'] ?? 0}',
-                              "Completed",
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // ─── NURSING REQUESTS HEADER ───────────────────────────────
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
-                ),
-                padding: const EdgeInsets.only(top: 24, bottom: 30),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Row(
-                        children: [
-                          const Text(
-                            'Nursing Requests',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF152238),
-                              letterSpacing: 0.1,
+                          )
+                        else
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              children: _pendingBookings
+                                  .take(_showAllRequests ? _pendingBookings.length : 1)
+                                  .map((b) => _buildBookingCard(b))
+                                  .toList(),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 3),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                  // ─── MANAGE BANNER ─────────────────────────────────────────
+                  // Moved outside ScrollView
+                ],
+              ), // end Column (111)
+            ), // end SingleChildScrollView (109)
+          ), // end RefreshIndicator (107)
+        ), // end Expanded (106)
+          
+          // ─── Pinned MANAGE BANNER at the bottom ────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 5, 20, 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8EEF9),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 72,
+                    height: 72,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: Icon(Icons.assignment_outlined,
+                              size: 52, color: const Color(0xFF1565C0)),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 30,
+                            height: 30,
                             decoration: const BoxDecoration(
-                              color: Colors.green,
+                              color: Color(0xFF1565C0),
                               shape: BoxShape.circle,
                             ),
-                            child: Text(
-                              '${_pendingBookings.length}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: const Icon(Icons.add,
+                                size: 18, color: Colors.white),
                           ),
-                          const Spacer(),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _showAllRequests = !_showAllRequests;
-                              });
-                            },
-                            child: Text(
-                              _showAllRequests ? 'View Less' : 'View All',
-                              style: const TextStyle(
-                                color: Color(0xFF1565C0),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-
-                    const SizedBox(height: 10),
-
-                    // ─── BOOKING CARDS ─────────────────────────────────────────
-                    if (_pendingBookings.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Center(
-                          child: Text(
-                            'No requests right now.',
-                            style: TextStyle(color: Colors.grey.shade500),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Manage Your\nConsultations Easily',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF152238),
+                            height: 1.3,
                           ),
                         ),
-                      )
-                    else
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          children: _pendingBookings
-                              .take(_showAllRequests ? _pendingBookings.length : 1)
-                              .map((b) => _buildBookingCard(b))
-                              .toList(),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Check your requests, track consultations, and manage your progress all in one place.',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                            height: 1.4,
+                          ),
                         ),
-                      ),
-
-                    const SizedBox(height: 16),
-
-                    // ─── MANAGE BANNER ─────────────────────────────────────────
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 18),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8EEF9),
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        const SizedBox(height: 10),
+                        Row(
                           children: [
-                            SizedBox(
-                              width: 72,
-                              height: 72,
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    top: 0,
-                                    left: 0,
-                                    child: Icon(Icons.assignment_outlined,
-                                        size: 52,
-                                        color: const Color(0xFF1565C0)),
-                                  ),
-                                  Positioned(
-                                    bottom: 0,
-                                    right: 0,
-                                    child: Container(
-                                      width: 30,
-                                      height: 30,
-                                      decoration: const BoxDecoration(
-                                        color: Color(0xFF1565C0),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(Icons.add,
-                                          size: 18, color: Colors.white),
-                                    ),
-                                  ),
-                                ],
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF1565C0),
+                                shape: BoxShape.circle,
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Manage Your\nConsultations Easily',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF152238),
-                                      height: 1.3,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    'Check your requests, track consultations, and manage your progress all in one place.',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.grey.shade600,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFF1565C0),
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 5),
-                                      Container(
-                                        width: 8,
-                                        height: 8,
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade300,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                            const SizedBox(width: 5),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                shape: BoxShape.circle,
                               ),
                             ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      // Active Service Widget
-          if (_pendingBookings.isNotEmpty || (_dashboardData?['accepted'] ?? 0) > 0)
-            Positioned(
-              bottom: 24,
-              right: 24,
-              child: ActiveBookingFloatingWidget(
-                serviceType: 'nurse',
-                bookingDetails: const {
-                  'serviceType': 'nurse',
-                  'status': 'accepted',
-                  'provider': {'name': 'Care Plus', 'rating': 4.9},
-                },
-                onTap: () {
-                  final activeBookings = _pendingBookings.where((b) => b['status'] != 'requested').toList();
-                  
-                  if (activeBookings.length > 1) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BookingsScreen(),
-                      ),
-                    ).then((_) => _loadDashboard());
-                    return;
-                  }
-                  
-                  final targetBookingData = activeBookings.isNotEmpty 
-                      ? activeBookings.first 
-                      : _pendingBookings.first;
-                      
-                  final targetBookingId = targetBookingData['_id'].toString();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ActiveBookingScreen(
-                        bookingId: targetBookingId,
-                        bookingData: targetBookingData,
-                      ),
-                    ),
-                  ).then((_) => _loadDashboard());
-                },
+                  ),
+                ],
               ),
             ),
+          ),
         ],
-      ),
-    );
+      ), // end Column (104)
+    ],
+  ), // end Stack (102)
+); // end Scaffold (100)
   }
 
   Widget _buildStatItem(String value, String label) {

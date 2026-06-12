@@ -157,7 +157,7 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
     final notes = _bookingDetails?['notes'] ?? 'Patient requested morning sample collection.';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6FB),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Lab Test Request Details',
@@ -179,8 +179,9 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2)),
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4)),
                   ],
                 ),
                 padding: const EdgeInsets.all(12),
@@ -263,8 +264,9 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2)),
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4)),
                   ],
                 ),
                 padding: const EdgeInsets.all(12),
@@ -292,8 +294,9 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.withOpacity(0.2)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 2)),
+                    BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15, offset: const Offset(0, 4)),
                   ],
                 ),
                 padding: const EdgeInsets.all(12),

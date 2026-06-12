@@ -13,7 +13,7 @@ class UploadDocumentScreen extends StatefulWidget {
 class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
   final _apiClient = OnMintApiClient();
   final _descriptionController = TextEditingController();
-  
+
   String _selectedType = 'medical_report';
   PlatformFile? _selectedFile;
   bool _isUploading = false;
@@ -61,8 +61,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
         filePath: _selectedFile!.path!,
         fileName: _selectedFile!.name,
         documentType: _selectedType,
-        description: _descriptionController.text.isEmpty 
-            ? null 
+        description: _descriptionController.text.isEmpty
+            ? null
             : _descriptionController.text,
       );
 
@@ -132,9 +132,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                 }
               },
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // File Selection
             const Text(
               'Select File',
@@ -144,7 +144,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             if (_selectedFile == null)
               InkWell(
                 onTap: _pickFile,
@@ -218,9 +218,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                   ),
                 ),
               ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Description
             const Text(
               'Description (Optional)',
@@ -239,9 +239,9 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
               ),
               maxLines: 3,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Upload Button
             SizedBox(
               width: double.infinity,
@@ -253,7 +253,8 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Icon(Icons.upload),

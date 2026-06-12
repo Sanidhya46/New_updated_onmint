@@ -10,6 +10,7 @@ class CustomTextField extends StatefulWidget {
   final String? Function(String?)? validator;
   final void Function(String)? onChanged;
   final IconData? prefixIcon;
+  final Widget? prefix;
   final Widget? suffixIcon;
   final int? maxLines;
   final int? maxLength;
@@ -27,6 +28,7 @@ class CustomTextField extends StatefulWidget {
     this.validator,
     this.onChanged,
     this.prefixIcon,
+    this.prefix,
     this.suffixIcon,
     this.maxLines = 1,
     this.maxLength,
@@ -76,6 +78,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           decoration: InputDecoration(
             hintText: widget.hint,
             prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon) : null,
+            prefix: widget.prefix,
             suffixIcon: widget.obscureText
                 ? IconButton(
                     icon: Icon(

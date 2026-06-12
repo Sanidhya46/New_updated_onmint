@@ -22,7 +22,16 @@ class _BloodBankDetailScreenState extends State<BloodBankDetailScreen> {
   bool _isLoading = true;
   String? _error;
 
-  final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+  final List<String> _bloodGroups = [
+    'A+',
+    'A-',
+    'B+',
+    'B-',
+    'AB+',
+    'AB-',
+    'O+',
+    'O-'
+  ];
 
   @override
   void initState() {
@@ -37,7 +46,8 @@ class _BloodBankDetailScreenState extends State<BloodBankDetailScreen> {
     });
 
     try {
-      final response = await _apiClient.patient.getBloodBankDetails(widget.bloodBankId);
+      final response =
+          await _apiClient.patient.getBloodBankDetails(widget.bloodBankId);
 
       setState(() {
         _bloodBank = response;
@@ -98,16 +108,14 @@ class _BloodBankDetailScreenState extends State<BloodBankDetailScreen> {
                         ],
                       ),
                     ),
-      bottomNavigationBar: _bloodBank != null
-          ? _buildRequestButton()
-          : null,
+      bottomNavigationBar: _bloodBank != null ? _buildRequestButton() : null,
     );
   }
 
   Widget _buildHeader() {
     final rating = _bloodBank!['rating']?.toDouble() ?? 0.0;
     final reviewCount = _bloodBank!['reviewCount'] ?? 0;
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -258,7 +266,7 @@ class _BloodBankDetailScreenState extends State<BloodBankDetailScreen> {
 
   Widget _buildBloodStockSection() {
     final bloodStock = _bloodBank!['bloodStock'] ?? {};
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -280,7 +288,8 @@ class _BloodBankDetailScreenState extends State<BloodBankDetailScreen> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
                       childAspectRatio: 2.5,
                       crossAxisSpacing: 12,
@@ -292,7 +301,7 @@ class _BloodBankDetailScreenState extends State<BloodBankDetailScreen> {
                       final units = bloodStock[group] ?? 0;
                       final color = _getStockColor(units);
                       final status = _getStockStatus(units);
-                      
+
                       return Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(

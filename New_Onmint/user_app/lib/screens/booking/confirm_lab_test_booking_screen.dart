@@ -22,10 +22,12 @@ class ConfirmLabTestBookingScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<ConfirmLabTestBookingScreen> createState() => _ConfirmLabTestBookingScreenState();
+  State<ConfirmLabTestBookingScreen> createState() =>
+      _ConfirmLabTestBookingScreenState();
 }
 
-class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScreen> {
+class _ConfirmLabTestBookingScreenState
+    extends State<ConfirmLabTestBookingScreen> {
   String _selectedPayment = 'upi';
   bool _isBooking = false;
   final OnMintApiClient _apiClient = OnMintApiClient();
@@ -39,12 +41,15 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
   Future<void> _handlePayAndConfirm() async {
     setState(() => _isBooking = true);
     try {
-      final testsArray = widget.selectedTests.map((t) => {
-        'name': t.name,
-        'price': t.price,
-      }).toList();
+      final testsArray = widget.selectedTests
+          .map((t) => {
+                'name': t.name,
+                'price': t.price,
+              })
+          .toList();
 
-      final totalAmount = widget.selectedTests.fold(0.0, (sum, item) => sum + item.price);
+      final totalAmount =
+          widget.selectedTests.fold(0.0, (sum, item) => sum + item.price);
 
       final bookingData = {
         'serviceType': 'labtest',
@@ -80,8 +85,10 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
 
   @override
   Widget build(BuildContext context) {
-    final totalAmount = widget.selectedTests.fold(0.0, (sum, item) => sum + item.price);
-    final String formattedDate = DateFormat('dd MMM yyyy').format(widget.preferredDate);
+    final totalAmount =
+        widget.selectedTests.fold(0.0, (sum, item) => sum + item.price);
+    final String formattedDate =
+        DateFormat('dd MMM yyyy').format(widget.preferredDate);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA), // Ice Purple background
@@ -107,63 +114,73 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: ElevatedButton(
-                  onPressed: _isBooking ? null : _handlePayAndConfirm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6C2BD9), // Purple button
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+            SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: _isBooking ? null : _handlePayAndConfirm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6C2BD9), // Purple button
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: _isBooking
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.lock_outline, color: Colors.white, size: 18),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  'Pay Rs. ${totalAmount.toInt()} & Confirm Booking',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                                ),
+                ),
+                child: _isBooking
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.lock_outline,
+                              color: Colors.white, size: 18),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Pay Rs. ${totalAmount.toInt()} & Confirm Booking',
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward_rounded,
+                              color: Colors.white, size: 18),
+                        ],
+                      ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.verified_user_outlined,
+                    color: Colors.grey[500], size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  'By proceeding, you agree to our ',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 11),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.verified_user_outlined, color: Colors.grey[500], size: 14),
-                  const SizedBox(width: 6),
-                  Text(
-                    'By proceeding, you agree to our ',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 11),
-                  ),
-                  Text(
-                    'Terms & Conditions',
-                    style: TextStyle(color: Colors.purple[700], fontSize: 11, decoration: TextDecoration.underline),
-                  ),
-                ],
-              ),
-              SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 6),
-            ],
-          ),
+                Text(
+                  'Terms & Conditions',
+                  style: TextStyle(
+                      color: Colors.purple[700],
+                      fontSize: 11,
+                      decoration: TextDecoration.underline),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom > 0 ? 0 : 6),
+          ],
         ),
+      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,14 +198,14 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
                     height: 150,
                     color: Colors.purple[100],
                     alignment: Alignment.center,
-                    child: const Text('Banner Image Missing', style: TextStyle(color: Colors.purple)),
+                    child: const Text('Banner Image Missing',
+                        style: TextStyle(color: Colors.purple)),
                   ),
                 ),
-
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Booking Summary
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -207,24 +224,25 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Row(
-                      children: [
-                        Icon(Icons.receipt_long_outlined, color: Colors.purple[700], size: 18),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Order Summary',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                  Row(
+                    children: [
+                      Icon(Icons.receipt_long_outlined,
+                          color: Colors.purple[700], size: 18),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Order Summary',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 6),
                   const Divider(height: 1),
                   const SizedBox(height: 10),
-                  
+
                   // Tests details
                   Container(
                     padding: const EdgeInsets.all(10),
@@ -235,22 +253,37 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
                     ),
                     child: Column(
                       children: [
-                        ...widget.selectedTests.map((test) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(test.name, style: TextStyle(color: Colors.grey[800], fontSize: 11)),
-                              Text('Rs. ${test.price.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                            ],
-                          ),
-                        )).toList(),
+                        ...widget.selectedTests
+                            .map((test) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 4.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(test.name,
+                                          style: TextStyle(
+                                              color: Colors.grey[800],
+                                              fontSize: 11)),
+                                      Text('Rs. ${test.price.toInt()}',
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 11)),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
                         const Divider(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total Lab Tests', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-                            Text('Rs. ${totalAmount.toInt()}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.purple)),
+                            const Text('Total Lab Tests',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 11)),
+                            Text('Rs. ${totalAmount.toInt()}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                    color: Colors.purple)),
                           ],
                         ),
                       ],
@@ -258,14 +291,19 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
                   ),
                   const SizedBox(height: 12),
 
-                  _buildDetailRow(Icons.calendar_today, 'Sample Collection Date', formattedDate),
-                  _buildDetailRow(Icons.location_on, 'Collection Address', widget.address),
-                  _buildDetailRow(Icons.person, 'Patient Name', widget.contactName),
-                  _buildDetailRow(Icons.phone, 'Mobile Number', widget.phoneNumber, isLast: true),
+                  _buildDetailRow(Icons.calendar_today,
+                      'Sample Collection Date', formattedDate),
+                  _buildDetailRow(
+                      Icons.location_on, 'Collection Address', widget.address),
+                  _buildDetailRow(
+                      Icons.person, 'Patient Name', widget.contactName),
+                  _buildDetailRow(
+                      Icons.phone, 'Mobile Number', widget.phoneNumber,
+                      isLast: true),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
 
             // Payment Details Section
@@ -286,59 +324,65 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Row(
+                  Row(
+                    children: [
+                      Icon(Icons.credit_card,
+                          color: Colors.purple[700], size: 18),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Payment Details',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.purple[200]!),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(Icons.credit_card, color: Colors.purple[700], size: 18),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Payment Details',
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Total Amount',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            Text(
+                              'Service Fee (Non-Refundable)',
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 9),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          'Rs. ${totalAmount.toInt()}',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: Colors.purple[700],
                           ),
                         ),
                       ],
                     ),
-                  const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.purple[200]!),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Total Amount',
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                              ),
-                              Text(
-                                'Service Fee (Non-Refundable)',
-                                style: TextStyle(color: Colors.grey[600], fontSize: 9),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            'Rs. ${totalAmount.toInt()}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.purple[700],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                  ),
                   const SizedBox(height: 12),
                   _buildPaymentOption('UPI', 'upi', Icons.qr_code),
-                  _buildPaymentOption('Debit / Credit Card', 'card', Icons.credit_card, trailingIcon: true),
-                  _buildPaymentOption('Bank Transfer', 'bank', Icons.account_balance),
-                  
+                  _buildPaymentOption(
+                      'Debit / Credit Card', 'card', Icons.credit_card,
+                      trailingIcon: true),
+                  _buildPaymentOption(
+                      'Bank Transfer', 'bank', Icons.account_balance),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -348,7 +392,8 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.verified_user, color: Colors.green[600], size: 18),
+                        Icon(Icons.verified_user,
+                            color: Colors.green[600], size: 18),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
@@ -356,16 +401,21 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
                             children: [
                               Text(
                                 '100% Secure Payment',
-                                style: TextStyle(color: Colors.green[800], fontWeight: FontWeight.bold, fontSize: 11),
+                                style: TextStyle(
+                                    color: Colors.green[800],
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11),
                               ),
                               Text(
                                 'Your payment information is safe and encrypted',
-                                style: TextStyle(color: Colors.green[700], fontSize: 10),
+                                style: TextStyle(
+                                    color: Colors.green[700], fontSize: 10),
                               ),
                             ],
                           ),
                         ),
-                        Icon(Icons.lock_outline, color: Colors.green[600], size: 16),
+                        Icon(Icons.lock_outline,
+                            color: Colors.green[600], size: 16),
                       ],
                     ),
                   ),
@@ -379,7 +429,8 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value, {bool isLast = false}) {
+  Widget _buildDetailRow(IconData icon, String label, String value,
+      {bool isLast = false}) {
     return Column(
       children: [
         Row(
@@ -391,7 +442,10 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
               flex: 2,
               child: Text(
                 label,
-                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 11),
+                style: const TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11),
               ),
             ),
             Expanded(
@@ -399,7 +453,10 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.normal, fontSize: 11),
+                style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.normal,
+                    fontSize: 11),
               ),
             ),
           ],
@@ -410,16 +467,18 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
     );
   }
 
-  Widget _buildPaymentOption(String title, String id, IconData icon, {bool trailingIcon = false}) {
+  Widget _buildPaymentOption(String title, String id, IconData icon,
+      {bool trailingIcon = false}) {
     final isSelected = _selectedPayment == id;
-    
+
     return GestureDetector(
       onTap: () => setState(() => _selectedPayment = id),
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          border: Border.all(color: isSelected ? Colors.purple[700]! : Colors.grey[300]!),
+          border: Border.all(
+              color: isSelected ? Colors.purple[700]! : Colors.grey[300]!),
           borderRadius: BorderRadius.circular(8),
           color: isSelected ? Colors.purple[50] : Colors.transparent,
         ),
@@ -442,22 +501,31 @@ class _ConfirmLabTestBookingScreenState extends State<ConfirmLabTestBookingScree
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w500, fontSize: 11),
               ),
             ),
             if (trailingIcon)
               Row(
                 children: [
                   Container(
-                    width: 24, height: 14,
+                    width: 24,
+                    height: 14,
                     color: Colors.blue[800],
                     alignment: Alignment.center,
-                    child: const Text('VISA', style: TextStyle(color: Colors.white, fontSize: 6, fontWeight: FontWeight.bold)),
+                    child: const Text('VISA',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 6,
+                            fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(width: 4),
                   Container(
-                    width: 24, height: 14,
-                    decoration: BoxDecoration(color: Colors.orange[200], borderRadius: BorderRadius.circular(2)),
+                    width: 24,
+                    height: 14,
+                    decoration: BoxDecoration(
+                        color: Colors.orange[200],
+                        borderRadius: BorderRadius.circular(2)),
                   ),
                 ],
               ),

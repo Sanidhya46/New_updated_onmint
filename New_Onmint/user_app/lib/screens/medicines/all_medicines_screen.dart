@@ -3,24 +3,25 @@ import 'package:api_client/api_client.dart';
 
 class AllMedicinesScreen extends StatefulWidget {
   final String? category;
-  
+
   const AllMedicinesScreen({super.key, this.category});
 
   @override
   State<AllMedicinesScreen> createState() => _AllMedicinesScreenState();
 }
 
-class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTickerProviderStateMixin {
+class _AllMedicinesScreenState extends State<AllMedicinesScreen>
+    with SingleTickerProviderStateMixin {
   final PatientService _patientService = PatientService();
   late TabController _tabController;
-  
+
   List<Map<String, dynamic>> _allMedicines = [];
   List<Map<String, dynamic>> _filteredMedicines = [];
   bool _isLoading = true;
   String _selectedCategory = 'All';
   String _selectedSort = 'Popular';
   String _searchQuery = '';
-  
+
   final List<String> _categories = [
     'All',
     'Pain Relief',
@@ -32,7 +33,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
     'Respiratory',
     'Digestive',
   ];
-  
+
   final List<String> _sortOptions = [
     'Popular',
     'Price: Low to High',
@@ -46,7 +47,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     _loadMedicines();
-    
+
     // Set initial tab based on category argument
     if (widget.category != null) {
       switch (widget.category) {
@@ -74,13 +75,13 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
 
   Future<void> _loadMedicines() async {
     if (!mounted) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       final response = await _patientService.searchMedicines(limit: 100);
       final medicines = response['data'] ?? [];
-      
+
       if (mounted) {
         setState(() {
           _allMedicines = List<Map<String, dynamic>>.from(medicines);
@@ -100,7 +101,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
 
   void _applyFilters() {
     List<Map<String, dynamic>> filtered = List.from(_allMedicines);
-    
+
     // Apply category filter
     if (_selectedCategory != 'All') {
       filtered = filtered.where((m) {
@@ -108,7 +109,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
         return category != null && category == _selectedCategory;
       }).toList();
     }
-    
+
     // Apply search filter
     if (_searchQuery.isNotEmpty) {
       filtered = filtered.where((m) {
@@ -118,37 +119,35 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
         return name.contains(query) || genericName.contains(query);
       }).toList();
     }
-    
+
     // Apply sorting
     switch (_selectedSort) {
       case 'Price: Low to High':
-        filtered.sort((a, b) => 
-          (a['discountedPrice'] ?? a['price'] ?? 0).compareTo(b['discountedPrice'] ?? b['price'] ?? 0)
-        );
+        filtered.sort((a, b) => (a['discountedPrice'] ?? a['price'] ?? 0)
+            .compareTo(b['discountedPrice'] ?? b['price'] ?? 0));
         break;
       case 'Price: High to Low':
-        filtered.sort((a, b) => 
-          (b['discountedPrice'] ?? b['price'] ?? 0).compareTo(a['discountedPrice'] ?? a['price'] ?? 0)
-        );
+        filtered.sort((a, b) => (b['discountedPrice'] ?? b['price'] ?? 0)
+            .compareTo(a['discountedPrice'] ?? a['price'] ?? 0));
         break;
       case 'Discount':
         filtered.sort((a, b) {
-          final aDiscount = a['discountedPrice'] != null 
-            ? ((a['price'] - a['discountedPrice']) / a['price'] * 100)
-            : 0;
-          final bDiscount = b['discountedPrice'] != null 
-            ? ((b['price'] - b['discountedPrice']) / b['price'] * 100)
-            : 0;
+          final aDiscount = a['discountedPrice'] != null
+              ? ((a['price'] - a['discountedPrice']) / a['price'] * 100)
+              : 0;
+          final bDiscount = b['discountedPrice'] != null
+              ? ((b['price'] - b['discountedPrice']) / b['price'] * 100)
+              : 0;
           return bDiscount.compareTo(aDiscount);
         });
         break;
       case 'Name: A-Z':
-        filtered.sort((a, b) => 
-          (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString())
-        );
+        filtered.sort((a, b) => (a['name'] ?? '')
+            .toString()
+            .compareTo((b['name'] ?? '').toString()));
         break;
     }
-    
+
     setState(() {
       _filteredMedicines = filtered;
     });
@@ -176,7 +175,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
               ),
               actions: [
                 IconButton(
-                  icon: const Icon(Icons.shopping_cart_outlined, color: Color(0xFF667EEA)),
+                  icon: const Icon(Icons.shopping_cart_outlined,
+                      color: Color(0xFF667EEA)),
                   onPressed: () {
                     Navigator.pushNamed(context, '/cart');
                   },
@@ -202,9 +202,11 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         },
                         decoration: InputDecoration(
                           hintText: 'Search medicines...',
-                          prefixIcon: const Icon(Icons.search, color: Color(0xFF667EEA)),
+                          prefixIcon: const Icon(Icons.search,
+                              color: Color(0xFF667EEA)),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
                           suffixIcon: _searchQuery.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear),
@@ -219,7 +221,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         ),
                       ),
                     ),
-                    
+
                     // Filter Chips
                     Container(
                       height: 50,
@@ -231,16 +233,20 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                             child: GestureDetector(
                               onTap: _showCategoryFilter,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF667EEA).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF667EEA).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF667EEA)),
+                                  border: Border.all(
+                                      color: const Color(0xFF667EEA)),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.category, size: 18, color: Color(0xFF667EEA)),
+                                    const Icon(Icons.category,
+                                        size: 18, color: Color(0xFF667EEA)),
                                     const SizedBox(width: 8),
                                     Flexible(
                                       child: Text(
@@ -254,7 +260,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF667EEA)),
+                                    const Icon(Icons.arrow_drop_down,
+                                        size: 18, color: Color(0xFF667EEA)),
                                   ],
                                 ),
                               ),
@@ -266,16 +273,20 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                             child: GestureDetector(
                               onTap: _showSortFilter,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.1),
+                                  color:
+                                      const Color(0xFF10B981).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFF10B981)),
+                                  border: Border.all(
+                                      color: const Color(0xFF10B981)),
                                 ),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(Icons.sort, size: 18, color: Color(0xFF10B981)),
+                                    const Icon(Icons.sort,
+                                        size: 18, color: Color(0xFF10B981)),
                                     const SizedBox(width: 8),
                                     Flexible(
                                       child: Text(
@@ -289,7 +300,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                                       ),
                                     ),
                                     const SizedBox(width: 4),
-                                    const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF10B981)),
+                                    const Icon(Icons.arrow_drop_down,
+                                        size: 18, color: Color(0xFF10B981)),
                                   ],
                                 ),
                               ),
@@ -298,7 +310,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         ],
                       ),
                     ),
-                    
+
                     // Tabs
                     Container(
                       color: Colors.white,
@@ -307,7 +319,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         labelColor: const Color(0xFF667EEA),
                         unselectedLabelColor: Colors.grey,
                         indicatorColor: const Color(0xFF667EEA),
-                        labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                        labelStyle: const TextStyle(
+                            fontWeight: FontWeight.w600, fontSize: 13),
                         tabs: const [
                           Tab(text: 'Featured'),
                           Tab(text: 'Popular'),
@@ -338,7 +351,9 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
   }
 
   List<Map<String, dynamic>> _getDiscountedMedicines() {
-    return _filteredMedicines.where((m) => m['discountedPrice'] != null).toList();
+    return _filteredMedicines
+        .where((m) => m['discountedPrice'] != null)
+        .toList();
   }
 
   Widget _buildMedicineGrid(List<Map<String, dynamic>> medicines) {
@@ -361,12 +376,12 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
         ),
       );
     }
-    
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 0.57,  // 160/280 = 0.57 for phone-friendly cards
+        childAspectRatio: 0.57, // 160/280 = 0.57 for phone-friendly cards
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -381,13 +396,14 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
     final name = medicine['name']?.toString() ?? 'Medicine';
     final price = medicine['discountedPrice'] ?? medicine['price'] ?? 0;
     final originalPrice = medicine['price'] ?? price;
-    final hasDiscount = medicine['discountedPrice'] != null && originalPrice > price;
-    final discountPercent = hasDiscount 
+    final hasDiscount =
+        medicine['discountedPrice'] != null && originalPrice > price;
+    final discountPercent = hasDiscount
         ? ((originalPrice - price) / originalPrice * 100).round()
         : 0;
     final medicineId = medicine['_id']?.toString() ?? '';
     final manufacturer = medicine['manufacturer']?.toString() ?? '';
-    
+
     return GestureDetector(
       onTap: () {
         if (medicineId.isNotEmpty) {
@@ -417,7 +433,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
             Stack(
               children: [
                 Container(
-                  height: 100,  // Reduced from 140 to match home page
+                  height: 100, // Reduced from 140 to match home page
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
                     borderRadius: const BorderRadius.vertical(
@@ -482,7 +498,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                 ),
               ],
             ),
-            
+
             // Medicine details
             Expanded(
               child: Padding(
@@ -502,7 +518,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    
+
                     // Manufacturer
                     if (manufacturer.isNotEmpty)
                       Text(
@@ -514,9 +530,9 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    
+
                     const Spacer(),
-                    
+
                     // Rating
                     Row(
                       children: [
@@ -536,9 +552,9 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 8),
-                    
+
                     // Price
                     Row(
                       children: [
@@ -563,9 +579,9 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                         ],
                       ],
                     ),
-                    
+
                     const SizedBox(height: 12),
-                    
+
                     // Buttons
                     Row(
                       children: [
@@ -610,10 +626,10 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                           child: IconButton(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Added to cart'),
-                                duration: Duration(seconds: 2),
-                              ),
+                                const SnackBar(
+                                  content: Text('Added to cart'),
+                                  duration: Duration(seconds: 2),
+                                ),
                               );
                             },
                             icon: const Icon(
@@ -639,19 +655,19 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
 
   Widget _buildMedicineImage(Map<String, dynamic> medicine) {
     String? imageUrl;
-    
+
     // Try to get image from various fields
     if (medicine['images'] != null && (medicine['images'] as List).isNotEmpty) {
       imageUrl = medicine['images'][0];
     } else if (medicine['imageUrl'] != null) {
       imageUrl = medicine['imageUrl'];
     }
-    
+
     // Fix relative URLs
     if (imageUrl != null && imageUrl.startsWith('/images/')) {
       imageUrl = 'http://localhost:5000$imageUrl';
     }
-    
+
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return Image.network(
         imageUrl,
@@ -663,7 +679,8 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
           return Center(
             child: CircularProgressIndicator(
               value: loadingProgress.expectedTotalBytes != null
-                  ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                  ? loadingProgress.cumulativeBytesLoaded /
+                      loadingProgress.expectedTotalBytes!
                   : null,
             ),
           );
@@ -679,7 +696,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
         },
       );
     }
-    
+
     return Center(
       child: Icon(
         Icons.medication,
@@ -733,8 +750,10 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen> with SingleTick
                     title: Text(
                       category,
                       style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? const Color(0xFF667EEA) : Colors.black,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color:
+                            isSelected ? const Color(0xFF667EEA) : Colors.black,
                       ),
                     ),
                     onTap: () {

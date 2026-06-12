@@ -69,15 +69,28 @@ const getBookingDetails = async (req, res) => {
     const { id } = req.params;
     const pathologyId = req.user.userId;
 
-    const booking = await Booking.findById(id)
+    let booking = await Booking.findById(id)
       .populate('patient', 'firstName lastName phone email age gender address')
       .populate('provider', 'labName testsOffered firstName lastName');
+    
+    let isRealTime = false;
+    if (!booking) {
+      const { RealTimeBooking } = await import('../models/RealTimeBooking.model.js');
+      booking = await RealTimeBooking.findById(id)
+        .populate('patient', 'firstName lastName phone email age gender address')
+        .populate('acceptedProvider', 'labName testsOffered firstName lastName');
+      if (booking) isRealTime = true;
+    }
 
     if (!booking) {
       return res.status(404).json(errorResponse('Booking not found'));
     }
 
-    if (booking.provider._id.toString() !== pathologyId) {
+    const providerIdToCompare = isRealTime 
+      ? (booking.acceptedProvider?._id || booking.acceptedProvider)?.toString() 
+      : (booking.provider?._id || booking.provider)?.toString();
+
+    if (providerIdToCompare !== pathologyId) {
       return res.status(403).json(errorResponse('Not authorized'));
     }
 
@@ -85,6 +98,9 @@ const getBookingDetails = async (req, res) => {
     const formattedBooking = booking.toObject();
     if (formattedBooking.patient) {
       formattedBooking.patient.fullName = `${formattedBooking.patient.firstName || ''} ${formattedBooking.patient.lastName || ''}`.trim();
+    }
+    if (isRealTime && formattedBooking.acceptedProvider) {
+      formattedBooking.provider = formattedBooking.acceptedProvider;
     }
 
     res.json(successResponse('Booking details fetched', formattedBooking));
@@ -217,15 +233,23 @@ const uploadReport = async (req, res) => {
       return res.status(400).json(errorResponse('Report file required'));
     }
 
-    const booking = await Booking.findById(id).populate('patient', 'firstName lastName phone email');
+    let booking = await Booking.findById(id).populate('patient', 'firstName lastName phone email');
+    let isRealTime = false;
 
     if (!booking) {
-      console.error('❌ Booking not found:', id);
-      return res.status(404).json(errorResponse('Booking not found'));
+      const { RealTimeBooking } = await import('../models/RealTimeBooking.model.js');
+      booking = await RealTimeBooking.findById(id).populate('patient', 'firstName lastName phone email');
+      if (booking) {
+        isRealTime = true;
+      } else {
+        console.error('❌ Booking not found:', id);
+        return res.status(404).json(errorResponse('Booking not found'));
+      }
     }
 
-    if (booking.provider.toString() !== pathologyId) {
-      console.error('❌ Not authorized. Provider:', booking.provider.toString(), 'User:', pathologyId);
+    const providerIdToCompare = isRealTime ? booking.acceptedProvider?.toString() : booking.provider?.toString();
+    if (providerIdToCompare !== pathologyId) {
+      console.error('❌ Not authorized. Provider:', providerIdToCompare, 'User:', pathologyId);
       return res.status(403).json(errorResponse('Not authorized'));
     }
 
@@ -233,7 +257,11 @@ const uploadReport = async (req, res) => {
 
     booking.report = `/uploads/report/${file.filename}`;
     booking.status = 'completed';
-    booking.reportUploadedAt = new Date();
+    if (!isRealTime) {
+      booking.reportUploadedAt = new Date();
+    } else {
+      booking.endTime = new Date();
+    }
     await booking.save();
 
     console.log('✅ Report saved to booking:', booking.report);
@@ -312,10 +340,16 @@ const updateBookingStatus = async (req, res) => {
     const pathologyId = req.user.userId;
     const { status, notes } = req.body;
 
-    const booking = await Booking.findById(id);
+    let booking = await Booking.findById(id);
 
     if (!booking) {
-      return res.status(404).json(errorResponse('Booking not found'));
+      try {
+        const { realTimeBookingService } = await import('../services/realTimeBooking.service.js');
+        const updatedBooking = await realTimeBookingService.updateBookingStatus(id, pathologyId, status);
+        return res.json(successResponse('Booking status updated', updatedBooking));
+      } catch (rtError) {
+        return res.status(404).json(errorResponse(rtError.message || 'Booking not found'));
+      }
     }
 
     if (booking.provider.toString() !== pathologyId) {

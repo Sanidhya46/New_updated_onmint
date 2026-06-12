@@ -21,7 +21,8 @@ class CartScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.shopping_cart_outlined, size: 100, color: Colors.grey[300]),
+                  Icon(Icons.shopping_cart_outlined,
+                      size: 100, color: Colors.grey[300]),
                   const SizedBox(height: 16),
                   Text(
                     'Your cart is empty',
@@ -69,12 +70,16 @@ class CartScreen extends StatelessWidget {
                                       child: Image.network(
                                         item.imageUrl!,
                                         fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Icon(Icons.medication, color: AppColors.pharmacy, size: 30);
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                          return const Icon(Icons.medication,
+                                              color: AppColors.pharmacy,
+                                              size: 30);
                                         },
                                       ),
                                     )
-                                  : const Icon(Icons.medication, color: AppColors.pharmacy, size: 30),
+                                  : const Icon(Icons.medication,
+                                      color: AppColors.pharmacy, size: 30),
                             ),
                             const SizedBox(width: 12),
                             // Medicine Details
@@ -111,10 +116,12 @@ class CartScreen extends StatelessWidget {
                                     IconButton(
                                       onPressed: () {
                                         if (item.quantity > 1) {
-                                          cart.updateQuantity(item.medicineId, item.quantity - 1);
+                                          cart.updateQuantity(item.medicineId,
+                                              item.quantity - 1);
                                         }
                                       },
-                                      icon: const Icon(Icons.remove_circle_outline),
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline),
                                       color: AppColors.pharmacy,
                                     ),
                                     Text(
@@ -126,15 +133,18 @@ class CartScreen extends StatelessWidget {
                                     ),
                                     IconButton(
                                       onPressed: () {
-                                        cart.updateQuantity(item.medicineId, item.quantity + 1);
+                                        cart.updateQuantity(
+                                            item.medicineId, item.quantity + 1);
                                       },
-                                      icon: const Icon(Icons.add_circle_outline),
+                                      icon:
+                                          const Icon(Icons.add_circle_outline),
                                       color: AppColors.pharmacy,
                                     ),
                                   ],
                                 ),
                                 TextButton(
-                                  onPressed: () => cart.removeItem(item.medicineId),
+                                  onPressed: () =>
+                                      cart.removeItem(item.medicineId),
                                   child: const Text(
                                     'Remove',
                                     style: TextStyle(color: Colors.red),
@@ -215,7 +225,8 @@ class CartScreen extends StatelessWidget {
                         ),
                         child: const Text(
                           'Proceed to Checkout',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),

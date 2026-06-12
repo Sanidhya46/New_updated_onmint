@@ -5,7 +5,7 @@ import 'cart_screen.dart';
 
 class MedicineDetailScreen extends StatefulWidget {
   final String medicineId;
-  
+
   const MedicineDetailScreen({super.key, required this.medicineId});
 
   @override
@@ -18,25 +18,25 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
   Map<String, dynamic>? _medicine;
   bool _isLoading = true;
   int _quantity = 1;
-  
+
   @override
   void initState() {
     super.initState();
     _loadMedicine();
   }
-  
+
   Future<void> _loadMedicine() async {
     if (!mounted) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       await _apiClient.initialize();
-      
+
       // Use getMedicineById instead of search
       final PatientService patientService = PatientService();
       final medicine = await patientService.getMedicineById(widget.medicineId);
-      
+
       if (mounted) {
         setState(() {
           _medicine = medicine;
@@ -52,21 +52,21 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
       }
     }
   }
-  
+
   void _addToCart() {
     if (_medicine == null) return;
-    
+
     for (int i = 0; i < _quantity; i++) {
       _cartService.addItem(
         _medicine!['_id'],
         _medicine!['name'],
         (_medicine!['discountedPrice'] ?? _medicine!['price']).toDouble(),
-        _medicine!['imagesSigned']?.isNotEmpty == true 
-          ? _medicine!['imagesSigned'][0] 
-          : null,
+        _medicine!['imagesSigned']?.isNotEmpty == true
+            ? _medicine!['imagesSigned'][0]
+            : null,
       );
     }
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$_quantity x ${_medicine!['name']} added to cart'),
@@ -83,7 +83,7 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
       ),
     );
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,7 +151,7 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                           color: Colors.grey[200],
                           child: const Icon(Icons.medication, size: 100),
                         ),
-                      
+
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
@@ -166,7 +166,7 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            
+
                             // Generic Name
                             if (_medicine!['genericName'] != null)
                               Text(
@@ -177,7 +177,7 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                                 ),
                               ),
                             const SizedBox(height: 16),
-                            
+
                             // Price
                             Row(
                               children: [
@@ -222,42 +222,45 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                               ],
                             ),
                             const SizedBox(height: 16),
-                            
+
                             // Stock Status
                             Row(
                               children: [
                                 Icon(
-                                  _medicine!['stock'] > 0 
-                                    ? Icons.check_circle 
-                                    : Icons.cancel,
-                                  color: _medicine!['stock'] > 0 
-                                    ? Colors.green 
-                                    : Colors.red,
+                                  _medicine!['stock'] > 0
+                                      ? Icons.check_circle
+                                      : Icons.cancel,
+                                  color: _medicine!['stock'] > 0
+                                      ? Colors.green
+                                      : Colors.red,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  _medicine!['stock'] > 0 
-                                    ? 'In Stock (${_medicine!['stock']} available)' 
-                                    : 'Out of Stock',
+                                  _medicine!['stock'] > 0
+                                      ? 'In Stock (${_medicine!['stock']} available)'
+                                      : 'Out of Stock',
                                   style: TextStyle(
-                                    color: _medicine!['stock'] > 0 
-                                      ? Colors.green 
-                                      : Colors.red,
+                                    color: _medicine!['stock'] > 0
+                                        ? Colors.green
+                                        : Colors.red,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 24),
-                            
+
                             // Details
-                            _buildDetailRow('Manufacturer', _medicine!['manufacturer']),
+                            _buildDetailRow(
+                                'Manufacturer', _medicine!['manufacturer']),
                             _buildDetailRow('Category', _medicine!['category']),
-                            _buildDetailRow('Dosage Form', _medicine!['dosageForm']),
+                            _buildDetailRow(
+                                'Dosage Form', _medicine!['dosageForm']),
                             _buildDetailRow('Strength', _medicine!['strength']),
-                            _buildDetailRow('Packaging', _medicine!['packaging']),
-                            
+                            _buildDetailRow(
+                                'Packaging', _medicine!['packaging']),
+
                             if (_medicine!['requiresPrescription'] == true)
                               Container(
                                 margin: const EdgeInsets.only(top: 16),
@@ -283,9 +286,9 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                                   ],
                                 ),
                               ),
-                            
+
                             const SizedBox(height: 24),
-                            
+
                             // Description
                             if (_medicine!['description'] != null) ...[
                               const Text(
@@ -357,7 +360,7 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Add to Cart Button
                   Expanded(
                     child: ElevatedButton(
@@ -385,10 +388,10 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
           : null,
     );
   }
-  
+
   Widget _buildDetailRow(String label, String? value) {
     if (value == null || value.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(

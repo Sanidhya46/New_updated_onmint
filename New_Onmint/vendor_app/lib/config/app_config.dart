@@ -14,6 +14,7 @@ class AppConfig {
     'ambulance',
     'bloodbank',
     'pathology',
+    'labtest',
   ];
   
   // Role display names
@@ -24,6 +25,7 @@ class AppConfig {
     'ambulance': 'Ambulance Driver',
     'bloodbank': 'Blood Bank',
     'pathology': 'Pathology Lab',
+    'labtest': 'Lab Test',
   };
   
   // Booking statuses
@@ -102,6 +104,8 @@ class AppConfig {
         return Icons.bloodtype;
       case 'pathology':
         return Icons.science;
+      case 'labtest':
+        return Icons.biotech;
       default:
         return Icons.person;
     }

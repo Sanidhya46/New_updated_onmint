@@ -26,13 +26,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
   Future<void> _loadBookingDetails() async {
     setState(() => _isLoading = true);
-    
+
     try {
       await _apiClient.initialize();
-      
+
       // Try realtime booking first
       try {
-        final realtimeData = await _apiClient.patient.getRealtimeBookingDetails(widget.bookingId);
+        final realtimeData = await _apiClient.patient
+            .getRealtimeBookingDetails(widget.bookingId);
         setState(() {
           _bookingData = realtimeData;
           _isLoading = false;
@@ -41,9 +42,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       } catch (e) {
         print('Not a realtime booking, trying regular booking: $e');
       }
-      
+
       // Fallback to regular booking
-      final booking = await _apiClient.patient.getBookingDetails(widget.bookingId);
+      final booking =
+          await _apiClient.patient.getBookingDetails(widget.bookingId);
       setState(() {
         _bookingData = booking.toJson();
         _isLoading = false;
@@ -68,7 +70,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           backgroundColor: const Color(0xFF4CAF50),
           foregroundColor: Colors.white,
         ),
-        body: const Center(child: CircularProgressIndicator(color: Color(0xFF4CAF50))),
+        body: const Center(
+            child: CircularProgressIndicator(color: Color(0xFF4CAF50))),
       );
     }
 
@@ -85,12 +88,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
     final serviceType = _bookingData!['serviceType'] ?? '';
     final status = _bookingData!['status'] ?? '';
-    final price = (_bookingData!['price'] ?? _bookingData!['totalAmount'] ?? 0).toDouble();
-    final createdAt = DateTime.parse(_bookingData!['createdAt'] ?? DateTime.now().toIso8601String());
+    final price = (_bookingData!['price'] ?? _bookingData!['totalAmount'] ?? 0)
+        .toDouble();
+    final createdAt = DateTime.parse(
+        _bookingData!['createdAt'] ?? DateTime.now().toIso8601String());
     final medicines = _bookingData!['medicines'] as List?;
     final requirements = _bookingData!['requirements'] as Map<String, dynamic>?;
     final location = _bookingData!['location'] as Map<String, dynamic>?;
-    final acceptedProvider = _bookingData!['acceptedProvider'] as Map<String, dynamic>?;
+    final acceptedProvider =
+        _bookingData!['acceptedProvider'] as Map<String, dynamic>?;
 
     return Scaffold(
       appBar: AppBar(
@@ -104,9 +110,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           children: [
             // Order Tracking Timeline
             _buildOrderTracking(status),
-            
+
             const Divider(height: 1),
-            
+
             // Order Info
             Padding(
               padding: const EdgeInsets.all(16),
@@ -129,11 +135,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       color: Colors.grey[600],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Medicines List (if pharmacist)
-                  if (serviceType == 'pharmacist' && medicines != null && medicines.isNotEmpty) ...[
+                  if (serviceType == 'pharmacist' &&
+                      medicines != null &&
+                      medicines.isNotEmpty) ...[
                     const Text(
                       'Items',
                       style: TextStyle(
@@ -145,7 +153,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     ...medicines.map((med) => _buildMedicineItem(med)),
                     const SizedBox(height: 24),
                   ],
-                  
+
                   // Requirements
                   if (requirements != null) ...[
                     const Text(
@@ -159,12 +167,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     if (requirements['description'] != null)
                       _buildInfoRow('Description', requirements['description']),
                     if (requirements['urgency'] != null)
-                      _buildInfoRow('Urgency', requirements['urgency'].toString().toUpperCase()),
+                      _buildInfoRow('Urgency',
+                          requirements['urgency'].toString().toUpperCase()),
                     if (requirements['specialRequirements'] != null)
-                      _buildInfoRow('Special Requirements', requirements['specialRequirements']),
+                      _buildInfoRow('Special Requirements',
+                          requirements['specialRequirements']),
                     const SizedBox(height: 24),
                   ],
-                  
+
                   // Delivery Address
                   if (location != null) ...[
                     const Text(
@@ -183,7 +193,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on, color: Color(0xFF4CAF50)),
+                          const Icon(Icons.location_on,
+                              color: Color(0xFF4CAF50)),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -196,7 +207,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     ),
                     const SizedBox(height: 24),
                   ],
-                  
+
                   // Provider Info
                   if (acceptedProvider != null) ...[
                     const Text(
@@ -218,7 +229,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                           CircleAvatar(
                             backgroundColor: const Color(0xFF4CAF50),
                             child: Text(
-                              (acceptedProvider['firstName'] ?? 'P')[0].toUpperCase(),
+                              (acceptedProvider['firstName'] ?? 'P')[0]
+                                  .toUpperCase(),
                               style: const TextStyle(color: Colors.white),
                             ),
                           ),
@@ -228,7 +240,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${acceptedProvider['firstName'] ?? ''} ${acceptedProvider['lastName'] ?? ''}'.trim(),
+                                  '${acceptedProvider['firstName'] ?? ''} ${acceptedProvider['lastName'] ?? ''}'
+                                      .trim(),
                                   style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -249,21 +262,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             onPressed: () {
                               // Call provider
                             },
-                            icon: const Icon(Icons.phone, color: Color(0xFF4CAF50)),
+                            icon: const Icon(Icons.phone,
+                                color: Color(0xFF4CAF50)),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
                   ],
-                  
+
                   // Price Summary
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: const Color(0xFF4CAF50).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.3)),
+                      border: Border.all(
+                          color: const Color(0xFF4CAF50).withOpacity(0.3)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,7 +315,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     final stages = [
       {'key': 'requested', 'label': 'Requested', 'icon': Icons.receipt},
       {'key': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-      {'key': 'in_progress', 'label': 'In Progress', 'icon': Icons.local_shipping},
+      {
+        'key': 'in_progress',
+        'label': 'In Progress',
+        'icon': Icons.local_shipping
+      },
       {'key': 'completed', 'label': 'Delivered', 'icon': Icons.done_all},
     ];
 
@@ -347,7 +366,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    status == 'expired' ? 'This order has expired' : 'This order was cancelled',
+                    status == 'expired'
+                        ? 'This order has expired'
+                        : 'This order was cancelled',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[700],
@@ -384,7 +405,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 return Expanded(
                   child: Container(
                     height: 2,
-                    color: isCompleted ? const Color(0xFF4CAF50) : Colors.grey[300],
+                    color: isCompleted
+                        ? const Color(0xFF4CAF50)
+                        : Colors.grey[300],
                   ),
                 );
               } else {
@@ -393,7 +416,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 final stage = stages[stageIndex];
                 final isCompleted = stageIndex < currentStageIndex;
                 final isCurrent = stageIndex == currentStageIndex;
-                
+
                 return Column(
                   children: [
                     Container(
@@ -419,7 +442,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                          fontWeight:
+                              isCurrent ? FontWeight.bold : FontWeight.normal,
                           color: isCompleted || isCurrent
                               ? const Color(0xFF4CAF50)
                               : Colors.grey[600],

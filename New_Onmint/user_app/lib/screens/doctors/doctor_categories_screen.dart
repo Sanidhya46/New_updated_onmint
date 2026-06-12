@@ -104,7 +104,8 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Consult a doctor', style: TextStyle(color: Colors.white)),
+        title: const Text('Consult a doctor',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFF283593), // Dark blue from image
         elevation: 0,
       ),
@@ -114,7 +115,6 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               Container(
                 decoration: BoxDecoration(
                   color: Colors.grey[100],
@@ -131,8 +131,9 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              
-              ..._categories.map((category) => _buildCategorySection(category)).toList(),
+              ..._categories
+                  .map((category) => _buildCategorySection(category))
+                  .toList(),
             ],
           ),
         ),
@@ -141,7 +142,8 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
   }
 
   Widget _buildCategorySection(Map<String, dynamic> category) {
-    List<Map<String, String>> symptoms = List<Map<String, String>>.from(category['symptoms']);
+    List<Map<String, String>> symptoms =
+        List<Map<String, String>>.from(category['symptoms']);
     String path = category['path'];
 
     return Padding(
@@ -162,14 +164,18 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: symptoms.map((symptom) => _buildSymptomItem(category['title'], path, symptom)).toList(),
+            children: symptoms
+                .map((symptom) =>
+                    _buildSymptomItem(category['title'], path, symptom))
+                .toList(),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSymptomItem(String categoryTitle, String path, Map<String, String> symptom) {
+  Widget _buildSymptomItem(
+      String categoryTitle, String path, Map<String, String> symptom) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -198,7 +204,8 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
                   'assets/images/doctor/categories/$path/${symptom['image']}',
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.medical_services, size: 30, color: Colors.grey);
+                    return const Icon(Icons.medical_services,
+                        size: 30, color: Colors.grey);
                   },
                 ),
               ),

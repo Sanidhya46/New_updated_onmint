@@ -4,6 +4,7 @@ import '../../utils/app_colors.dart';
 
 // Import UserTimeSlot specifically from user_model to avoid conflicts
 import 'package:api_client/src/models/user_model.dart' show UserTimeSlot;
+import 'order_request_screen.dart';
 
 class BookingFlowScreen extends StatefulWidget {
   final User provider;
@@ -23,7 +24,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
   final _apiClient = OnMintApiClient();
   final _notesController = TextEditingController();
   final _addressController = TextEditingController();
-  
+
   DateTime? _selectedDate;
   UserTimeSlot? _selectedTimeSlot;
   bool _isLoading = false;
@@ -52,10 +53,11 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
 
     try {
       await _apiClient.initialize();
-      
+
       // Fetch provider availability
-      final response = await _apiClient.patient.getDoctorAvailability(widget.provider.id);
-      
+      final response =
+          await _apiClient.patient.getDoctorAvailability(widget.provider.id);
+
       if (mounted) {
         setState(() {
           _providerAvailability = response;
@@ -75,7 +77,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
   }
 
   List<String> _getAvailableDays() {
-    if (_providerAvailability == null || 
+    if (_providerAvailability == null ||
         _providerAvailability!['availability'] == null ||
         (_providerAvailability!['availability'] as List).isEmpty) {
       return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; // Default weekdays
@@ -104,7 +106,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
 
   List<UserTimeSlot> _getAvailableSlotsForDate(DateTime date) {
     // If no availability data or empty, use default slots
-    if (_providerAvailability == null || 
+    if (_providerAvailability == null ||
         _providerAvailability!['availability'] == null ||
         (_providerAvailability!['availability'] as List).isEmpty) {
       return _generateDefaultTimeSlots(); // Fallback to default slots
@@ -113,7 +115,15 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     final availability = _providerAvailability!['availability'] as List;
 
     // Get day of week (SUNDAY, MONDAY, etc.)
-    const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    const daysOfWeek = [
+      'SUNDAY',
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY'
+    ];
     final dayOfWeek = daysOfWeek[date.weekday % 7];
 
     // Find availability for this day
@@ -215,7 +225,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.serviceType == 'doctor' 
+                            widget.serviceType == 'doctor'
                                 ? 'Dr. ${widget.provider.fullName}'
                                 : widget.provider.fullName,
                             style: const TextStyle(
@@ -251,11 +261,13 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            
+
             // Available Days Indicator
-            if (!_isLoadingAvailability && (widget.serviceType == 'doctor' || widget.serviceType == 'nurse'))
+            if (!_isLoadingAvailability &&
+                (widget.serviceType == 'doctor' ||
+                    widget.serviceType == 'nurse'))
               _buildAvailableDaysIndicator(),
-            
+
             const SizedBox(height: 12),
             _buildDateSelector(),
 
@@ -374,12 +386,14 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Text(
                         'Confirm Booking',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
             ),
@@ -393,7 +407,7 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
 
   Widget _buildAvailableDaysIndicator() {
     final availableDays = _getAvailableDays();
-    
+
     if (availableDays.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -465,7 +479,8 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                     _getDayName(date.weekday),
                     style: TextStyle(
                       fontSize: 14,
-                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                      color:
+                          isSelected ? Colors.white : AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -482,7 +497,8 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
                     _getMonthName(date.month),
                     style: TextStyle(
                       fontSize: 12,
-                      color: isSelected ? Colors.white : AppColors.textSecondary,
+                      color:
+                          isSelected ? Colors.white : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -505,9 +521,8 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     }
 
     // Get available slots for selected date
-    final timeSlots = _selectedDate != null 
-        ? _getAvailableSlotsForDate(_selectedDate!)
-        : [];
+    final timeSlots =
+        _selectedDate != null ? _getAvailableSlotsForDate(_selectedDate!) : [];
 
     if (timeSlots.isEmpty) {
       return Card(
@@ -589,7 +604,20 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
   }
 
   String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return months[month - 1];
   }
 
@@ -598,7 +626,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     if (_selectedDate == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a date'), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text('Please select a date'),
+              backgroundColor: Colors.red),
         );
       }
       return;
@@ -607,7 +637,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     if (_selectedTimeSlot == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a time slot'), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text('Please select a time slot'),
+              backgroundColor: Colors.red),
         );
       }
       return;
@@ -616,7 +648,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
     if (_addressController.text.trim().isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter your address'), backgroundColor: Colors.red),
+          const SnackBar(
+              content: Text('Please enter your address'),
+              backgroundColor: Colors.red),
         );
       }
       return;
@@ -647,12 +681,13 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
         'price': widget.provider.consultationFee ?? 0,
         'paymentMethod': 'cash', // Changed from COD to cash
       };
-      
+
       // Add consultationType for doctor bookings (required by backend)
       if (widget.serviceType == 'doctor') {
-        bookingData['consultationType'] = 'in-person'; // Default to in-person for scheduled bookings
+        bookingData['consultationType'] =
+            'in-person'; // Default to in-person for scheduled bookings
       }
-      
+
       // Only add notes if not empty
       if (_notesController.text.trim().isNotEmpty) {
         bookingData['notes'] = _notesController.text.trim();
@@ -693,9 +728,16 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
             actions: [
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Close booking flow
-                  Navigator.pop(context); // Close provider detail
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => OrderRequestScreen(
+                        bookingId: booking['_id'] ?? booking['id'] ?? '',
+                        bookingData: bookingData,
+                        serviceType: widget.serviceType,
+                      ),
+                    ),
+                    (route) => route.isFirst,
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.success,
@@ -711,7 +753,9 @@ class _BookingFlowScreenState extends State<BookingFlowScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create booking: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text('Failed to create booking: ${e.toString()}'),
+              backgroundColor: Colors.red),
         );
       }
     }

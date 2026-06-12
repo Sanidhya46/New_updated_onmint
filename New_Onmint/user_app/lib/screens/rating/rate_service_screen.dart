@@ -79,7 +79,7 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const SizedBox(height: 20),
-            
+
             // Provider Info
             CircleAvatar(
               radius: 40,
@@ -93,9 +93,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             Text(
               widget.providerName,
               style: const TextStyle(
@@ -103,9 +103,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             Text(
               _formatProviderType(widget.providerType),
               style: TextStyle(
@@ -113,9 +113,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                 color: Colors.grey[600],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Rating Question
             const Text(
               'How was your experience?',
@@ -124,9 +124,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Star Rating
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -146,9 +146,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                 );
               }),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             if (_rating > 0)
               Text(
                 _getRatingText(_rating),
@@ -158,9 +158,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                   color: _getRatingColor(_rating),
                 ),
               ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Review Text Field
             TextField(
               controller: _reviewController,
@@ -177,9 +177,9 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
               maxLines: 5,
               maxLength: 500,
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             // Submit Button
             SizedBox(
               width: double.infinity,
@@ -194,15 +194,16 @@ class _RateServiceScreenState extends State<RateServiceScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Text('Submit Rating'),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // Skip Button
             TextButton(
               onPressed: () => Navigator.pop(context),

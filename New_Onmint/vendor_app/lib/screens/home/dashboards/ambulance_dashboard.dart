@@ -60,13 +60,16 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
       backgroundColor: Colors.white,
       body: _isLoading 
         ? const LoadingWidget(message: 'Loading dashboard...')
-        : RefreshIndicator(
-            onRefresh: _loadDashboard,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+        : Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _loadDashboard,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                   // ─── RED HEADER + STATS CARD ──────────────────────────────
                   SizedBox(
                     height: 260,
@@ -273,60 +276,64 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
 
                       const SizedBox(height: 20),
                       
-                      // Manage Consultations banner
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF5F5), // Light red background
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.assignment, size: 60, color: Color(0xFFE52329)),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Manage Your Consultations Easily',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Check your requests, track consultations, and manage your progress all in one place.',
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Container(width: 8, height: 8, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE52329))),
-                                      const SizedBox(width: 4),
-                                      Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[300])),
-                                      const SizedBox(width: 4),
-                                      Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[300])),
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-                    ],
+                      ],
+                    ),
                   ),
+          // Manage Consultations banner at the bottom
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF5F5), // Light red background
+                  borderRadius: BorderRadius.circular(12),
                 ),
-              ],
-            ),
-          ),
-        ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.assignment, size: 32, color: Color(0xFFE52329)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Manage Your Consultations Easily',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Check your requests, track consultations, and manage your progress all in one place.',
+                            style: TextStyle(
+                              color: Colors.grey[700],
+                              fontSize: 11,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Container(width: 8, height: 8, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE52329))),
+                              const SizedBox(width: 4),
+                              Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[300])),
+                              const SizedBox(width: 4),
+                              Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[300])),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ), // End inner Column
+        ), // End SingleChildScrollView
+      ), // End RefreshIndicator
+    ), // End Expanded
+  ],
+), // End outer Column
     );
   }
 
@@ -372,10 +379,10 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
   Widget _buildRequestCard(Booking request) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF5F5), // Light ice red
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFFFE5E5)),
         boxShadow: [
           BoxShadow(
@@ -485,7 +492,7 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
           // View Details Button
           SizedBox(
             width: double.infinity,
-            height: 38,
+            height: 32,
             child: ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -499,14 +506,15 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
                 backgroundColor: const Color(0xFFE52329),
                 foregroundColor: Colors.white,
                 elevation: 0,
+                padding: const EdgeInsets.symmetric(vertical: 0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
               child: const Text(
                 'View Details',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
               ),

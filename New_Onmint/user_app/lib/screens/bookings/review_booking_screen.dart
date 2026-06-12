@@ -138,7 +138,9 @@ class _ReviewBookingScreenState extends State<ReviewBookingScreen> {
                       child: Icon(
                         Icons.star,
                         size: 48,
-                        color: index < _selectedRating ? Colors.amber : Colors.grey[300],
+                        color: index < _selectedRating
+                            ? Colors.amber
+                            : Colors.grey[300],
                       ),
                     ),
                   );
@@ -148,7 +150,9 @@ class _ReviewBookingScreenState extends State<ReviewBookingScreen> {
             const SizedBox(height: 8),
             Center(
               child: Text(
-                _selectedRating > 0 ? '$_selectedRating out of 5 stars' : 'Tap to rate',
+                _selectedRating > 0
+                    ? '$_selectedRating out of 5 stars'
+                    : 'Tap to rate',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[600],
@@ -194,7 +198,8 @@ class _ReviewBookingScreenState extends State<ReviewBookingScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
                     : const Text('Submit Review'),

@@ -139,14 +139,14 @@ class AuthProvider extends ChangeNotifier {
   }
 
   /// Register new user
-  Future<bool> register(Map<String, dynamic> registrationData) async {
+  Future<bool> register(Map<String, dynamic> registrationData, {List<dynamic>? xFiles, Map<String, dynamic>? namedXFiles}) async {
     _setLoading(true);
     _clearError();
     
     try {
       debugPrint('Starting registration process...');
       
-      final result = await _authService.register(registrationData);
+      final result = await _authService.register(registrationData, xFiles: xFiles, namedXFiles: namedXFiles);
       
       debugPrint('Registration result received');
       

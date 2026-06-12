@@ -93,7 +93,7 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
         elevation: 0,
         title: const Text(
           'My Booking',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: 18),
         ),
         actions: [
           IconButton(
@@ -107,7 +107,7 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
           indicatorWeight: 3,
           labelColor: const Color(0xFF1565C0),
           unselectedLabelColor: Colors.grey.shade500,
-          labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          labelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 13),
           tabs: const [
             Tab(text: 'All'),
             Tab(text: 'In Progress'),
@@ -143,7 +143,7 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
       return const Center(child: Text('No bookings found.', style: TextStyle(color: Colors.grey)));
     }
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: [
         if (_pendingBookings.isNotEmpty) _buildSectionHeader('Pending', _pendingBookings.length, Colors.orange),
         ..._pendingBookings.map((b) => _buildBookingCard(b)),
@@ -160,7 +160,7 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
       return Center(child: Text('No $type bookings.', style: const TextStyle(color: Colors.grey)));
     }
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       itemCount: list.length,
       itemBuilder: (context, index) => _buildBookingCard(list[index]),
     );
@@ -174,7 +174,8 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
           Text(
             title,
             style: const TextStyle(
-              fontSize: 16,
+              fontFamily: 'Poppins',
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               color: Color(0xFF152238),
             ),
@@ -189,7 +190,8 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
             child: Text(
               count.toString(),
               style: TextStyle(
-                fontSize: 12,
+                fontFamily: 'Poppins',
+                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: badgeColor,
               ),
@@ -244,14 +246,22 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           if (isPending) {
             Navigator.push(
@@ -276,13 +286,13 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
           }
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Avatar
               CircleAvatar(
-                radius: 32,
+                radius: 24,
                 backgroundColor: Colors.blue.shade50,
                 backgroundImage: patientPhoto.isNotEmpty 
                     ? NetworkImage(patientPhoto) 
@@ -290,88 +300,99 @@ class _PathologyBookingsScreenState extends State<PathologyBookingsScreen>
                         ? 'assets/images/female_profile.png' 
                         : 'assets/images/male_profile.png') as ImageProvider,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               // Details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       patientName.isNotEmpty ? patientName : 'Patient Name',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF152238),
+                        height: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
+                        const Icon(Icons.person_outline, size: 12, color: Colors.grey),
+                        const SizedBox(width: 2),
                         Text(
                           '$age Years',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
                         ),
-                        const SizedBox(width: 12),
-                        Icon(gender.toLowerCase() == 'female' ? Icons.female : Icons.male, size: 14, color: Colors.grey),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 8),
+                        Icon(gender.toLowerCase() == 'female' ? Icons.female : Icons.male, size: 12, color: Colors.grey),
+                        const SizedBox(width: 2),
                         Text(
                           gender,
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    if (address.isNotEmpty)
+                    if (address.isNotEmpty) ...[
+                      const SizedBox(height: 4),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                          const SizedBox(width: 4),
+                          const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                          const SizedBox(width: 2),
                           Expanded(
                             child: Text(
                               address,
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                              style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
                             ),
                           ),
                         ],
                       ),
+                    ],
                   ],
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 8),
               // Right Side (Status + Chevron)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      statusLabel,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: statusColor,
-                        fontWeight: FontWeight.w600,
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 10,
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
-                    ),
+                      if (isCompleted && completedDateStr.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Completed on\n$completedDateStr',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
+                        ),
+                      ],
+                    ],
                   ),
-                  if (isCompleted && completedDateStr.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      'Completed on\n$completedDateStr',
-                      textAlign: TextAlign.right,
-                      style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  const Icon(Icons.chevron_right, color: Colors.black54),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right, color: Colors.black54, size: 18),
                 ],
               ),
             ],

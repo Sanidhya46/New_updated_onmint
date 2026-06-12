@@ -71,18 +71,32 @@ const findAvailableProviders = async (serviceType, coordinates, isEmergency, cat
       throw new Error(`Invalid service type: ${serviceType}`);
     }
 
-    let maxDistance = isEmergency ? 20000 : 10000; // 20km for emergency, 10km for normal
+    let maxDistance = 20000; // Default 20km for all vendor roles
     let limit = 50;
 
-    if (role === 'ambulance') {
-      maxDistance = 500000; // 500km for ambulance (increased range)
-      limit = 10; // Increase limit to see more ambulances
+    // Pathology/labtest vendors: 12km range
+    if (role === 'pathology') {
+      maxDistance = 12000; // 12km for pathology/labtest
     }
+
+    // Ambulance vendors: 20km range
+    if (role === 'ambulance') {
+      maxDistance = 20000; // 20km for ambulance
+      limit = 20;
+    }
+
+    // Nurse, bloodbank: 20km range (default)
+    // Doctor: no geo filter applied (handled below)
 
     const [longitude, latitude] = coordinates;
 
+    const rolesToSearch = [role];
+    if (role === 'pathology') {
+      rolesToSearch.push('bloodbank');
+    }
+
     const query = {
-      role,
+      role: { $in: rolesToSearch },
       status: "approved",
     };
 
@@ -250,11 +264,11 @@ const acceptBooking = async (bookingId, providerId) => {
         throw error;
       }
       if (existingBooking.acceptedProvider) {
-        const error = new Error("This booking has already been accepted by another provider");
+        const error = new Error("Order expired or already accepted by another provider");
         error.status = 409;
         throw error;
       }
-      const error = new Error("Booking request has expired or is no longer valid");
+      const error = new Error("Order expired");
       error.status = 410;
       throw error;
     }
@@ -321,10 +335,14 @@ const updateBookingStatus = async (bookingId, providerId, newStatus) => {
 
     // Validate status transitions
     const validTransitions = {
-      accepted: ["on_the_way", "cancelled"],
-      on_the_way: ["reached", "in_progress", "cancelled"],
-      reached: ["in_progress", "completed", "cancelled"],
-      in_progress: ["completed", "cancelled"],
+      accepted: ["preparing", "ready", "on_the_way", "in_progress", "sample_collected", "completed", "cancelled"],
+      preparing: ["ready", "on_the_way", "in_progress", "completed", "cancelled"],
+      ready: ["on_the_way", "in_progress", "completed", "cancelled"],
+      on_the_way: ["reached", "in_progress", "sample_collected", "completed", "cancelled"],
+      reached: ["in_progress", "sample_collected", "completed", "cancelled"],
+      in_progress: ["sample_collected", "completed", "cancelled"],
+      sample_collected: ["report_uploaded", "completed", "cancelled"],
+      report_uploaded: ["completed", "cancelled"],
     };
 
     if (!validTransitions[booking.status]?.includes(newStatus)) {
@@ -363,6 +381,8 @@ const updateBookingStatus = async (bookingId, providerId, newStatus) => {
 
     // Notify patient of status change
     const statusMessages = {
+      preparing: "Your provider is preparing your order/service",
+      ready: "Your order/service is ready",
       on_the_way: "Your provider is on the way!",
       reached: "Your provider has reached the location",
       in_progress: "Service has started",

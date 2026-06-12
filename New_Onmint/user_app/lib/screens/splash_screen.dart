@@ -81,9 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   color: AppColors.primary,
                 ),
               ),
-              
               const SizedBox(height: 24),
-              
               const Text(
                 'OnMint',
                 style: TextStyle(
@@ -92,9 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   color: Colors.white,
                 ),
               ),
-              
               const SizedBox(height: 8),
-              
               const Text(
                 'Your Healthcare Partner',
                 style: TextStyle(
@@ -102,9 +98,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   color: Colors.white70,
                 ),
               ),
-              
               const SizedBox(height: 48),
-              
               const LoadingWidget(color: Colors.white),
             ],
           ),

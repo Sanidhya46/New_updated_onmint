@@ -12,13 +12,13 @@ class PathologyScreen extends StatefulWidget {
 
 class _PathologyScreenState extends State<PathologyScreen> {
   final PatientService _patientService = PatientService();
-  
+
   List<Map<String, dynamic>> _labs = [];
   String _selectedCategory = '';
   String _selectedCity = '';
   bool _isLoading = true;
   final TextEditingController _cityController = TextEditingController();
-  
+
   final List<Map<String, dynamic>> _testCategories = [
     {'id': '', 'name': 'All Tests', 'icon': Icons.science},
     {'id': 'blood_test', 'name': 'Blood Test', 'icon': Icons.bloodtype},
@@ -47,29 +47,29 @@ class _PathologyScreenState extends State<PathologyScreen> {
   Future<void> _loadLabs() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    
+
     try {
       debugPrint('Loading pathology labs with city filter: $_selectedCity');
-      
+
       // Call the correct API endpoint: /patient/search/labs
       final response = await _patientService.searchPathologyLabs(
         city: _selectedCity.isEmpty ? null : _selectedCity,
         page: 1,
         limit: 20,
       );
-      
+
       debugPrint('Pathology labs response: $response');
-      
+
       // Parse response: {"success": true, "data": [...], "pagination": {...}}
       final data = response['data'];
       List<Map<String, dynamic>> labs = [];
-      
+
       if (data is List) {
         labs = List<Map<String, dynamic>>.from(data);
       }
-      
+
       debugPrint('Found ${labs.length} pathology labs');
-      
+
       if (mounted) {
         setState(() {
           _labs = labs;
@@ -131,14 +131,16 @@ class _PathologyScreenState extends State<PathologyScreen> {
               decoration: InputDecoration(
                 hintText: 'Filter by city',
                 hintStyle: const TextStyle(fontSize: 14),
-                prefixIcon: const Icon(Icons.location_city, color: Color(0xFFFF6B6B), size: 20),
+                prefixIcon: const Icon(Icons.location_city,
+                    color: Color(0xFFFF6B6B), size: 20),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
               onSubmitted: (value) {
                 setState(() => _selectedCity = value.trim());
@@ -191,7 +193,10 @@ class _PathologyScreenState extends State<PathologyScreen> {
               children: [
                 Text(
                   'Need Lab Tests?',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -206,7 +211,8 @@ class _PathologyScreenState extends State<PathologyScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const InstantBookingScreen(serviceType: 'pathology'),
+                  builder: (context) =>
+                      const InstantBookingScreen(serviceType: 'pathology'),
                 ),
               );
             },
@@ -243,7 +249,7 @@ class _PathologyScreenState extends State<PathologyScreen> {
             itemBuilder: (context, index) {
               final category = _testCategories[index];
               final isSelected = _selectedCategory == category['id'];
-              
+
               return GestureDetector(
                 onTap: () => setState(() => _selectedCategory = category['id']),
                 child: Container(
@@ -255,7 +261,9 @@ class _PathologyScreenState extends State<PathologyScreen> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFF6B6B) : Colors.grey[100],
+                          color: isSelected
+                              ? const Color(0xFFFF6B6B)
+                              : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -269,8 +277,11 @@ class _PathologyScreenState extends State<PathologyScreen> {
                         category['name'],
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? const Color(0xFFFF6B6B) : Colors.grey[700],
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFFFF6B6B)
+                              : Colors.grey[700],
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
@@ -290,7 +301,8 @@ class _PathologyScreenState extends State<PathologyScreen> {
 
   Widget _buildLabsList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF6B6B)));
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFFFF6B6B)));
     }
 
     if (_labs.isEmpty) {
@@ -301,13 +313,15 @@ class _PathologyScreenState extends State<PathologyScreen> {
             Icon(Icons.science, size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              _selectedCity.isEmpty ? 'No labs available' : 'No labs found in $_selectedCity',
+              _selectedCity.isEmpty
+                  ? 'No labs available'
+                  : 'No labs found in $_selectedCity',
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
-              _selectedCity.isEmpty 
-                  ? 'Try filtering by city' 
+              _selectedCity.isEmpty
+                  ? 'Try filtering by city'
                   : 'Try a different city',
               style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
@@ -322,7 +336,7 @@ class _PathologyScreenState extends State<PathologyScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
-            _selectedCity.isEmpty 
+            _selectedCity.isEmpty
                 ? 'Pathology Labs (${_labs.length})'
                 : 'Labs in $_selectedCity (${_labs.length})',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -337,7 +351,7 @@ class _PathologyScreenState extends State<PathologyScreen> {
               final testsOffered = lab['testsOffered'] as List? ?? [];
               final homeCollection = lab['homeCollectionAvailable'] ?? false;
               final homeCollectionFee = lab['homeCollectionFee'] ?? 0;
-              
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
                 child: InkWell(
@@ -368,27 +382,37 @@ class _PathologyScreenState extends State<PathologyScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    lab['labName'] ?? lab['firstName'] ?? 'Lab Center',
-                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    lab['labName'] ??
+                                        lab['firstName'] ??
+                                        'Lab Center',
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                   if (lab['city'] != null)
                                     Text(
                                       '${lab['city']}, ${lab['state'] ?? ''}',
-                                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey[600]),
                                     ),
                                 ],
                               ),
                             ),
                             if (homeCollection)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.green.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: const Text(
                                   'Home Collection',
-                                  style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.w600),
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.w600),
                                 ),
                               ),
                           ],
@@ -397,7 +421,8 @@ class _PathologyScreenState extends State<PathologyScreen> {
                         if (testsOffered.isNotEmpty) ...[
                           Text(
                             'Available Tests (${testsOffered.length}):',
-                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 8),
                           Wrap(
@@ -406,15 +431,20 @@ class _PathologyScreenState extends State<PathologyScreen> {
                             children: testsOffered.take(3).map((test) {
                               final price = test['price'] ?? 0;
                               return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
                                   color: Colors.blue.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.blue, width: 1),
+                                  border:
+                                      Border.all(color: Colors.blue, width: 1),
                                 ),
                                 child: Text(
                                   '${test['name']} - ₹$price',
-                                  style: const TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.w500),
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.w500),
                                 ),
                               );
                             }).toList(),
@@ -424,7 +454,8 @@ class _PathologyScreenState extends State<PathologyScreen> {
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 '+${testsOffered.length - 3} more tests',
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                style: TextStyle(
+                                    fontSize: 12, color: Colors.grey[600]),
                               ),
                             ),
                           const SizedBox(height: 12),
@@ -438,11 +469,16 @@ class _PathologyScreenState extends State<PathologyScreen> {
                                   children: [
                                     Text(
                                       'Home Collection Fee',
-                                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[600]),
                                     ),
                                     Text(
                                       '₹$homeCollectionFee',
-                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green),
+                                      style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green),
                                     ),
                                   ],
                                 ),
@@ -451,9 +487,11 @@ class _PathologyScreenState extends State<PathologyScreen> {
                               onPressed: () => _bookLabTest(lab),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFFF6B6B),
-                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
                               ),
-                              child: const Text('Book Test', style: TextStyle(color: Colors.white)),
+                              child: const Text('Book Test',
+                                  style: TextStyle(color: Colors.white)),
                             ),
                           ],
                         ),

@@ -10,7 +10,8 @@ class BookingsScreen extends StatefulWidget {
   State<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProviderStateMixin {
+class _BookingsScreenState extends State<BookingsScreen>
+    with SingleTickerProviderStateMixin {
   final _apiClient = OnMintApiClient();
   late TabController _tabController;
   List<Booking> _bookings = [];
@@ -41,17 +42,18 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
   Future<void> _loadBookings() async {
     setState(() => _isLoading = true);
-    
+
     try {
       await _apiClient.initialize();
       final result = await _apiClient.patient.getBookings(
         status: _currentFilter == 'all' ? null : _currentFilter,
       );
-      
+
       setState(() {
         _bookings = (result['bookings'] as List?)
-            ?.map((e) => Booking.fromJson(e))
-            .toList() ?? [];
+                ?.map((e) => Booking.fromJson(e))
+                .toList() ??
+            [];
         _isLoading = false;
       });
     } catch (e) {
@@ -150,18 +152,22 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
               const Divider(height: 24),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today, size: 16, color: AppColors.textSecondary),
+                  const Icon(Icons.calendar_today,
+                      size: 16, color: AppColors.textSecondary),
                   const SizedBox(width: 8),
                   Text(
                     _formatDate(booking.scheduledTime),
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textSecondary),
                   ),
                   const SizedBox(width: 16),
-                  const Icon(Icons.access_time, size: 16, color: AppColors.textSecondary),
+                  const Icon(Icons.access_time,
+                      size: 16, color: AppColors.textSecondary),
                   const SizedBox(width: 8),
                   Text(
                     _formatTime(booking.scheduledTime),
-                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textSecondary),
                   ),
                 ],
               ),
@@ -169,12 +175,14 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+                    const Icon(Icons.location_on,
+                        size: 16, color: AppColors.textSecondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         booking.location.address!,
-                        style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                        style: const TextStyle(
+                            fontSize: 14, color: AppColors.textSecondary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -224,7 +232,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   Widget _buildServiceIcon(String serviceType) {
     IconData icon;
     Color color;
-    
+
     switch (serviceType.toLowerCase()) {
       case 'doctor':
         icon = Icons.medical_services;
@@ -254,7 +262,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         icon = Icons.medical_services;
         color = AppColors.primary;
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -268,7 +276,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   Widget _buildStatusChip(String status) {
     Color color;
     String label;
-    
+
     switch (status.toLowerCase()) {
       case 'requested':
         color = AppColors.warning;
@@ -298,7 +306,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
         color = AppColors.textSecondary;
         label = status;
     }
-    
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -336,7 +344,20 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 
@@ -398,7 +419,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                 _buildDetailRow('Notes', booking.notes!),
               _buildDetailRow('Price', '₹${booking.price.toStringAsFixed(0)}'),
               if (booking.cancellationReason != null)
-                _buildDetailRow('Cancellation Reason', booking.cancellationReason!),
+                _buildDetailRow(
+                    'Cancellation Reason', booking.cancellationReason!),
               const SizedBox(height: 24),
               if (booking.canBeCancelled)
                 SizedBox(
@@ -473,7 +495,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
 
   void _cancelBooking(Booking booking) {
     final reasonController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -504,9 +526,9 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                 ToastUtils.showError('Please provide a reason');
                 return;
               }
-              
+
               Navigator.pop(context);
-              
+
               try {
                 await _apiClient.patient.cancelBooking(
                   booking.id,
@@ -532,7 +554,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   void _rateBooking(Booking booking) {
     int rating = 0;
     final reviewController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -580,15 +602,15 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                   ToastUtils.showError('Please select a rating');
                   return;
                 }
-                
+
                 Navigator.pop(context);
-                
+
                 try {
                   await _apiClient.patient.rateBooking(
                     booking.id,
                     rating: rating,
-                    review: reviewController.text.trim().isEmpty 
-                        ? null 
+                    review: reviewController.text.trim().isEmpty
+                        ? null
                         : reviewController.text.trim(),
                   );
                   ToastUtils.showSuccess('Thank you for your feedback!');

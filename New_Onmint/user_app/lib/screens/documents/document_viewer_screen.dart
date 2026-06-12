@@ -34,7 +34,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   Future<void> _loadDocument() async {
     setState(() => _isLoading = true);
     try {
-      final doc = await _apiClient.document.getDocumentDetails(widget.documentId);
+      final doc =
+          await _apiClient.document.getDocumentDetails(widget.documentId);
       setState(() {
         _document = doc;
         _isLoading = false;
@@ -73,7 +74,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
 
       // Open file
       final result = await OpenFile.open(filePath);
-      
+
       if (result.type != ResultType.done) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -157,9 +158,9 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Document Details
                       const Text(
                         'Document Details',
@@ -169,14 +170,17 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
-                      _buildDetailRow('Type', _formatDocumentType(_document!['documentType'])),
-                      _buildDetailRow('Uploaded', _formatDate(DateTime.parse(_document!['createdAt']))),
+
+                      _buildDetailRow('Type',
+                          _formatDocumentType(_document!['documentType'])),
+                      _buildDetailRow('Uploaded',
+                          _formatDate(DateTime.parse(_document!['createdAt']))),
                       if (_document!['description'] != null)
-                        _buildDetailRow('Description', _document!['description']),
-                      
+                        _buildDetailRow(
+                            'Description', _document!['description']),
+
                       const SizedBox(height: 32),
-                      
+
                       // Action Buttons
                       if (_isDownloading)
                         Column(
@@ -196,7 +200,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                                 icon: const Icon(Icons.download),
                                 label: const Text('Download & Open'),
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                 ),
                               ),
                             ),
@@ -206,16 +211,21 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                               child: OutlinedButton.icon(
                                 onPressed: () async {
                                   try {
-                                    final url = await _apiClient.document.getDocumentUrl(widget.documentId);
+                                    final url = await _apiClient.document
+                                        .getDocumentUrl(widget.documentId);
                                     // TODO: Open URL in browser or webview
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Opening in browser...')),
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Opening in browser...')),
                                       );
                                     }
                                   } catch (e) {
                                     if (mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
                                         SnackBar(content: Text('Error: $e')),
                                       );
                                     }
@@ -224,7 +234,8 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
                                 icon: const Icon(Icons.open_in_browser),
                                 label: const Text('View in Browser'),
                                 style: OutlinedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                 ),
                               ),
                             ),

@@ -9,11 +9,12 @@ import '../booking/active_service_tracking_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  @override  
+  @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
 
   final List<Widget> _screens = [
@@ -24,10 +25,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   ];
 
   late AnimationController _rotationController;
-  
+
   // Mock active booking state (should be bound to backend real-time stream)
   bool _hasActiveBooking = true;
-  String _activeServiceType = 'ambulance'; // 'ambulance', 'doctor', 'nurse', 'lab_test'
+  String _activeServiceType =
+      'ambulance'; // 'ambulance', 'doctor', 'nurse', 'lab_test'
 
   @override
   void initState() {
@@ -50,21 +52,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Color get _activeThemeColor {
     switch (_activeServiceType) {
-      case 'ambulance': return Colors.red;
-      case 'doctor': return Colors.blue;
-      case 'nurse': return Colors.blue;
-      case 'lab_test': return Colors.teal;
-      default: return const Color(0xFF0D47A1);
+      case 'ambulance':
+        return Colors.red;
+      case 'doctor':
+        return Colors.blue;
+      case 'nurse':
+        return Colors.blue;
+      case 'lab_test':
+        return Colors.teal;
+      default:
+        return const Color(0xFF0D47A1);
     }
   }
 
   IconData get _activeIcon {
     switch (_activeServiceType) {
-      case 'ambulance': return Icons.airport_shuttle;
-      case 'doctor': return Icons.person;
-      case 'nurse': return Icons.local_hospital;
-      case 'lab_test': return Icons.science;
-      default: return Icons.medical_services;
+      case 'ambulance':
+        return Icons.airport_shuttle;
+      case 'doctor':
+        return Icons.person;
+      case 'nurse':
+        return Icons.local_hospital;
+      case 'lab_test':
+        return Icons.science;
+      default:
+        return Icons.medical_services;
     }
   }
 
@@ -114,7 +126,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         children: [
                           // Rotating Border
                           Transform.rotate(
-                            angle: _rotationController.value * 2 * 3.141592653589793,
+                            angle: _rotationController.value *
+                                2 *
+                                3.141592653589793,
                             child: Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -164,7 +178,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
+            padding: const EdgeInsets.symmetric(
+                horizontal: 8, vertical: 4), // Reduced padding
             child: Row(
               children: [
                 Expanded(
@@ -233,7 +248,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       onTap: () => _onItemTapped(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // Reduced padding
+        padding: const EdgeInsets.symmetric(
+            horizontal: 4, vertical: 2), // Reduced padding
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(16),

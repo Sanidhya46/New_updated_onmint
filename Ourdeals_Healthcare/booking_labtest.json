@@ -1,0 +1,7 @@
+{
+  "serviceType": "labtest",
+  "phone": "9876543223",
+  "address": "Sample location",
+  "coordinates": [72.877, 19.06],
+  "tests": [{ "name": "Blood Test", "price": 100 }]
+}

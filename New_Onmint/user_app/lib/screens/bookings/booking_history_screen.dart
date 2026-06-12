@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'booking_details_screen.dart';
+import '../booking/order_request_screen.dart';
+import '../booking/order_detail_file.dart';
+import '../booking/user_unified_tracking_screen.dart';
 
 /// Booking history screen for patients
 class BookingHistoryScreen extends StatefulWidget {
@@ -10,14 +13,15 @@ class BookingHistoryScreen extends StatefulWidget {
   State<BookingHistoryScreen> createState() => _BookingHistoryScreenState();
 }
 
-class _BookingHistoryScreenState extends State<BookingHistoryScreen> with SingleTickerProviderStateMixin {
+class _BookingHistoryScreenState extends State<BookingHistoryScreen>
+    with SingleTickerProviderStateMixin {
   final _apiClient = OnMintApiClient();
   late TabController _tabController;
-  
+
   List<Booking> _activeBookings = [];
   List<Booking> _completedBookings = [];
   List<Booking> _cancelledBookings = [];
-  
+
   bool _isLoadingActive = true;
   bool _isLoadingCompleted = true;
   bool _isLoadingCancelled = true;
@@ -37,13 +41,13 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
 
   Future<void> _loadBookings() async {
     await _apiClient.initialize();
-    
+
     // Load active bookings
     _loadActiveBookings();
-    
+
     // Load completed bookings
     _loadCompletedBookings();
-    
+
     // Load cancelled bookings
     _loadCancelledBookings();
   }
@@ -69,10 +73,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
   Future<void> _loadCompletedBookings() async {
     setState(() => _isLoadingCompleted = true);
     try {
-      final response = await _apiClient.patient.getBookings(status: 'completed');
+      final response =
+          await _apiClient.patient.getBookings(status: 'completed');
       final bookings = (response['data'] as List?)
-          ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [];
+              ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
       setState(() {
         _completedBookings = bookings;
         _isLoadingCompleted = false;
@@ -90,10 +96,12 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
   Future<void> _loadCancelledBookings() async {
     setState(() => _isLoadingCancelled = true);
     try {
-      final response = await _apiClient.patient.getBookings(status: 'cancelled');
+      final response =
+          await _apiClient.patient.getBookings(status: 'cancelled');
       final bookings = (response['data'] as List?)
-          ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [];
+              ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [];
       setState(() {
         _cancelledBookings = bookings;
         _isLoadingCancelled = false;
@@ -126,14 +134,17 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
         controller: _tabController,
         children: [
           _buildBookingsList(_activeBookings, _isLoadingActive, 'active'),
-          _buildBookingsList(_completedBookings, _isLoadingCompleted, 'completed'),
-          _buildBookingsList(_cancelledBookings, _isLoadingCancelled, 'cancelled'),
+          _buildBookingsList(
+              _completedBookings, _isLoadingCompleted, 'completed'),
+          _buildBookingsList(
+              _cancelledBookings, _isLoadingCancelled, 'cancelled'),
         ],
       ),
     );
   }
 
-  Widget _buildBookingsList(List<Booking> bookings, bool isLoading, String type) {
+  Widget _buildBookingsList(
+      List<Booking> bookings, bool isLoading, String type) {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -144,9 +155,11 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              type == 'active' ? Icons.event_busy : 
-              type == 'completed' ? Icons.check_circle_outline : 
-              Icons.cancel_outlined,
+              type == 'active'
+                  ? Icons.event_busy
+                  : type == 'completed'
+                      ? Icons.check_circle_outline
+                      : Icons.cancel_outlined,
               size: 64,
               color: Colors.grey[400],
             ),
@@ -187,7 +200,7 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
   Widget _buildBookingCard(Booking booking) {
     Color statusColor;
     IconData statusIcon;
-    
+
     switch (booking.status.toLowerCase()) {
       case 'requested':
         statusColor = Colors.orange;
@@ -225,12 +238,39 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () async {
+          final sType = booking.serviceType.toLowerCase();
+
+          if (booking.status.toLowerCase() == 'requested' ||
+              booking.status.toLowerCase() == 'pending') {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => OrderRequestScreen(
+                  bookingId: booking.id,
+                  serviceType: booking.serviceType,
+                ),
+              ),
+            );
+            if (result == true) {
+              _loadBookings();
+            }
+            return;
+          }
+
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BookingDetailsScreen(
-                bookingId: booking.id,
-              ),
+              builder: (context) {
+                if (sType == 'nurse' ||
+                    sType == 'ambulance' ||
+                    sType == 'pathology' ||
+                    sType == 'lab_test' ||
+                    sType == 'lab test') {
+                  return UserUnifiedTrackingScreen(
+                      bookingId: booking.id, serviceType: booking.serviceType);
+                }
+                return BookingDetailsScreen(bookingId: booking.id);
+              },
             ),
           );
           if (result == true) {
@@ -319,7 +359,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.currency_rupee, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.currency_rupee,
+                        size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 8),
                     Text(
                       '₹${booking.price.toStringAsFixed(2)}',
@@ -444,7 +485,8 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> with Single
         await _apiClient.patient.rateBooking(
           booking.id,
           rating: rating,
-          review: reviewController.text.isNotEmpty ? reviewController.text : null,
+          review:
+              reviewController.text.isNotEmpty ? reviewController.text : null,
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

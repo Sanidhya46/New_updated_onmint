@@ -34,7 +34,8 @@ class _NursingCareSelectionScreenState
       id: '1',
       name: 'Injection Assistance',
       description: 'Get injection at home',
-      iconPath: 'assets/images/nurse/injection.png', // Fallback to icons if images don't exist
+      iconPath:
+          'assets/images/nurse/injection.png', // Fallback to icons if images don't exist
     ),
     NursingCareModel(
       id: '2',
@@ -112,17 +113,28 @@ class _NursingCareSelectionScreenState
 
   IconData _getIconForCare(String id) {
     switch (id) {
-      case '1': return Icons.vaccines_outlined;
-      case '2': return Icons.bloodtype_outlined;
-      case '3': return Icons.healing_outlined;
-      case '4': return Icons.medical_services_outlined;
-      case '5': return Icons.elderly_outlined;
-      case '6': return Icons.favorite_border_outlined;
-      case '7': return Icons.monitor_heart_outlined;
-      case '8': return Icons.person_add_alt_outlined;
-      case '9': return Icons.child_care_outlined;
-      case '10': return Icons.medication_outlined;
-      default: return Icons.medical_services_outlined;
+      case '1':
+        return Icons.vaccines_outlined;
+      case '2':
+        return Icons.bloodtype_outlined;
+      case '3':
+        return Icons.healing_outlined;
+      case '4':
+        return Icons.medical_services_outlined;
+      case '5':
+        return Icons.elderly_outlined;
+      case '6':
+        return Icons.favorite_border_outlined;
+      case '7':
+        return Icons.monitor_heart_outlined;
+      case '8':
+        return Icons.person_add_alt_outlined;
+      case '9':
+        return Icons.child_care_outlined;
+      case '10':
+        return Icons.medication_outlined;
+      default:
+        return Icons.medical_services_outlined;
     }
   }
 
@@ -151,7 +163,8 @@ class _NursingCareSelectionScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Text(
               'Choose the type of nursing service you need',
               style: TextStyle(
@@ -162,7 +175,8 @@ class _NursingCareSelectionScreenState
           ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               itemCount: _allCares.length,
               itemBuilder: (context, index) {
                 final care = _allCares[index];
@@ -177,7 +191,8 @@ class _NursingCareSelectionScreenState
                       color: isSelected ? Colors.blue[50] : Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? Colors.blue[300]! : Colors.grey[200]!,
+                        color:
+                            isSelected ? Colors.blue[300]! : Colors.grey[200]!,
                         width: isSelected ? 1.5 : 1,
                       ),
                       boxShadow: [
@@ -230,15 +245,20 @@ class _NursingCareSelectionScreenState
                           width: 24,
                           height: 24,
                           decoration: BoxDecoration(
-                            color: isSelected ? Colors.blue[600] : Colors.transparent,
+                            color: isSelected
+                                ? Colors.blue[600]
+                                : Colors.transparent,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: isSelected ? Colors.blue[600]! : Colors.grey[400]!,
+                              color: isSelected
+                                  ? Colors.blue[600]!
+                                  : Colors.grey[400]!,
                               width: 1.5,
                             ),
                           ),
                           child: isSelected
-                              ? const Icon(Icons.check, size: 16, color: Colors.white)
+                              ? const Icon(Icons.check,
+                                  size: 16, color: Colors.white)
                               : null,
                         ),
                       ],
@@ -250,51 +270,54 @@ class _NursingCareSelectionScreenState
           ),
         ],
       ),
-      bottomNavigationBar: _selectedCares.isEmpty ? const SizedBox.shrink() : Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              offset: const Offset(0, -4),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context, _selectedCares);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[700],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Proceed',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+      bottomNavigationBar: _selectedCares.isEmpty
+          ? const SizedBox.shrink()
+          : Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    offset: const Offset(0, -4),
+                    blurRadius: 8,
                   ),
-                  SizedBox(width: 8),
-                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                 ],
               ),
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context, _selectedCares);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[700],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Proceed',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward,
+                            color: Colors.white, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }

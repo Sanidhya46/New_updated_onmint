@@ -14,7 +14,7 @@ class PathologyLabsScreen extends StatefulWidget {
 class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
   final _apiClient = OnMintApiClient();
   final _searchController = TextEditingController();
-  
+
   List<dynamic> _labs = [];
   bool _isLoading = true;
   String? _error;
@@ -39,7 +39,7 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
 
     try {
       await _apiClient.initialize();
-      
+
       final result = await _apiClient.patient.searchLabs(
         city: _searchController.text.isEmpty ? null : _searchController.text,
       );
@@ -124,7 +124,7 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
     final reviewCount = lab['reviewCount'] ?? 0;
     final tests = lab['tests'] as List? ?? [];
     final isOpen = lab['isOpen'] ?? false;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -158,7 +158,7 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Lab Info
                   Expanded(
                     child: Column(
@@ -196,12 +196,13 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Rating
                         if (rating > 0)
                           Row(
                             children: [
-                              const Icon(Icons.star, size: 16, color: Colors.amber),
+                              const Icon(Icons.star,
+                                  size: 16, color: Colors.amber),
                               const SizedBox(width: 4),
                               Text(
                                 rating.toStringAsFixed(1),
@@ -220,11 +221,12 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
                             ],
                           ),
                         const SizedBox(height: 8),
-                        
+
                         // Tests Count
                         Row(
                           children: [
-                            const Icon(Icons.medical_services, size: 16, color: Colors.grey),
+                            const Icon(Icons.medical_services,
+                                size: 16, color: Colors.grey),
                             const SizedBox(width: 4),
                             Text(
                               '${tests.length} tests available',
@@ -236,12 +238,13 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        
+
                         // Location
                         if (lab['address'] != null)
                           Row(
                             children: [
-                              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                              const Icon(Icons.location_on,
+                                  size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -261,7 +264,7 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
                   ),
                 ],
               ),
-              
+
               // Popular Tests
               if (tests.isNotEmpty) ...[
                 const SizedBox(height: 12),
@@ -315,7 +318,7 @@ class _PathologyLabsScreenState extends State<PathologyLabsScreen> {
                   }).toList(),
                 ),
               ],
-              
+
               // Home Collection
               if (lab['homeCollection'] == true) ...[
                 const SizedBox(height: 12),

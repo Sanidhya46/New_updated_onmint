@@ -18,11 +18,12 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
+class _DashboardScreenState extends State<DashboardScreen>
+    with TickerProviderStateMixin {
   final _apiClient = OnMintApiClient();
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   List<dynamic> _nearbyDoctors = [];
   List<dynamic> _medicines = [];
   List<dynamic> _activeBookings = [];
@@ -98,7 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   Future<void> _getCurrentLocation() async {
     try {
       setState(() => _isLocationLoading = true);
-      
+
       // Check and request location permission
       final permission = await Permission.location.request();
       if (!permission.isGranted) {
@@ -123,21 +124,22 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           throw Exception('Location timeout');
         },
       );
-      
+
       _currentPosition = position;
-      
+
       // Try to get address from coordinates using geocoding
       try {
         final placemarks = await placemarkFromCoordinates(
           position.latitude,
           position.longitude,
         ).timeout(const Duration(seconds: 3));
-        
+
         if (placemarks.isNotEmpty) {
           final place = placemarks.first;
-          final city = place.locality ?? place.subAdministrativeArea ?? 'Unknown';
+          final city =
+              place.locality ?? place.subAdministrativeArea ?? 'Unknown';
           final state = place.administrativeArea ?? '';
-          
+
           if (mounted) {
             setState(() {
               _currentCity = city;
@@ -206,7 +208,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
+    ).animate(
+        CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic));
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _scaleController, curve: Curves.elasticOut),
     );
@@ -224,18 +227,19 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
 
     try {
       await _apiClient.initialize();
-      
+
       // Load active bookings
       final bookingsResponse = await _apiClient.patient.getActiveBookings();
-      
+
       // Load nearby doctors
       final doctorsResult = await _apiClient.patient.searchDoctors(limit: 10);
       final doctors = (doctorsResult['data'] as List?) ?? [];
-      
+
       // Load medicines
-      final medicinesResult = await _apiClient.patient.searchMedicines(limit: 6, inStock: true);
+      final medicinesResult =
+          await _apiClient.patient.searchMedicines(limit: 6, inStock: true);
       final medicines = (medicinesResult['data'] as List?) ?? [];
-      
+
       setState(() {
         _activeBookings = bookingsResponse;
         _nearbyDoctors = doctors;
@@ -262,8 +266,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           _buildFixedHeader(),
           // Scrollable Content
           Expanded(
-            child: _isLoading 
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF667EEA)))
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF667EEA)))
                 : FadeTransition(
                     opacity: _fadeAnimation,
                     child: SingleChildScrollView(
@@ -469,12 +474,14 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             ),
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         ),
         onSubmitted: _performSearch,
       ),
     );
   }
+
   Widget _buildQuickServiceCards() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -540,7 +547,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? const Color(0xFF667EEA) : Colors.grey[700],
+                        color: isSelected
+                            ? const Color(0xFF667EEA)
+                            : Colors.grey[700],
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -690,15 +699,40 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       ),
     );
   }
+
   Widget _buildMedicinesSection() {
     // Medicine categories
     final medicineCategories = [
-      {'name': 'Pain Relief', 'icon': Icons.healing, 'color': const Color(0xFFFF6B6B)},
-      {'name': 'Vitamins', 'icon': Icons.energy_savings_leaf, 'color': const Color(0xFF4ECDC4)},
-      {'name': 'Antibiotics', 'icon': Icons.medication_liquid, 'color': const Color(0xFF95E1D3)},
-      {'name': 'Diabetes', 'icon': Icons.water_drop, 'color': const Color(0xFFFFBE76)},
-      {'name': 'Heart Care', 'icon': Icons.favorite, 'color': const Color(0xFFFF6B9D)},
-      {'name': 'Skin Care', 'icon': Icons.face, 'color': const Color(0xFFC7CEEA)},
+      {
+        'name': 'Pain Relief',
+        'icon': Icons.healing,
+        'color': const Color(0xFFFF6B6B)
+      },
+      {
+        'name': 'Vitamins',
+        'icon': Icons.energy_savings_leaf,
+        'color': const Color(0xFF4ECDC4)
+      },
+      {
+        'name': 'Antibiotics',
+        'icon': Icons.medication_liquid,
+        'color': const Color(0xFF95E1D3)
+      },
+      {
+        'name': 'Diabetes',
+        'icon': Icons.water_drop,
+        'color': const Color(0xFFFFBE76)
+      },
+      {
+        'name': 'Heart Care',
+        'icon': Icons.favorite,
+        'color': const Color(0xFFFF6B9D)
+      },
+      {
+        'name': 'Skin Care',
+        'icon': Icons.face,
+        'color': const Color(0xFFC7CEEA)
+      },
     ];
 
     return Column(
@@ -734,10 +768,12 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MedicinesListScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const MedicinesListScreen()),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
@@ -775,7 +811,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             ],
           ),
         ),
-        
+
         // Medicine Categories Grid
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -850,9 +886,9 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             },
           ),
         ),
-        
+
         const SizedBox(height: 16),
-        
+
         // Featured Medicines Horizontal List
         if (_medicines.isNotEmpty) ...[
           Padding(
@@ -869,7 +905,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFF6B6B).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -939,10 +976,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     final price = (medicine['discountedPrice'] ?? medicine['price']).toDouble();
     final originalPrice = medicine['price'].toDouble();
     final hasDiscount = medicine['discountedPrice'] != null;
-    final discountPercent = hasDiscount 
+    final discountPercent = hasDiscount
         ? ((originalPrice - price) / originalPrice * 100).round()
         : 0;
-    
+
     return Container(
       width: 170,
       margin: const EdgeInsets.only(right: 12),
@@ -976,22 +1013,26 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                         top: Radius.circular(16),
                       ),
                     ),
-                    child: medicine['images'] != null && (medicine['images'] as List).isNotEmpty
+                    child: medicine['images'] != null &&
+                            (medicine['images'] as List).isNotEmpty
                         ? ClipRRect(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                            borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(16)),
                             child: Image.network(
                               medicine['images'][0],
                               fit: BoxFit.cover,
                               width: double.infinity,
                               errorBuilder: (context, error, stackTrace) {
                                 return Center(
-                                  child: Icon(Icons.medication, size: 50, color: Colors.grey[400]),
+                                  child: Icon(Icons.medication,
+                                      size: 50, color: Colors.grey[400]),
                                 );
                               },
                             ),
                           )
                         : Center(
-                            child: Icon(Icons.medication, size: 50, color: Colors.grey[400]),
+                            child: Icon(Icons.medication,
+                                size: 50, color: Colors.grey[400]),
                           ),
                   ),
                   // Discount Badge
@@ -1000,7 +1041,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Color(0xFFFF6B6B), Color(0xFFFF8E8E)],
@@ -1026,7 +1068,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                     ),
                 ],
               ),
-              
+
               // Medicine Details
               Padding(
                 padding: const EdgeInsets.all(12),
@@ -1117,6 +1159,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       ),
     );
   }
+
   Widget _buildNearbyDoctorsSection() {
     if (_nearbyDoctors.isEmpty) {
       return Container(
@@ -1165,7 +1208,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(  
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             children: [
@@ -1187,10 +1230,12 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
               GestureDetector(
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const DoctorsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const DoctorsScreen()),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFF667EEA).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
@@ -1256,7 +1301,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             CircleAvatar(
               radius: 30,
               backgroundColor: const Color(0xFF667EEA).withOpacity(0.1),
-              child: doctor['profilePicture'] != null && doctor['profilePicture'].isNotEmpty
+              child: doctor['profilePicture'] != null &&
+                      doctor['profilePicture'].isNotEmpty
                   ? ClipOval(
                       child: Image.network(
                         doctor['profilePicture'],
@@ -1284,7 +1330,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'.trim(),
+                    'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'
+                        .trim(),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -1302,7 +1349,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Color(0xFFFFD700), size: 14),
+                      const Icon(Icons.star,
+                          color: Color(0xFFFFD700), size: 14),
                       const SizedBox(width: 4),
                       const Text(
                         '4.5',
@@ -1313,7 +1361,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                       ),
                       const SizedBox(width: 12),
                       if (doctor['experience'] != null) ...[
-                        const Icon(Icons.work, size: 14, color: Color(0xFF6B7280)),
+                        const Icon(Icons.work,
+                            size: 14, color: Color(0xFF6B7280)),
                         const SizedBox(width: 4),
                         Text(
                           '${doctor['experience']} yrs',
@@ -1345,7 +1394,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF667EEA),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -1359,6 +1409,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       ),
     );
   }
+
   Widget _buildActiveBookingsSection() {
     if (_activeBookings.isEmpty) {
       return const SizedBox.shrink();
@@ -1514,6 +1565,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       ),
     );
   }
+
   // Navigation and action methods
   void _navigateToServiceScreen(String serviceId) {
     setState(() {
@@ -1640,7 +1692,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     try {
       // Get current location
       await _getCurrentLocation();
-      
+
       // Close loading dialog
       if (mounted) Navigator.pop(context);
 
@@ -1663,7 +1715,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                   children: [
                     const CircularProgressIndicator(),
                     const SizedBox(height: 16),
-                    Text('Sending ${type == "doctor" ? "doctor" : "ambulance"} request...'),
+                    Text(
+                        'Sending ${type == "doctor" ? "doctor" : "ambulance"} request...'),
                   ],
                 ),
               ),
@@ -1676,29 +1729,35 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       final response = await _apiClient.patient.triggerEmergency(
         location: {
           'type': 'Point',
-          'coordinates': [_currentPosition!.longitude, _currentPosition!.latitude], // [longitude, latitude]
+          'coordinates': [
+            _currentPosition!.longitude,
+            _currentPosition!.latitude
+          ], // [longitude, latitude]
         },
-        address: 'Current Location', // You can use reverse geocoding to get actual address
-        notes: type == 'doctor' 
-          ? 'Emergency doctor consultation needed - immediate video call required'
-          : 'Emergency ambulance request - immediate assistance required',
+        address:
+            'Current Location', // You can use reverse geocoding to get actual address
+        notes: type == 'doctor'
+            ? 'Emergency doctor consultation needed - immediate video call required'
+            : 'Emergency ambulance request - immediate assistance required',
         type: type,
       );
 
       // Close sending dialog
       if (mounted) Navigator.pop(context);
-      
+
       // Show success with provider details
       if (mounted) {
         final emergencyData = response['data'] ?? {};
-        
+
         String providerInfo = '';
         if (type == 'doctor' && emergencyData['doctor'] != null) {
           final doctor = emergencyData['doctor'];
-          providerInfo = '\n\nDoctor: ${doctor['name']}\nSpecialization: ${doctor['specialization']}\nETA: ${emergencyData['eta']} minutes';
+          providerInfo =
+              '\n\nDoctor: ${doctor['name']}\nSpecialization: ${doctor['specialization']}\nETA: ${emergencyData['eta']} minutes';
         } else if (type == 'ambulance' && emergencyData['ambulance'] != null) {
           final ambulance = emergencyData['ambulance'];
-          providerInfo = '\n\nDriver: ${ambulance['driverName']}\nVehicle: ${ambulance['vehicleNumber']}\nETA: ${emergencyData['eta']} minutes';
+          providerInfo =
+              '\n\nDriver: ${ambulance['driverName']}\nVehicle: ${ambulance['vehicleNumber']}\nETA: ${emergencyData['eta']} minutes';
         }
 
         showDialog(
@@ -1716,8 +1775,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             ),
             content: Text(
               type == 'doctor'
-                ? 'Emergency doctor consultation requested! Doctor will connect via video call shortly.$providerInfo'
-                : 'Emergency ambulance requested! Ambulance is on the way.$providerInfo',
+                  ? 'Emergency doctor consultation requested! Doctor will connect via video call shortly.$providerInfo'
+                  : 'Emergency ambulance requested! Ambulance is on the way.$providerInfo',
             ),
             actions: [
               TextButton(
@@ -1743,9 +1802,10 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     } catch (e) {
       // Close any open dialogs
       if (mounted) {
-        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+        Navigator.of(context, rootNavigator: true)
+            .popUntil((route) => route.isFirst);
       }
-      
+
       print('Emergency request error: $e');
       if (mounted) {
         showDialog(

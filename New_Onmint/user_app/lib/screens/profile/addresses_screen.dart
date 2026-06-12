@@ -57,7 +57,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       final data = {
         'address': {
           'street': _streetController.text,
@@ -70,7 +70,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
       await _apiClient.patient.updateProfile(data);
 
       await authProvider.refreshProfile();
-      
+
       if (mounted) {
         ToastUtils.showSuccess('Address updated successfully');
         Navigator.pop(context);
@@ -186,7 +186,11 @@ class _AddressesScreenState extends State<AddressesScreen> {
                     ),
                   ),
                   child: _isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
                       : const Text(
                           'Save Address',
                           style: TextStyle(

@@ -99,6 +99,13 @@ class AmbulanceApiService {
     await _client.post('/ambulance/requests/$requestId/complete');
   }
 
+  /// Update status of a real-time booking directly using the realtime API (PATCH)
+  Future<void> updateRealtimeBookingStatus(String bookingId, String status) async {
+    await _client.patch('/realtime/$bookingId/status', data: {
+      'status': status,
+    });
+  }
+
   // Get single ride request details
   Future<Map<String, dynamic>> getRideDetails(String requestId) async {
     final response = await _client.get('/ambulance/requests/$requestId');

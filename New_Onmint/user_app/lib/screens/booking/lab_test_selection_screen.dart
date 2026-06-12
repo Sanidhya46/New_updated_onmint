@@ -28,17 +28,61 @@ class LabTestSelectionScreen extends StatefulWidget {
 
 class _LabTestSelectionScreenState extends State<LabTestSelectionScreen> {
   final List<LabTestModel> _allTests = [
-    LabTestModel(id: '1', name: 'HbA1c', description: 'Known as Glycosylated Haemoglobin Blood', price: 420),
-    LabTestModel(id: '2', name: 'Vitamin B 12', description: 'Known as Vitamin B12 Conventional Blood', price: 960),
-    LabTestModel(id: '3', name: 'Beta HCG', description: 'Known as Beta Hcg Automated Blood', price: 815),
-    LabTestModel(id: '4', name: 'Fasting Blood Sugar', description: 'Known as Glucose Fasting Blood', price: 80),
-    LabTestModel(id: '5', name: 'Vitamin D Profile', description: 'Known as Vitamin D Profile Blood', price: 1910),
-    LabTestModel(id: '6', name: 'Thyroid Profile', description: 'Known as Thyroid Profile Total Blood', price: 420),
-    LabTestModel(id: '7', name: 'Complete Blood Count', description: 'Known as Complete Blood Count Automated Blood', price: 330),
-    LabTestModel(id: '8', name: 'Lipid Profile', description: 'Known as Lipid Profile Blood', price: 620),
-    LabTestModel(id: '9', name: 'Liver Function Test', description: 'Known as Liver Function Tests Blood', price: 790),
-    LabTestModel(id: '10', name: 'Dengue NS 1', description: 'Known as Dengue Ns1 Antigen Pcr Blood', price: 630),
-    LabTestModel(id: '11', name: 'Malarial Antigen', description: 'Known as Malarial Antigen Pcr Blood', price: 680),
+    LabTestModel(
+        id: '1',
+        name: 'HbA1c',
+        description: 'Known as Glycosylated Haemoglobin Blood',
+        price: 420),
+    LabTestModel(
+        id: '2',
+        name: 'Vitamin B 12',
+        description: 'Known as Vitamin B12 Conventional Blood',
+        price: 960),
+    LabTestModel(
+        id: '3',
+        name: 'Beta HCG',
+        description: 'Known as Beta Hcg Automated Blood',
+        price: 815),
+    LabTestModel(
+        id: '4',
+        name: 'Fasting Blood Sugar',
+        description: 'Known as Glucose Fasting Blood',
+        price: 80),
+    LabTestModel(
+        id: '5',
+        name: 'Vitamin D Profile',
+        description: 'Known as Vitamin D Profile Blood',
+        price: 1910),
+    LabTestModel(
+        id: '6',
+        name: 'Thyroid Profile',
+        description: 'Known as Thyroid Profile Total Blood',
+        price: 420),
+    LabTestModel(
+        id: '7',
+        name: 'Complete Blood Count',
+        description: 'Known as Complete Blood Count Automated Blood',
+        price: 330),
+    LabTestModel(
+        id: '8',
+        name: 'Lipid Profile',
+        description: 'Known as Lipid Profile Blood',
+        price: 620),
+    LabTestModel(
+        id: '9',
+        name: 'Liver Function Test',
+        description: 'Known as Liver Function Tests Blood',
+        price: 790),
+    LabTestModel(
+        id: '10',
+        name: 'Dengue NS 1',
+        description: 'Known as Dengue Ns1 Antigen Pcr Blood',
+        price: 630),
+    LabTestModel(
+        id: '11',
+        name: 'Malarial Antigen',
+        description: 'Known as Malarial Antigen Pcr Blood',
+        price: 680),
   ];
 
   late List<LabTestModel> _selectedTests;
@@ -66,7 +110,11 @@ class _LabTestSelectionScreenState extends State<LabTestSelectionScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Select Tests', style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+        title: const Text('Select Tests',
+            style: TextStyle(
+                color: Colors.black87,
+                fontSize: 18,
+                fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black87),
@@ -76,7 +124,8 @@ class _LabTestSelectionScreenState extends State<LabTestSelectionScreen> {
           Expanded(
             child: ListView.separated(
               itemCount: _allTests.length,
-              separatorBuilder: (context, index) => Divider(color: Colors.grey[200], height: 1),
+              separatorBuilder: (context, index) =>
+                  Divider(color: Colors.grey[200], height: 1),
               itemBuilder: (context, index) {
                 final test = _allTests[index];
                 final isSelected = _selectedTests.any((t) => t.id == test.id);
@@ -85,7 +134,8 @@ class _LabTestSelectionScreenState extends State<LabTestSelectionScreen> {
                   onTap: () => _toggleSelection(test),
                   child: Container(
                     color: isSelected ? const Color(0xFFF4F0FF) : Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
@@ -172,7 +222,8 @@ class _LabTestSelectionScreenState extends State<LabTestSelectionScreen> {
                       const SizedBox(height: 4),
                       Text(
                         '₹${totalPrice.toInt()}',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),

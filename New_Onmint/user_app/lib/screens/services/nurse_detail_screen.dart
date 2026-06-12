@@ -83,16 +83,14 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
                         ],
                       ),
                     ),
-      bottomNavigationBar: _nurse != null
-          ? _buildBookButton()
-          : null,
+      bottomNavigationBar: _nurse != null ? _buildBookButton() : null,
     );
   }
 
   Widget _buildHeader() {
     final rating = _nurse!['rating']?.toDouble() ?? 0.0;
     final reviewCount = _nurse!['reviewCount'] ?? 0;
-    
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: const BoxDecoration(
@@ -165,7 +163,7 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
   Widget _buildInfoSection() {
     final experience = _nurse!['experience'] ?? 0;
     final qualification = _nurse!['qualification'] ?? 'Not specified';
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -263,14 +261,15 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
   }
 
   Widget _buildServicesSection() {
-    final services = _nurse!['servicesOffered'] as List? ?? 
-                     _nurse!['services'] as List? ?? [];
+    final services = _nurse!['servicesOffered'] as List? ??
+        _nurse!['services'] as List? ??
+        [];
     final specializations = _nurse!['specializations'] as List? ?? [];
     final tasks = _nurse!['tasks'] as List? ?? [];
-    
+
     // Combine all service-related information
     final allServices = <Map<String, dynamic>>[];
-    
+
     // Add services
     for (var service in services) {
       if (service is Map<String, dynamic>) {
@@ -279,7 +278,7 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
         allServices.add({'name': service.toString(), 'type': 'service'});
       }
     }
-    
+
     // Add specializations
     for (var spec in specializations) {
       if (spec is Map<String, dynamic>) {
@@ -288,7 +287,7 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
         allServices.add({'name': spec.toString(), 'type': 'specialization'});
       }
     }
-    
+
     // Add tasks
     for (var task in tasks) {
       if (task is Map<String, dynamic>) {
@@ -297,9 +296,9 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
         allServices.add({'name': task.toString(), 'type': 'task'});
       }
     }
-    
+
     if (allServices.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -321,7 +320,7 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
                   final type = service['type'] ?? 'service';
                   IconData icon;
                   Color color;
-                  
+
                   switch (type) {
                     case 'specialization':
                       icon = Icons.star;
@@ -335,7 +334,7 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
                       icon = Icons.medical_services;
                       color = AppColors.primary;
                   }
-                  
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
@@ -389,7 +388,9 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
                                     ),
                                 ],
                               ),
-                              if (service['price'] != null || service['pricePerHour'] != null || service['hourlyRate'] != null)
+                              if (service['price'] != null ||
+                                  service['pricePerHour'] != null ||
+                                  service['hourlyRate'] != null)
                                 Text(
                                   '₹${service['price'] ?? service['pricePerHour'] ?? service['hourlyRate']}/hour',
                                   style: TextStyle(
@@ -416,16 +417,21 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
               ),
             ),
           ),
-          
+
           // Show general hourly rate if no service-specific rates
-          if (_nurse!['hourlyRate'] != null && allServices.every((s) => s['price'] == null && s['pricePerHour'] == null && s['hourlyRate'] == null))
+          if (_nurse!['hourlyRate'] != null &&
+              allServices.every((s) =>
+                  s['price'] == null &&
+                  s['pricePerHour'] == null &&
+                  s['hourlyRate'] == null))
             Card(
               color: AppColors.primary.withOpacity(0.1),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.attach_money, color: AppColors.primary, size: 24),
+                    Icon(Icons.attach_money,
+                        color: AppColors.primary, size: 24),
                     const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,9 +464,9 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
 
   Widget _buildAvailabilitySection() {
     final availability = _nurse!['availability'] as List? ?? [];
-    
+
     if (availability.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -511,9 +517,9 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
 
   Widget _buildReviewsSection() {
     final reviews = _nurse!['reviews'] as List? ?? [];
-    
+
     if (reviews.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -623,7 +629,20 @@ class _NurseDetailScreenState extends State<NurseDetailScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]}';
   }
 }

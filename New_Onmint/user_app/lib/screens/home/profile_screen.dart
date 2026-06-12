@@ -49,7 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           radius: 50,
                           backgroundColor: Colors.white,
                           child: Text(
-                            user.firstName?.isNotEmpty == true ? user.firstName![0].toUpperCase() : 'U',
+                            user.firstName?.isNotEmpty == true
+                                ? user.firstName![0].toUpperCase()
+                                : 'U',
                             style: const TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.bold,
@@ -83,7 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Personal Information
                   _buildSection(
                     title: 'Personal Information',
@@ -123,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                     ],
                   ),
-                  
+
                   // Address Information
                   if (user.address != null)
                     _buildSection(
@@ -136,7 +138,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                  
+
                   // Emergency Contact
                   if (user.emergencyContact != null)
                     _buildSection(
@@ -159,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ],
                     ),
-                  
+
                   // Actions
                   _buildSection(
                     title: 'Settings',
@@ -190,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ],
                   ),
-                  
+
                   // Logout Button
                   Padding(
                     padding: const EdgeInsets.all(16),
@@ -207,7 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),
@@ -215,7 +217,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildSection({required String title, required List<Widget> children}) {
+  Widget _buildSection(
+      {required String title, required List<Widget> children}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -289,13 +292,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
           color: AppColors.textPrimary,
         ),
       ),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
+      trailing: const Icon(Icons.arrow_forward_ios,
+          size: 16, color: AppColors.textSecondary),
       onTap: onTap,
     );
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 

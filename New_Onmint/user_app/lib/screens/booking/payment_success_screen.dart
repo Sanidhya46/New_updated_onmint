@@ -70,11 +70,14 @@ class PaymentSuccessScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     children: [
-                      _buildDetailRow('Amount Paid', '₹${amount.toStringAsFixed(2)}'),
+                      _buildDetailRow(
+                          'Amount Paid', '₹${amount.toStringAsFixed(2)}'),
                       const Divider(height: 24),
-                      _buildDetailRow('Payment ID', '#${paymentId.substring(0, 12)}...'),
+                      _buildDetailRow(
+                          'Payment ID', '#${paymentId.substring(0, 12)}...'),
                       const Divider(height: 24),
-                      _buildDetailRow('Booking ID', '#${bookingId.substring(0, 8)}'),
+                      _buildDetailRow(
+                          'Booking ID', '#${bookingId.substring(0, 8)}'),
                     ],
                   ),
                 ),
@@ -138,9 +141,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   OutlinedButton(
                     onPressed: () {
                       Navigator.pushNamedAndRemoveUntil(

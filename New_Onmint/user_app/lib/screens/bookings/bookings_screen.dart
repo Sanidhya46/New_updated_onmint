@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ui_components/ui_components.dart';
 import 'package:api_client/api_client.dart';
 import '../../config/app_colors.dart';
+import '../booking/user_unified_tracking_screen.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -10,10 +11,11 @@ class BookingsScreen extends StatefulWidget {
   State<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProviderStateMixin {
+class _BookingsScreenState extends State<BookingsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _apiClient = OnMintApiClient();
-  
+
   List<Map<String, dynamic>> _activeBookings = [];
   List<Map<String, dynamic>> _allBookings = [];
   bool _isLoadingActive = false;
@@ -80,23 +82,57 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
       // Handle the actual API response format: {success: true, data: [...], pagination: {...}}
       List<Map<String, dynamic>> newBookings = [];
       Map<String, dynamic> pagination = {};
-      
+
       if (response['success'] == true) {
         if (response['data'] is List) {
-          newBookings = (response['data'] as List).cast<Map<String, dynamic>>();
+          final allData =
+              (response['data'] as List).cast<Map<String, dynamic>>();
+          newBookings = allData.where((b) {
+            final status = b['status']?.toString().toLowerCase() ?? '';
+            return status != 'expired' && status != 'cancelled';
+          }).toList();
         }
         if (response['pagination'] is Map) {
           pagination = response['pagination'] as Map<String, dynamic>;
         }
       }
-      
+
       setState(() {
         if (refresh) {
           _allBookings = newBookings;
         } else {
           _allBookings.addAll(newBookings);
         }
-        
+
+        int getStatusRank(String status) {
+          switch (status.toLowerCase()) {
+            case 'pending':
+            case 'requested':
+            case 'accepted':
+            case 'confirmed':
+              return 1; // Upcoming
+            case 'on_the_way':
+            case 'in_progress':
+              return 2; // In Progress
+            case 'completed':
+            case 'cancelled':
+              return 3; // Completed
+            default:
+              return 4;
+          }
+        }
+
+        _allBookings.sort((a, b) {
+          int rankA = getStatusRank(a['status'] ?? '');
+          int rankB = getStatusRank(b['status'] ?? '');
+          if (rankA != rankB) {
+            return rankA.compareTo(rankB);
+          }
+          String dateA = a['createdAt'] ?? a['scheduledTime'] ?? '';
+          String dateB = b['createdAt'] ?? b['scheduledTime'] ?? '';
+          return dateB.compareTo(dateA);
+        });
+
         _hasMoreBookings = pagination['hasNext'] ?? false;
         _currentPage = pagination['page'] ?? 1;
       });
@@ -143,7 +179,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     if (confirmed == true) {
       try {
         await _apiClient.initialize();
-        await _apiClient.patient.cancelBooking(bookingId, reason: 'User requested cancellation');
+        await _apiClient.patient
+            .cancelBooking(bookingId, reason: 'User requested cancellation');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Booking cancelled successfully'),
@@ -178,7 +215,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
           rating: result['rating'],
           review: result['review'],
         );
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Rating submitted successfully'),
@@ -199,22 +236,16 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
   }
 
-  Future<void> _viewBookingDetails(String bookingId) async {
-    try {
-      await _apiClient.initialize();
-      final response = await _apiClient.patient.getBookingDetails(bookingId);
-      showDialog(
-        context: context,
-        builder: (context) => _BookingDetailsDialog(booking: response.toJson()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error loading booking details: $e'),
-          backgroundColor: Colors.red,
+  void _viewBookingDetails(String bookingId, String serviceType) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => UserUnifiedTrackingScreen(
+          bookingId: bookingId,
+          serviceType: serviceType,
         ),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -378,7 +409,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     final status = booking['status'] ?? 'pending';
     final scheduledTime = booking['scheduledTime'];
     final providerName = booking['provider']?['firstName'] ?? 'Provider';
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -424,7 +455,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getStatusColor(status).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -450,7 +482,8 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => _viewBookingDetails(bookingId),
+                    onPressed: () =>
+                        _viewBookingDetails(bookingId, serviceType),
                     icon: const Icon(Icons.visibility_outlined, size: 16),
                     label: const Text('View Details'),
                   ),
@@ -619,9 +652,13 @@ class _BookingDetailsDialog extends StatelessWidget {
           children: [
             _buildDetailRow('Service', booking['serviceType'] ?? 'Unknown'),
             _buildDetailRow('Status', booking['status'] ?? 'Unknown'),
-            _buildDetailRow('Provider', booking['provider']?['firstName'] ?? 'Unknown'),
+            _buildDetailRow(
+                'Provider', booking['provider']?['firstName'] ?? 'Unknown'),
             if (booking['scheduledTime'] != null)
-              _buildDetailRow('Scheduled Time', DateFormatter.formatToHumanReadable(booking['scheduledTime'])),
+              _buildDetailRow(
+                  'Scheduled Time',
+                  DateFormatter.formatToHumanReadable(
+                      booking['scheduledTime'])),
             if (booking['notes'] != null)
               _buildDetailRow('Notes', booking['notes']),
           ],

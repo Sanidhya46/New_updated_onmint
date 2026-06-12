@@ -143,7 +143,7 @@ class ApiClient {
   }
 
   // Multiple files upload with form data (Web compatible)
-  Future<Response> uploadMultipartData(String path, Map<String, dynamic> data, {List<String>? filePaths, String fileFieldName = 'images', Map<String, String>? namedFiles, List<XFile>? xFiles}) async {
+  Future<Response> uploadMultipartData(String path, Map<String, dynamic> data, {List<String>? filePaths, String fileFieldName = 'images', Map<String, String>? namedFiles, List<XFile>? xFiles, Map<String, XFile>? namedXFiles}) async {
     try {
       final formData = FormData.fromMap(data);
       
@@ -184,8 +184,19 @@ class ApiClient {
               await MultipartFile.fromFile(entry.value),
             ));
           } catch (e) {
-            print('Warning: Could not add named file on web: ${entry.key}');
+            print('Warning: Could not add named file from path on web: ${entry.value}');
           }
+        }
+      }
+      
+      // Add named XFiles (Web compatible specific named fields)
+      if (namedXFiles != null && namedXFiles.isNotEmpty) {
+        for (final entry in namedXFiles.entries) {
+          final bytes = await entry.value.readAsBytes();
+          formData.files.add(MapEntry(
+            entry.key,
+            MultipartFile.fromBytes(bytes, filename: entry.value.name),
+          ));
         }
       }
       

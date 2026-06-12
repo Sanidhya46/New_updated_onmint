@@ -18,6 +18,7 @@ import '../pharmacist/order_management_screen.dart';
 import '../nurse/bookings_screen.dart' as nurse_bookings;
 import '../pathology/pathology_bookings_screen.dart';
 import '../pathology/pathology_home_screen.dart';
+import '../blood_bank/blood_bank_bookings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,7 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
       const ProfileScreen(),
     ];
 
-    bool hideAppBar = _selectedIndex == 3 || (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse' || role == 'pathology'));
+    bool hideAppBar = _selectedIndex == 3 || 
+        (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse' || role == 'pathology' || role == 'bloodbank')) || 
+        (_selectedIndex == 1 && (role == 'nurse' || role == 'pathology' || role == 'bloodbank'));
 
     return Scaffold(
       appBar: hideAppBar ? null : AppBar(
@@ -173,16 +176,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'pathology':
         return const PathologyBookingsScreen();
       case 'bloodbank':
-        return const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.bloodtype, size: 64, color: AppColors.textSecondary),
-              SizedBox(height: 16),
-              Text('Blood bank requests coming soon'),
-            ],
-          ),
-        );
+        return const BloodBankBookingsScreen();
       default:
         return const Center(child: Text('Bookings screen not available'));
     }

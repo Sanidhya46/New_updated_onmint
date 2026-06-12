@@ -31,8 +31,10 @@ class _ProviderReviewsScreenState extends State<ProviderReviewsScreen> {
   Future<void> _loadReviews() async {
     setState(() => _isLoading = true);
     try {
-      final summary = await _apiClient.rating.getProviderRatingSummary(widget.providerId);
-      final reviews = await _apiClient.rating.getProviderRatings(providerId: widget.providerId);
+      final summary =
+          await _apiClient.rating.getProviderRatingSummary(widget.providerId);
+      final reviews = await _apiClient.rating
+          .getProviderRatings(providerId: widget.providerId);
 
       setState(() {
         _summary = summary;
@@ -70,7 +72,10 @@ class _ProviderReviewsScreenState extends State<ProviderReviewsScreen> {
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Colors.blue.shade400, Colors.blue.shade600],
+                            colors: [
+                              Colors.blue.shade400,
+                              Colors.blue.shade600
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
@@ -78,7 +83,8 @@ class _ProviderReviewsScreenState extends State<ProviderReviewsScreen> {
                         child: Column(
                           children: [
                             Text(
-                              _summary!['averageRating']?.toStringAsFixed(1) ?? '0.0',
+                              _summary!['averageRating']?.toStringAsFixed(1) ??
+                                  '0.0',
                               style: const TextStyle(
                                 fontSize: 48,
                                 fontWeight: FontWeight.bold,
@@ -89,7 +95,9 @@ class _ProviderReviewsScreenState extends State<ProviderReviewsScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: List.generate(5, (index) {
                                 return Icon(
-                                  index < (_summary!['averageRating'] ?? 0).round()
+                                  index <
+                                          (_summary!['averageRating'] ?? 0)
+                                              .round()
                                       ? Icons.star
                                       : Icons.star_border,
                                   color: Colors.amber,
@@ -108,18 +116,20 @@ class _ProviderReviewsScreenState extends State<ProviderReviewsScreen> {
                           ],
                         ),
                       ),
-                    
+
                     // Reviews List
                     if (_reviews.isEmpty)
                       Padding(
                         padding: const EdgeInsets.all(32),
                         child: Column(
                           children: [
-                            Icon(Icons.rate_review, size: 64, color: Colors.grey[400]),
+                            Icon(Icons.rate_review,
+                                size: 64, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
                               'No reviews yet',
-                              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey[600]),
                             ),
                           ],
                         ),

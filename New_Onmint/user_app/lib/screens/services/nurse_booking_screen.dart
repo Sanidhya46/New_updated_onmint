@@ -18,7 +18,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
-  
+
   String? _selectedGender;
   final ScrollController _scrollController = ScrollController();
 
@@ -90,7 +90,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     if (_formKey.currentState!.validate()) {
       if (_selectedCares.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select at least one nursing care')),
+          const SnackBar(
+              content: Text('Please select at least one nursing care')),
         );
         return;
       }
@@ -101,13 +102,20 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             address: _addressController.text,
             name: _nameController.text,
             phone: _phoneController.text,
-            age: _ageController.text.isNotEmpty ? int.tryParse(_ageController.text) ?? 0 : 0,
+            age: _ageController.text.isNotEmpty
+                ? int.tryParse(_ageController.text) ?? 0
+                : 0,
             gender: _selectedGender ?? 'Other',
             notes: _notesController.text,
             selectedCares: _selectedCares,
             preferredDate: _selectedDate,
-            preferredTime: _selectedTime != null 
-                ? DateTime(_selectedDate!.year, _selectedDate!.month, _selectedDate!.day, _selectedTime!.hour, _selectedTime!.minute) 
+            preferredTime: _selectedTime != null
+                ? DateTime(
+                    _selectedDate!.year,
+                    _selectedDate!.month,
+                    _selectedDate!.day,
+                    _selectedTime!.hour,
+                    _selectedTime!.minute)
                 : null,
           ),
         ),
@@ -168,7 +176,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.calendar_month, color: Colors.blue[700], size: 24),
+                          Icon(Icons.calendar_month,
+                              color: Colors.blue[700], size: 24),
                           const SizedBox(width: 8),
                           const Text(
                             'Book a Nurse',
@@ -210,7 +219,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   controller: _nameController,
                                   hintText: 'Enter Name',
                                   prefixIcon: Icons.person_outline,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
                             ),
@@ -226,7 +236,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   hintText: 'Enter mob no.',
                                   prefixIcon: Icons.phone_outlined,
                                   keyboardType: TextInputType.phone,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
                             ),
@@ -249,7 +260,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   hintText: 'Enter Age',
                                   prefixIcon: Icons.calendar_today_outlined,
                                   keyboardType: TextInputType.number,
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
                             ),
@@ -264,13 +276,18 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   value: _selectedGender,
                                   isDense: true,
                                   isExpanded: true,
-                                  decoration: _buildInputDecoration('Gender', Icons.person_outline),
-                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
-                                  icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 16),
-                                  items: ['Male', 'Female', 'Other'].map((String value) {
+                                  decoration: _buildInputDecoration(
+                                      'Gender', Icons.person_outline),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.black87),
+                                  icon: const Icon(Icons.keyboard_arrow_down,
+                                      color: Colors.black87, size: 16),
+                                  items: ['Male', 'Female', 'Other']
+                                      .map((String value) {
                                     return DropdownMenuItem<String>(
                                       value: value,
-                                      child: Text(value, style: const TextStyle(fontSize: 12)),
+                                      child: Text(value,
+                                          style: const TextStyle(fontSize: 12)),
                                     );
                                   }).toList(),
                                   onChanged: (newValue) {
@@ -278,7 +295,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                       _selectedGender = newValue;
                                     });
                                   },
-                                  validator: (v) => v == null ? 'Required' : null,
+                                  validator: (v) =>
+                                      v == null ? 'Required' : null,
                                 ),
                               ],
                             ),
@@ -292,7 +310,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                       InkWell(
                         onTap: _navigateToNursingCareSelection,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -303,20 +322,24 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.medical_services_outlined, color: Colors.blue[600], size: 16),
+                                  Icon(Icons.medical_services_outlined,
+                                      color: Colors.blue[600], size: 16),
                                   const SizedBox(width: 10),
                                   Text(
                                     _selectedCares.isEmpty
                                         ? 'Choose Nurse Service'
                                         : '${_selectedCares.length} Cares Selected',
                                     style: TextStyle(
-                                      color: _selectedCares.isEmpty ? Colors.grey[400] : Colors.black87,
+                                      color: _selectedCares.isEmpty
+                                          ? Colors.grey[400]
+                                          : Colors.black87,
                                       fontSize: 12,
                                     ),
                                   ),
                                 ],
                               ),
-                              Icon(Icons.keyboard_arrow_down, color: Colors.blue[600], size: 16),
+                              Icon(Icons.keyboard_arrow_down,
+                                  color: Colors.blue[600], size: 16),
                             ],
                           ),
                         ),
@@ -327,17 +350,22 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: _selectedCares.map((care) => Chip(
-                              label: Text(care.name, style: const TextStyle(fontSize: 11)),
-                              backgroundColor: Colors.blue[50],
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () {
-                                setState(() {
-                                  _selectedCares.remove(care);
-                                });
-                              },
-                              side: BorderSide(color: Colors.blue[100]!),
-                            )).toList(),
+                            children: _selectedCares
+                                .map((care) => Chip(
+                                      label: Text(care.name,
+                                          style: const TextStyle(fontSize: 11)),
+                                      backgroundColor: Colors.blue[50],
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 16),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _selectedCares.remove(care);
+                                        });
+                                      },
+                                      side:
+                                          BorderSide(color: Colors.blue[100]!),
+                                    ))
+                                .toList(),
                           ),
                         ),
                       const SizedBox(height: 16),
@@ -356,8 +384,11 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   readOnly: true,
                                   onTap: () => _selectDate(context),
                                   style: const TextStyle(fontSize: 12),
-                                  decoration: _buildInputDecoration('Date', Icons.calendar_today_outlined, suffixIcon: Icons.keyboard_arrow_right),
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  decoration: _buildInputDecoration(
+                                      'Date', Icons.calendar_today_outlined,
+                                      suffixIcon: Icons.keyboard_arrow_right),
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
                             ),
@@ -373,8 +404,11 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   readOnly: true,
                                   onTap: () => _selectTime(context),
                                   style: const TextStyle(fontSize: 12),
-                                  decoration: _buildInputDecoration('Time', Icons.access_time_outlined, suffixIcon: Icons.keyboard_arrow_right),
-                                  validator: (v) => v!.isEmpty ? 'Required' : null,
+                                  decoration: _buildInputDecoration(
+                                      'Time', Icons.access_time_outlined,
+                                      suffixIcon: Icons.keyboard_arrow_right),
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
                             ),
@@ -418,7 +452,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                                   color: Colors.white,
                                 ),
                               ),
-                              Icon(Icons.arrow_forward, color: Colors.white, size: 16),
+                              Icon(Icons.arrow_forward,
+                                  color: Colors.white, size: 16),
                             ],
                           ),
                         ),
@@ -448,12 +483,15 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
     );
   }
 
-  InputDecoration _buildInputDecoration(String hintText, IconData prefixIcon, {IconData? suffixIcon}) {
+  InputDecoration _buildInputDecoration(String hintText, IconData prefixIcon,
+      {IconData? suffixIcon}) {
     return InputDecoration(
       hintText: hintText,
       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
       prefixIcon: Icon(prefixIcon, color: Colors.grey[500], size: 16),
-      suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: Colors.blue[600], size: 16) : null,
+      suffixIcon: suffixIcon != null
+          ? Icon(suffixIcon, color: Colors.blue[600], size: 16)
+          : null,
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -499,10 +537,13 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
           padding: EdgeInsets.only(bottom: alignTopIcon ? 20.0 : 0),
           child: Icon(prefixIcon, color: Colors.grey[500], size: 16),
         ),
-        suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: Colors.blue[600], size: 16) : null,
+        suffixIcon: suffixIcon != null
+            ? Icon(suffixIcon, color: Colors.blue[600], size: 16)
+            : null,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(color: Colors.grey[200]!),

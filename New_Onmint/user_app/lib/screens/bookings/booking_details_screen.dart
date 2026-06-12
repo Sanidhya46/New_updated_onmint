@@ -32,7 +32,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     setState(() => _isLoading = true);
     try {
       await _apiClient.initialize();
-      final booking = await _apiClient.patient.getBookingDetails(widget.bookingId);
+      final booking =
+          await _apiClient.patient.getBookingDetails(widget.bookingId);
       setState(() {
         _booking = booking;
         _isLoading = false;
@@ -72,9 +73,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   void _joinVideoCall() {
     if (_booking == null) return;
-    
+
     // Check if we have a direct video call link from backend
-    if (_booking!.videoCallLink != null && _booking!.videoCallLink!.isNotEmpty) {
+    if (_booking!.videoCallLink != null &&
+        _booking!.videoCallLink!.isNotEmpty) {
       // Use external video call link
       _showVideoCallDialog(_booking!.videoCallLink!);
     } else {
@@ -172,7 +174,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   void _viewPrescription() {
     if (_booking?.prescription == null) return;
-    
+
     // Navigate to prescription view screen or show in dialog
     showDialog(
       context: context,
@@ -267,391 +269,453 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      _buildStatusCard(),
-                      const SizedBox(height: 20),
-                      // Add horizontal status tracking for doctor consultations
-                      if (_booking!.serviceType.toLowerCase() == 'doctor')
-                        _buildStatusTracker(),
-                      if (_booking!.serviceType.toLowerCase() == 'doctor')
+                        _buildStatusCard(),
                         const SizedBox(height: 20),
-                      _buildSection('Provider Information', [
-                        _buildInfoRow('Name', _booking!.providerDetails?.fullName ?? 'N/A'),
-                        _buildInfoRow('Phone', _booking!.providerDetails?.phone ?? 'N/A'),
-                        _buildInfoRow('Service', _formatServiceType(_booking!.serviceType)),
-                        if (_booking!.providerDetails?.specialization != null)
-                          _buildInfoRow('Specialization', _booking!.providerDetails!.specialization!),
-                        if (_booking!.providerDetails?.experience != null)
-                          _buildInfoRow('Experience', '${_booking!.providerDetails!.experience} years'),
-                        if (_booking!.providerDetails?.rating != null)
-                          _buildInfoRow('Rating', '${_booking!.providerDetails!.rating}/5 ⭐'),
-                      ]),
-                      const SizedBox(height: 20),
-                      _buildSection('Booking Details', [
-                        _buildInfoRow('Date', _formatDate(_booking!.scheduledTime)),
-                        _buildInfoRow('Time', _formatTime(_booking!.scheduledTime)),
-                        _buildInfoRow('Status', _formatStatus(_booking!.status)),
-                        _buildInfoRow('Booking ID', _booking!.id),
-                        if (_booking!.consultationType != null)
-                          _buildInfoRow('Consultation Type', _booking!.consultationType!.replaceAll('_', ' ').toUpperCase()),
-                        if (_booking!.price > 0)
-                          _buildInfoRow('Amount', '₹${_booking!.price.toStringAsFixed(2)}'),
-                        if (_booking!.urgency != null)
-                          _buildInfoRow('Urgency', _booking!.urgency!.toUpperCase()),
-                      ]),
-                      if (_booking!.location.address != null) ...[
-                        const SizedBox(height: 20),
-                        _buildSection('Location', [
-                          Text(_booking!.location.address!),
+                        // Add horizontal status tracking for doctor consultations
+                        if (_booking!.serviceType.toLowerCase() == 'doctor')
+                          _buildStatusTracker(),
+                        if (_booking!.serviceType.toLowerCase() == 'doctor')
+                          const SizedBox(height: 20),
+                        _buildSection('Provider Information', [
+                          _buildInfoRow('Name',
+                              _booking!.providerDetails?.fullName ?? 'N/A'),
+                          _buildInfoRow('Phone',
+                              _booking!.providerDetails?.phone ?? 'N/A'),
+                          _buildInfoRow('Service',
+                              _formatServiceType(_booking!.serviceType)),
+                          if (_booking!.providerDetails?.specialization != null)
+                            _buildInfoRow('Specialization',
+                                _booking!.providerDetails!.specialization!),
+                          if (_booking!.providerDetails?.experience != null)
+                            _buildInfoRow('Experience',
+                                '${_booking!.providerDetails!.experience} years'),
+                          if (_booking!.providerDetails?.rating != null)
+                            _buildInfoRow('Rating',
+                                '${_booking!.providerDetails!.rating}/5 ⭐'),
                         ]),
-                      ],
-                      if (_booking!.notes != null && _booking!.notes!.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        _buildSection('Notes', [
-                          Text(_booking!.notes!),
+                        _buildSection('Booking Details', [
+                          _buildInfoRow(
+                              'Date', _formatDate(_booking!.scheduledTime)),
+                          _buildInfoRow(
+                              'Time', _formatTime(_booking!.scheduledTime)),
+                          _buildInfoRow(
+                              'Status', _formatStatus(_booking!.status)),
+                          _buildInfoRow('Booking ID', _booking!.id),
+                          if (_booking!.consultationType != null)
+                            _buildInfoRow(
+                                'Consultation Type',
+                                _booking!.consultationType!
+                                    .replaceAll('_', ' ')
+                                    .toUpperCase()),
+                          if (_booking!.price > 0)
+                            _buildInfoRow('Amount',
+                                '₹${_booking!.price.toStringAsFixed(2)}'),
+                          if (_booking!.urgency != null)
+                            _buildInfoRow(
+                                'Urgency', _booking!.urgency!.toUpperCase()),
                         ]),
-                      ],
-                      
-                      // Show lab report if available (for pathology bookings)
-                      if (_booking!.serviceType.toLowerCase() == 'pathology' && _booking!.report != null) ...[
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.cyan.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.cyan.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.description, color: Colors.cyan, size: 24),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Lab Report Ready',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.cyan,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey[300]!),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.picture_as_pdf, color: Colors.red, size: 32),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'Test Report.pdf',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                'Report uploaded on ${_formatDate(DateTime.now())}',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey[600],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton.icon(
-                                            onPressed: () => _viewReport(),
-                                            icon: const Icon(Icons.visibility, size: 16),
-                                            label: const Text('View Report'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: Colors.cyan,
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: OutlinedButton.icon(
-                                            onPressed: () => _downloadReport(),
-                                            icon: const Icon(Icons.download, size: 16),
-                                            label: const Text('Download'),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: Colors.cyan,
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      
-                      // Show prescription if available
-                      if (_booking!.prescription != null) ...[
-                        const SizedBox(height: 20),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.green.withOpacity(0.3)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.receipt_long, color: Colors.green, size: 24),
-                                  const SizedBox(width: 12),
-                                  const Text(
-                                    'Prescription Received',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.green,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.grey[300]!),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    if (_booking!.prescription is Map<String, dynamic>) ...[
-                                      // If prescription is a Map, show structured data
-                                      _buildPrescriptionDetails(_booking!.prescription as Map<String, dynamic>),
-                                    ] else if (_booking!.prescription is String) ...[
-                                      // If prescription is a String, show as text
-                                      Text(
-                                        _booking!.prescription.toString(),
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ] else ...[
-                                      // Fallback for other types
-                                      Text(
-                                        'Prescription ID: ${_booking!.prescription.toString()}',
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      ElevatedButton.icon(
-                                        onPressed: () => _viewPrescription(),
-                                        icon: const Icon(Icons.visibility, size: 16),
-                                        label: const Text('View Details'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.green,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      
-                      const SizedBox(height: 24),
-                      
-                      // Action Buttons for Doctor Consultations
-                      if (_booking!.serviceType.toLowerCase() == 'doctor') ...[
-                        if (_booking!.status.toLowerCase() == 'accepted') ...[
-                          // Show video call button for video consultations (only if not completed)
-                          if ((_booking!.consultationType?.toLowerCase() == 'video_call' || 
-                              _booking!.consultationType?.toLowerCase() == 'video-call' ||
-                              _booking!.consultationType?.toLowerCase() == 'video call') &&
-                              _booking!.videoCallCompleted != true) ...[
-                            ElevatedButton.icon(
-                              onPressed: () => _joinVideoCall(),
-                              icon: const Icon(Icons.videocam),
-                              label: const Text('Join Video Call'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                minimumSize: const Size(double.infinity, 50),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          
-                          // Show message if video call is completed
-                          if ((_booking!.consultationType?.toLowerCase() == 'video_call' || 
-                              _booking!.consultationType?.toLowerCase() == 'video-call' ||
-                              _booking!.consultationType?.toLowerCase() == 'video call') &&
-                              _booking!.videoCallCompleted == true) ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.green.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.check_circle, color: Colors.green),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Video consultation completed. Waiting for prescription...',
-                                      style: TextStyle(
-                                        color: Colors.green[800],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          
-                          // Information for in-person consultations
-                          if (_booking!.consultationType?.toLowerCase() == 'in_person' ||
-                              _booking!.consultationType?.toLowerCase() == 'in-person') ...[
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.green.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.location_on, color: Colors.green),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      'Your appointment is confirmed. Please visit the doctor at the scheduled time.',
-                                      style: TextStyle(
-                                        color: Colors.green[800],
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
+                        if (_booking!.location.address != null) ...[
+                          const SizedBox(height: 20),
+                          _buildSection('Location', [
+                            Text(_booking!.location.address!),
+                          ]),
                         ],
-                        
-                        if (_booking!.status.toLowerCase() == 'in_progress') ...[
+                        if (_booking!.notes != null &&
+                            _booking!.notes!.isNotEmpty) ...[
+                          const SizedBox(height: 20),
+                          _buildSection('Notes', [
+                            Text(_booking!.notes!),
+                          ]),
+                        ],
+
+                        // Show lab report if available (for pathology bookings)
+                        if (_booking!.serviceType.toLowerCase() ==
+                                'pathology' &&
+                            _booking!.report != null) ...[
+                          const SizedBox(height: 20),
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
+                              color: Colors.cyan.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                              border: Border.all(
+                                  color: Colors.cyan.withOpacity(0.3)),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.info_outline, color: Colors.blue),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _booking!.serviceType.toLowerCase() == 'doctor'
-                                        ? '🏥 Doctor Prescription Arriving Soon...'
-                                        : 'Service is in progress. Please wait for completion.',
-                                    style: TextStyle(
-                                      color: Colors.blue[800],
-                                      fontWeight: FontWeight.w500,
+                                Row(
+                                  children: [
+                                    Icon(Icons.description,
+                                        color: Colors.cyan, size: 24),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Lab Report Ready',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.cyan,
+                                      ),
                                     ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(Icons.picture_as_pdf,
+                                              color: Colors.red, size: 32),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Test Report.pdf',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  'Report uploaded on ${_formatDate(DateTime.now())}',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _viewReport(),
+                                              icon: const Icon(Icons.visibility,
+                                                  size: 16),
+                                              label: const Text('View Report'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.cyan,
+                                                foregroundColor: Colors.white,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 12),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: OutlinedButton.icon(
+                                              onPressed: () =>
+                                                  _downloadReport(),
+                                              icon: const Icon(Icons.download,
+                                                  size: 16),
+                                              label: const Text('Download'),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: Colors.cyan,
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 12),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 12),
                         ],
-                        
-                        if (_booking!.status.toLowerCase() == 'completed' && _booking!.prescription != null) ...[
+
+                        // Show prescription if available
+                        if (_booking!.prescription != null) ...[
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.green.withOpacity(0.3)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.receipt_long,
+                                        color: Colors.green, size: 24),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Prescription Received',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border:
+                                        Border.all(color: Colors.grey[300]!),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (_booking!.prescription
+                                          is Map<String, dynamic>) ...[
+                                        // If prescription is a Map, show structured data
+                                        _buildPrescriptionDetails(
+                                            _booking!.prescription
+                                                as Map<String, dynamic>),
+                                      ] else if (_booking!.prescription
+                                          is String) ...[
+                                        // If prescription is a String, show as text
+                                        Text(
+                                          _booking!.prescription.toString(),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                      ] else ...[
+                                        // Fallback for other types
+                                        Text(
+                                          'Prescription ID: ${_booking!.prescription.toString()}',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        ElevatedButton.icon(
+                                          onPressed: () => _viewPrescription(),
+                                          icon: const Icon(Icons.visibility,
+                                              size: 16),
+                                          label: const Text('View Details'),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 8),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // Action Buttons for Doctor Consultations
+                        if (_booking!.serviceType.toLowerCase() ==
+                            'doctor') ...[
+                          if (_booking!.status.toLowerCase() == 'accepted') ...[
+                            // Show video call button for video consultations (only if not completed)
+                            if ((_booking!.consultationType?.toLowerCase() ==
+                                        'video_call' ||
+                                    _booking!.consultationType?.toLowerCase() ==
+                                        'video-call' ||
+                                    _booking!.consultationType?.toLowerCase() ==
+                                        'video call') &&
+                                _booking!.videoCallCompleted != true) ...[
+                              ElevatedButton.icon(
+                                onPressed: () => _joinVideoCall(),
+                                icon: const Icon(Icons.videocam),
+                                label: const Text('Join Video Call'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                  minimumSize: const Size(double.infinity, 50),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            // Show message if video call is completed
+                            if ((_booking!.consultationType?.toLowerCase() ==
+                                        'video_call' ||
+                                    _booking!.consultationType?.toLowerCase() ==
+                                        'video-call' ||
+                                    _booking!.consultationType?.toLowerCase() ==
+                                        'video call') &&
+                                _booking!.videoCallCompleted == true) ...[
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: Colors.green.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.check_circle,
+                                        color: Colors.green),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Video consultation completed. Waiting for prescription...',
+                                        style: TextStyle(
+                                          color: Colors.green[800],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            // Information for in-person consultations
+                            if (_booking!.consultationType?.toLowerCase() ==
+                                    'in_person' ||
+                                _booking!.consultationType?.toLowerCase() ==
+                                    'in-person') ...[
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                      color: Colors.green.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.location_on,
+                                        color: Colors.green),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        'Your appointment is confirmed. Please visit the doctor at the scheduled time.',
+                                        style: TextStyle(
+                                          color: Colors.green[800],
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                          ],
+
+                          if (_booking!.status.toLowerCase() ==
+                              'in_progress') ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: Colors.blue.withOpacity(0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.blue),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _booking!.serviceType.toLowerCase() ==
+                                              'doctor'
+                                          ? '🏥 Doctor Prescription Arriving Soon...'
+                                          : 'Service is in progress. Please wait for completion.',
+                                      style: TextStyle(
+                                        color: Colors.blue[800],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          if (_booking!.status.toLowerCase() == 'completed' &&
+                              _booking!.prescription != null) ...[
+                            ElevatedButton.icon(
+                              onPressed: () => _viewPrescription(),
+                              icon: const Icon(Icons.receipt_long),
+                              label: const Text('View Prescription'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.purple,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                minimumSize: const Size(double.infinity, 50),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          // Review button for completed appointments
+                          if (_booking!.status.toLowerCase() ==
+                              'completed') ...[
+                            ElevatedButton.icon(
+                              onPressed: () => _showReviewScreen(),
+                              icon: const Icon(Icons.star_outline),
+                              label: const Text('Review Appointment'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.amber,
+                                foregroundColor: Colors.white,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
+                                minimumSize: const Size(double.infinity, 50),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ],
+
+                        if (_booking!.canBeCancelled) ...[
                           ElevatedButton.icon(
-                            onPressed: () => _viewPrescription(),
-                            icon: const Icon(Icons.receipt_long),
-                            label: const Text('View Prescription'),
+                            onPressed: _isProcessing ? null : _cancelBooking,
+                            icon: const Icon(Icons.cancel),
+                            label: const Text('Cancel Booking'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.purple,
+                              backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               minimumSize: const Size(double.infinity, 50),
                             ),
                           ),
-                          const SizedBox(height: 12),
                         ],
-                        
-                        // Review button for completed appointments
-                        if (_booking!.status.toLowerCase() == 'completed') ...[
-                          ElevatedButton.icon(
-                            onPressed: () => _showReviewScreen(),
-                            icon: const Icon(Icons.star_outline),
-                            label: const Text('Review Appointment'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.amber,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              minimumSize: const Size(double.infinity, 50),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                      ],
-                      
-                      if (_booking!.canBeCancelled) ...[
-                        ElevatedButton.icon(
-                          onPressed: _isProcessing ? null : _cancelBooking,
-                          icon: const Icon(Icons.cancel),
-                          label: const Text('Cancel Booking'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            minimumSize: const Size(double.infinity, 50),
-                          ),
-                        ),
-                      ],
                       ],
                     ),
                   ),
@@ -662,18 +726,30 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   Widget _buildStatusTracker() {
     final serviceType = _booking!.serviceType.toLowerCase();
     final currentStatus = _booking!.status.toLowerCase();
-    
+
     // Define status stages per service type
     List<Map<String, dynamic>> steps = [];
-    
+
     switch (serviceType) {
       case 'pathology':
       case 'lab':
         steps = [
           {'status': 'requested', 'label': 'Requested', 'icon': Icons.send},
-          {'status': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-          {'status': 'sample_collected', 'label': 'Sample Collected', 'icon': Icons.local_hospital},
-          {'status': 'report_ready', 'label': 'Report Ready', 'icon': Icons.description},
+          {
+            'status': 'accepted',
+            'label': 'Accepted',
+            'icon': Icons.check_circle
+          },
+          {
+            'status': 'sample_collected',
+            'label': 'Sample Collected',
+            'icon': Icons.local_hospital
+          },
+          {
+            'status': 'report_ready',
+            'label': 'Report Ready',
+            'icon': Icons.description
+          },
           {'status': 'completed', 'label': 'Completed', 'icon': Icons.done_all},
         ];
         break;
@@ -681,49 +757,106 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       case 'pharmacy':
         steps = [
           {'status': 'requested', 'label': 'Requested', 'icon': Icons.send},
-          {'status': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-          {'status': 'in_progress', 'label': 'Preparing', 'icon': Icons.local_pharmacy},
-          {'status': 'on_the_way', 'label': 'Out for Delivery', 'icon': Icons.two_wheeler},
+          {
+            'status': 'accepted',
+            'label': 'Accepted',
+            'icon': Icons.check_circle
+          },
+          {
+            'status': 'in_progress',
+            'label': 'Preparing',
+            'icon': Icons.local_pharmacy
+          },
+          {
+            'status': 'on_the_way',
+            'label': 'Out for Delivery',
+            'icon': Icons.two_wheeler
+          },
           {'status': 'completed', 'label': 'Delivered', 'icon': Icons.done_all},
         ];
         break;
       case 'ambulance':
         steps = [
           {'status': 'requested', 'label': 'Requested', 'icon': Icons.send},
-          {'status': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-          {'status': 'on_the_way', 'label': 'On the Way', 'icon': Icons.directions_car},
-          {'status': 'in_progress', 'label': 'Arrived', 'icon': Icons.location_on},
+          {
+            'status': 'accepted',
+            'label': 'Accepted',
+            'icon': Icons.check_circle
+          },
+          {
+            'status': 'on_the_way',
+            'label': 'On the Way',
+            'icon': Icons.directions_car
+          },
+          {
+            'status': 'in_progress',
+            'label': 'Arrived',
+            'icon': Icons.location_on
+          },
           {'status': 'completed', 'label': 'Completed', 'icon': Icons.done_all},
         ];
         break;
       case 'bloodbank':
         steps = [
           {'status': 'requested', 'label': 'Requested', 'icon': Icons.send},
-          {'status': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-          {'status': 'in_progress', 'label': 'Preparing', 'icon': Icons.bloodtype},
-          {'status': 'on_the_way', 'label': 'Ready for Pickup', 'icon': Icons.local_hospital},
+          {
+            'status': 'accepted',
+            'label': 'Accepted',
+            'icon': Icons.check_circle
+          },
+          {
+            'status': 'in_progress',
+            'label': 'Preparing',
+            'icon': Icons.bloodtype
+          },
+          {
+            'status': 'on_the_way',
+            'label': 'Ready for Pickup',
+            'icon': Icons.local_hospital
+          },
           {'status': 'completed', 'label': 'Completed', 'icon': Icons.done_all},
         ];
         break;
       case 'nurse':
         steps = [
           {'status': 'requested', 'label': 'Requested', 'icon': Icons.send},
-          {'status': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-          {'status': 'on_the_way', 'label': 'On the Way', 'icon': Icons.directions_car},
-          {'status': 'in_progress', 'label': 'In Progress', 'icon': Icons.medical_services},
+          {
+            'status': 'accepted',
+            'label': 'Accepted',
+            'icon': Icons.check_circle
+          },
+          {
+            'status': 'on_the_way',
+            'label': 'On the Way',
+            'icon': Icons.directions_car
+          },
+          {
+            'status': 'in_progress',
+            'label': 'In Progress',
+            'icon': Icons.medical_services
+          },
           {'status': 'completed', 'label': 'Completed', 'icon': Icons.done_all},
         ];
         break;
       default: // doctor
         steps = [
           {'status': 'requested', 'label': 'Requested', 'icon': Icons.send},
-          {'status': 'accepted', 'label': 'Accepted', 'icon': Icons.check_circle},
-          {'status': 'in_progress', 'label': 'In Progress', 'icon': Icons.medical_services},
+          {
+            'status': 'accepted',
+            'label': 'Accepted',
+            'icon': Icons.check_circle
+          },
+          {
+            'status': 'in_progress',
+            'label': 'In Progress',
+            'icon': Icons.medical_services
+          },
           {'status': 'completed', 'label': 'Completed', 'icon': Icons.done_all},
         ];
     }
 
-    int currentIndex = steps.indexWhere((step) => step['status'] == currentStatus);
+    int currentIndex =
+        steps.indexWhere((step) => step['status'] == currentStatus);
     if (currentIndex == -1) currentIndex = 0;
 
     return Container(
@@ -753,9 +886,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 final step = entry.value;
                 final isActive = index <= currentIndex;
                 final isCurrent = index == currentIndex;
-                
+
                 return Padding(
-                  padding: EdgeInsets.only(right: index < steps.length - 1 ? 8 : 0),
+                  padding:
+                      EdgeInsets.only(right: index < steps.length - 1 ? 8 : 0),
                   child: Column(
                     children: [
                       Container(
@@ -764,7 +898,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                         decoration: BoxDecoration(
                           color: isActive ? Colors.blue : Colors.grey[300],
                           shape: BoxShape.circle,
-                          border: isCurrent ? Border.all(color: Colors.blue, width: 3) : null,
+                          border: isCurrent
+                              ? Border.all(color: Colors.blue, width: 3)
+                              : null,
                         ),
                         child: Icon(
                           step['icon'] as IconData,
@@ -779,7 +915,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                           step['label'] as String,
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                            fontWeight:
+                                isCurrent ? FontWeight.bold : FontWeight.normal,
                             color: isActive ? Colors.blue : Colors.grey[600],
                           ),
                           textAlign: TextAlign.center,
@@ -802,7 +939,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     Color statusColor;
     IconData statusIcon;
     String statusText;
-    
+
     switch (_booking!.status.toLowerCase()) {
       case 'requested':
         statusColor = Colors.orange;
@@ -976,9 +1113,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           ),
           const SizedBox(height: 12),
         ],
-        
+
         // Medicines
-        if (prescription['medicines'] != null && prescription['medicines'] is List) ...[
+        if (prescription['medicines'] != null &&
+            prescription['medicines'] is List) ...[
           const Text(
             'Medicines:',
             style: TextStyle(
@@ -1008,7 +1146,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                         fontSize: 13,
                       ),
                     ),
-                    if (medicine['dosage'] != null || medicine['frequency'] != null || medicine['duration'] != null)
+                    if (medicine['dosage'] != null ||
+                        medicine['frequency'] != null ||
+                        medicine['duration'] != null)
                       Text(
                         '${medicine['dosage'] ?? ''} - ${medicine['frequency'] ?? ''} - ${medicine['duration'] ?? ''}',
                         style: TextStyle(
@@ -1024,9 +1164,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           }).toList()),
           const SizedBox(height: 12),
         ],
-        
+
         // Advice
-        if (prescription['advice'] != null && prescription['advice'].toString().isNotEmpty) ...[
+        if (prescription['advice'] != null &&
+            prescription['advice'].toString().isNotEmpty) ...[
           const Text(
             'Doctor\'s Advice:',
             style: TextStyle(
@@ -1042,9 +1183,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           ),
           const SizedBox(height: 12),
         ],
-        
+
         // Tests
-        if (prescription['tests'] != null && prescription['tests'] is List && (prescription['tests'] as List).isNotEmpty) ...[
+        if (prescription['tests'] != null &&
+            prescription['tests'] is List &&
+            (prescription['tests'] as List).isNotEmpty) ...[
           const Text(
             'Recommended Tests:',
             style: TextStyle(
@@ -1054,10 +1197,11 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          ...((prescription['tests'] as List).map((test) => Text('• ${test.toString()}'))),
+          ...((prescription['tests'] as List)
+              .map((test) => Text('• ${test.toString()}'))),
           const SizedBox(height: 12),
         ],
-        
+
         // Created date
         if (prescription['createdAt'] != null) ...[
           Text(
@@ -1075,7 +1219,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   void _showReviewScreen() {
     if (_booking == null) return;
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1105,12 +1249,12 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   void _viewReport() async {
     if (_booking?.report == null) return;
-    
+
     final reportUrl = _booking!.report!;
-    final fullUrl = reportUrl.startsWith('http') 
-        ? reportUrl 
+    final fullUrl = reportUrl.startsWith('http')
+        ? reportUrl
         : 'http://localhost:5000$reportUrl';
-    
+
     try {
       final uri = Uri.parse(fullUrl);
       if (await canLaunchUrl(uri)) {
@@ -1136,12 +1280,12 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   void _downloadReport() async {
     if (_booking?.report == null) return;
-    
+
     final reportUrl = _booking!.report!;
-    final fullUrl = reportUrl.startsWith('http') 
-        ? reportUrl 
+    final fullUrl = reportUrl.startsWith('http')
+        ? reportUrl
         : 'http://localhost:5000$reportUrl';
-    
+
     try {
       final uri = Uri.parse(fullUrl);
       if (await canLaunchUrl(uri)) {

@@ -13,7 +13,7 @@ class NursesScreen extends StatefulWidget {
 class _NursesScreenState extends State<NursesScreen> {
   final PatientService _patientService = PatientService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Map<String, dynamic>> _nurses = [];
   List<Map<String, dynamic>> _filteredNurses = [];
   bool _isLoading = false;
@@ -33,7 +33,7 @@ class _NursesScreenState extends State<NursesScreen> {
 
   Future<void> _loadNurses() async {
     if (!mounted) return;
-    
+
     if (mounted) {
       setState(() => _isLoading = true);
     }
@@ -43,16 +43,16 @@ class _NursesScreenState extends State<NursesScreen> {
       final response = await _patientService.searchNurses(
         limit: 100,
       );
-      
+
       final data = response['data'];
       List<Map<String, dynamic>> nurses = [];
-      
+
       if (data is List) {
         nurses = List<Map<String, dynamic>>.from(data);
       } else if (data is Map && data['data'] is List) {
         nurses = List<Map<String, dynamic>>.from(data['data']);
       }
-      
+
       if (mounted) {
         setState(() {
           _nurses = nurses;
@@ -77,23 +77,27 @@ class _NursesScreenState extends State<NursesScreen> {
 
   void _filterNurses() {
     final query = _searchController.text.toLowerCase();
-    
+
     setState(() {
       _filteredNurses = _nurses.where((nurse) {
-        final name = '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'.toLowerCase();
-        final services = (nurse['services'] as List?)?.join(' ').toLowerCase() ?? '';
-        final city = (nurse['city'] ?? nurse['address']?['city'] ?? '').toString().toLowerCase();
-        
+        final name = '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'
+            .toLowerCase();
+        final services =
+            (nurse['services'] as List?)?.join(' ').toLowerCase() ?? '';
+        final city = (nurse['city'] ?? nurse['address']?['city'] ?? '')
+            .toString()
+            .toLowerCase();
+
         // Text search filter
-        final matchesSearch = query.isEmpty || 
-            name.contains(query) || 
+        final matchesSearch = query.isEmpty ||
+            name.contains(query) ||
             services.contains(query) ||
             city.contains(query);
-        
+
         // City filter
         final matchesCity = _selectedCity == null ||
             city.contains(_selectedCity!.toLowerCase());
-        
+
         return matchesSearch && matchesCity;
       }).toList();
     });
@@ -144,9 +148,9 @@ class _NursesScreenState extends State<NursesScreen> {
                     fillColor: Colors.white,
                   ),
                 ),
-                
+
                 const SizedBox(height: 12),
-                
+
                 // Filter Row
                 Row(
                   children: [
@@ -161,14 +165,22 @@ class _NursesScreenState extends State<NursesScreen> {
                           fillColor: Colors.white,
                         ),
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('All Cities')),
-                          const DropdownMenuItem(value: 'Mumbai', child: Text('Mumbai')),
-                          const DropdownMenuItem(value: 'Delhi', child: Text('Delhi')),
-                          const DropdownMenuItem(value: 'Bangalore', child: Text('Bangalore')),
-                          const DropdownMenuItem(value: 'Chennai', child: Text('Chennai')),
-                          const DropdownMenuItem(value: 'Kolkata', child: Text('Kolkata')),
-                          const DropdownMenuItem(value: 'Hyderabad', child: Text('Hyderabad')),
-                          const DropdownMenuItem(value: 'Pune', child: Text('Pune')),
+                          const DropdownMenuItem(
+                              value: null, child: Text('All Cities')),
+                          const DropdownMenuItem(
+                              value: 'Mumbai', child: Text('Mumbai')),
+                          const DropdownMenuItem(
+                              value: 'Delhi', child: Text('Delhi')),
+                          const DropdownMenuItem(
+                              value: 'Bangalore', child: Text('Bangalore')),
+                          const DropdownMenuItem(
+                              value: 'Chennai', child: Text('Chennai')),
+                          const DropdownMenuItem(
+                              value: 'Kolkata', child: Text('Kolkata')),
+                          const DropdownMenuItem(
+                              value: 'Hyderabad', child: Text('Hyderabad')),
+                          const DropdownMenuItem(
+                              value: 'Pune', child: Text('Pune')),
                         ],
                         onChanged: (value) {
                           setState(() {
@@ -178,9 +190,9 @@ class _NursesScreenState extends State<NursesScreen> {
                         },
                       ),
                     ),
-                    
+
                     const SizedBox(width: 12),
-                    
+
                     // City Filter
                     Expanded(
                       child: TextField(
@@ -200,9 +212,9 @@ class _NursesScreenState extends State<NursesScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Instant Nurse Booking Button
                 GestureDetector(
                   onTap: () {
@@ -282,7 +294,7 @@ class _NursesScreenState extends State<NursesScreen> {
               ],
             ),
           ),
-          
+
           // Results Count
           if (!_isLoading)
             Container(
@@ -300,11 +312,12 @@ class _NursesScreenState extends State<NursesScreen> {
                 ],
               ),
             ),
-          
+
           // Nurses List
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF667EEA)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF667EEA)))
                 : _filteredNurses.isEmpty
                     ? Center(
                         child: Column(
@@ -358,7 +371,7 @@ class _NursesScreenState extends State<NursesScreen> {
     final reviewCount = nurse['reviewCount'] ?? nurse['totalRatings'] ?? 0;
     final experience = nurse['experience'] ?? 0;
     final distance = nurse['distance']; // NEW: Get distance from API
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Stack(
@@ -374,14 +387,16 @@ class _NursesScreenState extends State<NursesScreen> {
                     CircleAvatar(
                       radius: 30,
                       backgroundColor: const Color(0xFF667EEA),
-                      backgroundImage: nurse['profilePicture'] != null && 
-                          nurse['profilePicture'].toString().isNotEmpty
+                      backgroundImage: nurse['profilePicture'] != null &&
+                              nurse['profilePicture'].toString().isNotEmpty
                           ? NetworkImage(nurse['profilePicture'])
                           : null,
-                      child: nurse['profilePicture'] == null || 
-                          nurse['profilePicture'].toString().isEmpty
+                      child: nurse['profilePicture'] == null ||
+                              nurse['profilePicture'].toString().isEmpty
                           ? Text(
-                              (nurse['firstName']?.toString() ?? 'N').substring(0, 1).toUpperCase(),
+                              (nurse['firstName']?.toString() ?? 'N')
+                                  .substring(0, 1)
+                                  .toUpperCase(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -390,16 +405,17 @@ class _NursesScreenState extends State<NursesScreen> {
                             )
                           : null,
                     ),
-                    
+
                     const SizedBox(width: 16),
-                    
+
                     // Nurse Info
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'.trim(),
+                            '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'
+                                .trim(),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -408,7 +424,8 @@ class _NursesScreenState extends State<NursesScreen> {
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.work, size: 16, color: Colors.grey[500]),
+                              Icon(Icons.work,
+                                  size: 16, color: Colors.grey[500]),
                               const SizedBox(width: 4),
                               Text(
                                 '$experience years experience',
@@ -423,7 +440,8 @@ class _NursesScreenState extends State<NursesScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const Icon(Icons.star, size: 16, color: Colors.amber),
+                                const Icon(Icons.star,
+                                    size: 16, color: Colors.amber),
                                 const SizedBox(width: 4),
                                 Text(
                                   rating.toStringAsFixed(1),
@@ -444,11 +462,13 @@ class _NursesScreenState extends State<NursesScreen> {
                           ],
                           Row(
                             children: [
-                              Icon(Icons.location_on, size: 16, color: Colors.grey[500]),
+                              Icon(Icons.location_on,
+                                  size: 16, color: Colors.grey[500]),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  '${nurse['city'] ?? nurse['address']?['city'] ?? ''}, ${nurse['state'] ?? nurse['address']?['state'] ?? ''}'.replaceAll(RegExp(r'^,\s*|,\s*$'), ''),
+                                  '${nurse['city'] ?? nurse['address']?['city'] ?? ''}, ${nurse['state'] ?? nurse['address']?['state'] ?? ''}'
+                                      .replaceAll(RegExp(r'^,\s*|,\s*$'), ''),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.grey[500],
@@ -462,7 +482,7 @@ class _NursesScreenState extends State<NursesScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Hourly Rate
                     if (nurse['hourlyRate'] != null)
                       Column(
@@ -487,7 +507,7 @@ class _NursesScreenState extends State<NursesScreen> {
                       ),
                   ],
                 ),
-                
+
                 // Services
                 if (services.isNotEmpty) ...[
                   const SizedBox(height: 12),
@@ -495,9 +515,12 @@ class _NursesScreenState extends State<NursesScreen> {
                     spacing: 6,
                     runSpacing: 4,
                     children: services.take(4).map((service) {
-                      final serviceName = service is String ? service : service['name'] ?? service.toString();
+                      final serviceName = service is String
+                          ? service
+                          : service['name'] ?? service.toString();
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFF667EEA).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
@@ -514,9 +537,9 @@ class _NursesScreenState extends State<NursesScreen> {
                     }).toList(),
                   ),
                 ],
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Action Buttons
                 Row(
                   children: [
@@ -558,7 +581,8 @@ class _NursesScreenState extends State<NursesScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.location_on, size: 12, color: Colors.white),
+                    const Icon(Icons.location_on,
+                        size: 12, color: Colors.white),
                     const SizedBox(width: 4),
                     Text(
                       '${distance.toStringAsFixed(1)} km',
@@ -608,9 +632,9 @@ class _NursesScreenState extends State<NursesScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Nurse Header
                 Row(
                   children: [
@@ -618,7 +642,9 @@ class _NursesScreenState extends State<NursesScreen> {
                       radius: 40,
                       backgroundColor: const Color(0xFF667EEA),
                       child: Text(
-                        (nurse['firstName']?.toString() ?? 'N').substring(0, 1).toUpperCase(),
+                        (nurse['firstName']?.toString() ?? 'N')
+                            .substring(0, 1)
+                            .toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 28,
@@ -632,7 +658,8 @@ class _NursesScreenState extends State<NursesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'.trim(),
+                            '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'
+                                .trim(),
                             style: const TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
@@ -650,11 +677,12 @@ class _NursesScreenState extends State<NursesScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Details
-                if (nurse['about'] != null && nurse['about'].toString().isNotEmpty) ...[
+                if (nurse['about'] != null &&
+                    nurse['about'].toString().isNotEmpty) ...[
                   const Text(
                     'About',
                     style: TextStyle(
@@ -669,13 +697,18 @@ class _NursesScreenState extends State<NursesScreen> {
                   ),
                   const SizedBox(height: 20),
                 ],
-                
-                _buildDetailSection('Experience', '${nurse['experience'] ?? 0} years'),
-                _buildDetailSection('Hourly Rate', '₹${nurse['hourlyRate'] ?? 'N/A'}/hour'),
-                _buildDetailSection('Location', '${nurse['city'] ?? ''}, ${nurse['state'] ?? ''}'.replaceAll(RegExp(r'^,\s*|,\s*$'), '')),
-                
+
+                _buildDetailSection(
+                    'Experience', '${nurse['experience'] ?? 0} years'),
+                _buildDetailSection(
+                    'Hourly Rate', '₹${nurse['hourlyRate'] ?? 'N/A'}/hour'),
+                _buildDetailSection(
+                    'Location',
+                    '${nurse['city'] ?? ''}, ${nurse['state'] ?? ''}'
+                        .replaceAll(RegExp(r'^,\s*|,\s*$'), '')),
+
                 const SizedBox(height: 20),
-                
+
                 // Book Button
                 SizedBox(
                   width: double.infinity,

@@ -137,7 +137,8 @@ class DoctorDetailScreen extends StatelessWidget {
               ),
 
             // Qualifications
-            if (doctor.qualifications != null && doctor.qualifications!.isNotEmpty)
+            if (doctor.qualifications != null &&
+                doctor.qualifications!.isNotEmpty)
               _buildSection(
                 title: 'Qualifications',
                 child: Wrap(
@@ -209,21 +210,21 @@ class DoctorDetailScreen extends StatelessWidget {
                     ],
                   ),
                   ...[
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.email, color: AppColors.doctor),
-                      const SizedBox(width: 8),
-                      Text(
-                        doctor.email,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.email, color: AppColors.doctor),
+                        const SizedBox(width: 8),
+                        Text(
+                          doctor.email,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

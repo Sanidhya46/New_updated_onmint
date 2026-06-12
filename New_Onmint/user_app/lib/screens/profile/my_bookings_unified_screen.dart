@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:user_app/screens/booking/active_service_tracking_screen.dart';
-import 'package:user_app/screens/booking/user_active_nurse_tracking_screen.dart';
+import 'package:user_app/screens/booking/user_unified_tracking_screen.dart';
 import 'package:user_app/screens/booking/user_active_consultation_screen.dart';
 import 'package:user_app/screens/bookings/booking_details_screen.dart';
+import 'package:user_app/screens/booking/order_request_screen.dart';
+import 'package:user_app/screens/booking/order_detail_file.dart';
+import 'package:user_app/screens/booking/accepted_order_flow_screen.dart';
+import 'package:user_app/screens/booking/coming_soon_screen.dart';
 
 /// Unified My Bookings Screen with 3 tabs:
 /// 1. Active Orders - Active service bookings
@@ -13,17 +17,19 @@ class MyBookingsUnifiedScreen extends StatefulWidget {
   const MyBookingsUnifiedScreen({super.key});
 
   @override
-  State<MyBookingsUnifiedScreen> createState() => _MyBookingsUnifiedScreenState();
+  State<MyBookingsUnifiedScreen> createState() =>
+      _MyBookingsUnifiedScreenState();
 }
 
-class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with SingleTickerProviderStateMixin {
+class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _patientService = PatientService();
-  
+
   List<Map<String, dynamic>> _activeBookings = [];
   List<Map<String, dynamic>> _medicineOrders = [];
   List<Map<String, dynamic>> _allServices = [];
-  
+
   bool _isLoadingActive = false;
   bool _isLoadingMedicine = false;
   bool _isLoadingAll = false;
@@ -55,23 +61,37 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
   Future<void> _loadActiveBookings() async {
     setState(() => _isLoadingActive = true);
     try {
-      final response = await _patientService.getMyRealtimeBookings(page: 1, limit: 50);
+      final response =
+          await _patientService.getMyRealtimeBookings(page: 1, limit: 50);
       final data = response['data'];
       List<Map<String, dynamic>> bookings = [];
-      
+
       if (data is List) {
         bookings = List<Map<String, dynamic>>.from(data);
       } else if (data is Map && data['bookings'] != null) {
         bookings = List<Map<String, dynamic>>.from(data['bookings']);
       }
-      
+
       // Filter only active bookings
       final active = bookings.where((b) {
         final status = b['status']?.toString().toLowerCase() ?? '';
-        return status == 'pending' || status == 'accepted' || status == 'confirmed' || 
-               status == 'on_the_way' || status == 'in_progress';
+        if (status == 'pending' || status == 'requested') {
+          final createdAtStr = b['createdAt']?.toString() ?? '';
+          if (createdAtStr.isNotEmpty) {
+            final createdAt = DateTime.tryParse(createdAtStr);
+            if (createdAt != null &&
+                DateTime.now().difference(createdAt).inHours >= 24) {
+              return false;
+            }
+          }
+          return true;
+        }
+        return status == 'accepted' ||
+            status == 'confirmed' ||
+            status == 'on_the_way' ||
+            status == 'in_progress';
       }).toList();
-      
+
       setState(() {
         _activeBookings = active;
         _isLoadingActive = false;
@@ -84,9 +104,25 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
   Future<void> _loadMedicineOrders() async {
     setState(() => _isLoadingMedicine = true);
     try {
-      final orders = await _patientService.getMedicineOrders(page: 1, limit: 50);
+      final orders =
+          await _patientService.getMedicineOrders(page: 1, limit: 50);
       setState(() {
-        _medicineOrders = orders;
+        _medicineOrders = orders.where((m) {
+          final status = m['status']?.toString().toLowerCase() ?? '';
+          if (status == 'expired' || status == 'cancelled') return false;
+
+          if (status == 'pending' || status == 'requested') {
+            final createdAtStr = m['createdAt']?.toString() ?? '';
+            if (createdAtStr.isNotEmpty) {
+              final createdAt = DateTime.tryParse(createdAtStr);
+              if (createdAt != null &&
+                  DateTime.now().difference(createdAt).inHours >= 24) {
+                return false;
+              }
+            }
+          }
+          return true;
+        }).toList();
         _isLoadingMedicine = false;
       });
     } catch (e) {
@@ -97,18 +133,35 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
   Future<void> _loadAllServices() async {
     setState(() => _isLoadingAll = true);
     try {
-      final response = await _patientService.getMyRealtimeBookings(page: 1, limit: 50);
+      final response =
+          await _patientService.getMyRealtimeBookings(page: 1, limit: 50);
       final data = response['data'];
       List<Map<String, dynamic>> bookings = [];
-      
+
       if (data is List) {
         bookings = List<Map<String, dynamic>>.from(data);
       } else if (data is Map && data['bookings'] != null) {
         bookings = List<Map<String, dynamic>>.from(data['bookings']);
       }
-      
+
       setState(() {
-        _allServices = bookings;
+        _allServices = bookings.where((b) {
+          final status = b['status']?.toString().toLowerCase() ?? '';
+          if (status == 'expired' || status == 'cancelled') return false;
+
+          if (status == 'requested' || status == 'pending') {
+            final createdAtStr = b['createdAt']?.toString() ?? '';
+            if (createdAtStr.isNotEmpty) {
+              final createdAt = DateTime.tryParse(createdAtStr);
+              if (createdAt != null) {
+                if (DateTime.now().difference(createdAt).inHours >= 24) {
+                  return false;
+                }
+              }
+            }
+          }
+          return true;
+        }).toList();
         _isLoadingAll = false;
       });
     } catch (e) {
@@ -165,7 +218,8 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
           children: [
             Icon(Icons.inbox_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No active orders', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            Text('No active orders',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
           ],
         ),
       );
@@ -196,7 +250,8 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
           children: [
             Icon(Icons.medication_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No medicine orders', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            Text('No medicine orders',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
           ],
         ),
       );
@@ -227,7 +282,8 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
           children: [
             Icon(Icons.medical_services_outlined, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('No service bookings', style: TextStyle(fontSize: 16, color: Colors.grey)),
+            Text('No service bookings',
+                style: TextStyle(fontSize: 16, color: Colors.grey)),
           ],
         ),
       );
@@ -254,7 +310,9 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
         : 'Waiting for provider';
     final description = booking['description']?.toString() ?? '';
     final status = booking['status']?.toString() ?? 'pending';
-    final scheduledTime = booking['scheduledTime']?.toString() ?? booking['createdAt']?.toString() ?? '';
+    final scheduledTime = booking['scheduledTime']?.toString() ??
+        booking['createdAt']?.toString() ??
+        '';
     final amount = booking['totalAmount'] ?? booking['estimatedCost'] ?? 0;
 
     Color statusColor;
@@ -282,117 +340,141 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
     return GestureDetector(
       onTap: () {
         final currentStatus = status.toLowerCase();
+        final sType = serviceType.toLowerCase();
+
         if (currentStatus == 'requested' || currentStatus == 'pending') {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ActiveServiceTrackingScreen(
-                serviceType: serviceType.toLowerCase(),
-                bookingDetails: booking,
+              builder: (context) => OrderRequestScreen(
+                bookingId: bookingId,
+                bookingData: booking,
+                serviceType: serviceType,
               ),
             ),
-          ).then((_) => _loadActiveBookings());
+          ).then((_) => _loadData());
           return;
         }
 
-        if (serviceType.toLowerCase() == 'nurse') {
+        if (serviceType.toLowerCase() == 'nurse' ||
+            serviceType.toLowerCase() == 'ambulance' ||
+            sType == 'pathology' ||
+            sType == 'lab_test' ||
+            sType == 'lab test' ||
+            sType == 'labtest') {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => UserActiveNurseTrackingScreen(bookingId: bookingId),
+              builder: (context) => UserUnifiedTrackingScreen(
+                  bookingId: bookingId, serviceType: serviceType),
             ),
           ).then((_) => _loadActiveBookings());
         } else if (serviceType.toLowerCase() == 'doctor') {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => UserActiveConsultationScreen(bookingId: bookingId),
+              builder: (context) =>
+                  UserActiveConsultationScreen(bookingId: bookingId),
             ),
           ).then((_) => _loadActiveBookings());
-        } else {
-          // Open the general booking details page for ambulance, pathology, bloodbank, pharmacist
+        } else if (serviceType.toLowerCase() == 'bloodbank' ||
+            serviceType.toLowerCase() == 'blood bank') {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BookingDetailsScreen(bookingId: bookingId),
+              builder: (context) => UserUnifiedTrackingScreen(
+                bookingId: bookingId,
+                serviceType: 'bloodbank',
+              ),
+            ),
+          ).then((_) => _loadActiveBookings());
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ComingSoonScreen(),
             ),
           ).then((_) => _loadActiveBookings());
         }
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 12),
-        color: status.toLowerCase() == 'confirmed' ? Colors.blue[50] : Colors.red[50],
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  serviceType.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    statusText,
+        color: status.toLowerCase() == 'confirmed'
+            ? Colors.blue[50]
+            : Colors.red[50],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    serviceType.toUpperCase(),
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Dr. $providerName',
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.medical_services, size: 16, color: Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    description.isNotEmpty ? description : 'Service booking',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            if (scheduledTime.isNotEmpty)
+                ],
+              ),
+              const SizedBox(height: 8),
               Text(
-                'Scheduled: ${_formatDate(scheduledTime)}',
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                'Dr. $providerName',
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
               ),
-            const SizedBox(height: 8),
-            Text(
-              '₹${amount.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.medical_services,
+                      size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      description.isNotEmpty ? description : 'Service booking',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              if (scheduledTime.isNotEmpty)
+                Text(
+                  'Scheduled: ${_formatDate(scheduledTime)}',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              const SizedBox(height: 8),
+              Text(
+                '₹${amount.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -451,7 +533,8 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen> with 
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor,
                     borderRadius: BorderRadius.circular(20),

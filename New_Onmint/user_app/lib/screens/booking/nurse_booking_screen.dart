@@ -19,7 +19,7 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   final _apiClient = OnMintApiClient();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   DateTime? _selectedDate;
   String? _selectedService;
   double _selectedPrice = 0;
@@ -124,9 +124,10 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   @override
   Widget build(BuildContext context) {
     // Handle both 'services' and 'servicesOffered' keys from backend
-    final services = (widget.nurse['servicesOffered'] as List? ?? 
-                     widget.nurse['services'] as List? ?? []);
-    
+    final services = (widget.nurse['servicesOffered'] as List? ??
+        widget.nurse['services'] as List? ??
+        []);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Nurse'),
@@ -211,14 +212,17 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             else
               ...services.map<Widget>((service) {
                 // Handle both object and string formats
-                final serviceName = service is Map 
+                final serviceName = service is Map
                     ? (service['name'] ?? service.toString())
                     : service.toString();
-                final price = service is Map 
-                    ? (service['pricePerHour']?.toDouble() ?? service['price']?.toDouble() ?? service['hourlyRate']?.toDouble() ?? 0.0)
+                final price = service is Map
+                    ? (service['pricePerHour']?.toDouble() ??
+                        service['price']?.toDouble() ??
+                        service['hourlyRate']?.toDouble() ??
+                        0.0)
                     : 0.0;
                 final isSelected = _selectedService == serviceName;
-                
+
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8),
                   color: isSelected ? AppColors.primary.withOpacity(0.1) : null,
@@ -256,7 +260,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             const SizedBox(height: 12),
             Card(
               child: ListTile(
-                leading: const Icon(Icons.calendar_today, color: AppColors.primary),
+                leading:
+                    const Icon(Icons.calendar_today, color: AppColors.primary),
                 title: Text(
                   _selectedDate == null
                       ? 'Choose a date'
@@ -373,7 +378,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Duration:'),
-                        Text('$_selectedDuration ${_selectedDuration == 1 ? 'day' : 'days'}'),
+                        Text(
+                            '$_selectedDuration ${_selectedDuration == 1 ? 'day' : 'days'}'),
                       ],
                     ),
                     const Divider(),
@@ -416,7 +422,20 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 }

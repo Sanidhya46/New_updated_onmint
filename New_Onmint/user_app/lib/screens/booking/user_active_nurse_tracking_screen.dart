@@ -12,10 +12,12 @@ class UserActiveNurseTrackingScreen extends StatefulWidget {
   });
 
   @override
-  State<UserActiveNurseTrackingScreen> createState() => _UserActiveNurseTrackingScreenState();
+  State<UserActiveNurseTrackingScreen> createState() =>
+      _UserActiveNurseTrackingScreenState();
 }
 
-class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingScreen> {
+class _UserActiveNurseTrackingScreenState
+    extends State<UserActiveNurseTrackingScreen> {
   final _apiClient = OnMintApiClient();
   Map<String, dynamic>? _booking;
   bool _isLoading = true;
@@ -67,12 +69,14 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
       return Scaffold(
         backgroundColor: const Color(0xFF1565C0),
         appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: const Center(child: Text('Booking not found', style: TextStyle(color: Colors.white))),
+        body: const Center(
+            child: Text('Booking not found',
+                style: TextStyle(color: Colors.white))),
       );
     }
 
     final status = _booking!['status'] ?? 'accepted';
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FF),
       body: RefreshIndicator(
@@ -95,13 +99,18 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
   }
 
   Widget _buildTopSection(String status) {
-    final provider = _booking!['acceptedProvider'] ?? _booking!['provider'] ?? {};
-    final fullName = provider['fullName'] ?? '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
+    final provider =
+        _booking!['acceptedProvider'] ?? _booking!['provider'] ?? {};
+    final fullName = provider['fullName'] ??
+        '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
     final gender = provider['gender'] ?? 'Female';
     final age = _calculateAge(provider['dateOfBirth']);
-    
-    final price = _booking!['price'] ?? _booking!['totalAmount'] ?? _booking!['fees'] ?? 499;
-    
+
+    final price = _booking!['price'] ??
+        _booking!['totalAmount'] ??
+        _booking!['fees'] ??
+        499;
+
     String formattedDate = 'Unknown';
     String formattedTime = 'Unknown';
     if (_booking!['createdAt'] != null) {
@@ -116,7 +125,7 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
     String headerTitle;
     String subTitle;
     IconData headerIcon;
-    
+
     switch (status) {
       case 'on_the_way':
         headerTitle = 'Nurse is On The Way';
@@ -141,7 +150,8 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
       case 'accepted':
       default:
         headerTitle = 'Request Accepted';
-        subTitle = '${fullName.isEmpty ? "A nurse" : fullName} has accepted your request.';
+        subTitle =
+            '${fullName.isEmpty ? "A nurse" : fullName} has accepted your request.';
         headerIcon = Icons.check_circle;
         break;
     }
@@ -158,7 +168,8 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -209,154 +220,164 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
             ),
           ),
         ),
-        
+
         // Nurse Details Overlapping Card
         if (status != 'requested')
-        Positioned(
-          bottom: -90,
-          left: 16,
-          right: 16,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        shape: BoxShape.circle,
-                        image: provider['profilePicture'] != null 
-                          ? DecorationImage(
-                              image: NetworkImage(provider['profilePicture']),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+          Positioned(
+            bottom: -90,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                          image: provider['profilePicture'] != null
+                              ? DecorationImage(
+                                  image:
+                                      NetworkImage(provider['profilePicture']),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: provider['profilePicture'] == null
+                            ? const Icon(Icons.medical_services,
+                                color: Color(0xFF0D47A1), size: 32)
+                            : null,
                       ),
-                      child: provider['profilePicture'] == null
-                          ? const Icon(Icons.medical_services, color: Color(0xFF0D47A1), size: 32)
-                          : null,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            fullName.isEmpty ? 'Nurse' : fullName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF152238),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                gender.toLowerCase() == 'female' ? Icons.female : Icons.male,
-                                size: 14,
-                                color: Colors.pinkAccent,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fullName.isEmpty ? 'Nurse' : fullName,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF152238),
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$gender • $age',
-                                style: const TextStyle(
-                                  color: Colors.black87,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  gender.toLowerCase() == 'female'
+                                      ? Icons.female
+                                      : Icons.male,
+                                  size: 14,
+                                  color: Colors.pinkAccent,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '$gender • $age',
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: Colors.grey.shade200),
+                  const SizedBox(height: 16),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Expanded(
+                        flex: 3,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(Icons.workspace_premium,
+                                size: 16, color: Color(0xFF1565C0)),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Verified Professional Nurse\nCertified & Background Checked',
+                                style: TextStyle(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                  height: 1.4,
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Divider(color: Colors.grey.shade200),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Expanded(
-                      flex: 3,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.workspace_premium, size: 16, color: Color(0xFF1565C0)),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Verified Professional Nurse\nCertified & Background Checked',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                                height: 1.4,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                const Icon(Icons.calendar_month_outlined,
+                                    size: 14, color: Color(0xFF1565C0)),
+                                const SizedBox(width: 6),
+                                Text(
+                                  formattedDate,
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              formattedTime,
+                              style: const TextStyle(
+                                  fontSize: 12, color: Colors.black87),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '₹$price',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              const Icon(Icons.calendar_month_outlined, size: 14, color: Color(0xFF1565C0)),
-                              const SizedBox(width: 6),
-                              Text(
-                                formattedDate,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            formattedTime,
-                            style: const TextStyle(fontSize: 12, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '₹$price',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                            const Text(
+                              'Paid securely',
+                              style:
+                                  TextStyle(fontSize: 10, color: Colors.grey),
                             ),
-                          ),
-                          const Text(
-                            'Paid securely',
-                            style: TextStyle(fontSize: 10, color: Colors.grey),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -370,7 +391,9 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
             children: [
               CircularProgressIndicator(color: Color(0xFF1565C0)),
               SizedBox(height: 16),
-              Text('Looking for nearby nurses...', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+              Text('Looking for nearby nurses...',
+                  style: TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -399,13 +422,16 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
           const SizedBox(height: 24),
           Row(
             children: [
-              _buildProgressStep('Accepted', Icons.check, stepIndex >= 0, isFirst: true),
+              _buildProgressStep('Accepted', Icons.check, stepIndex >= 0,
+                  isFirst: true),
               _buildProgressLine(stepIndex >= 1),
-              _buildProgressStep('On The Way', Icons.two_wheeler, stepIndex >= 1),
+              _buildProgressStep(
+                  'On The Way', Icons.two_wheeler, stepIndex >= 1),
               _buildProgressLine(stepIndex >= 2),
               _buildProgressStep('Reached', Icons.location_on, stepIndex >= 2),
               _buildProgressLine(stepIndex >= 3),
-              _buildProgressStep('Completed', Icons.flag, stepIndex >= 3, isLast: true),
+              _buildProgressStep('Completed', Icons.flag, stepIndex >= 3,
+                  isLast: true),
             ],
           ),
         ],
@@ -413,7 +439,8 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
     );
   }
 
-  Widget _buildProgressStep(String label, IconData icon, bool isCompleted, {bool isFirst = false, bool isLast = false}) {
+  Widget _buildProgressStep(String label, IconData icon, bool isCompleted,
+      {bool isFirst = false, bool isLast = false}) {
     return Column(
       children: [
         Container(
@@ -422,14 +449,18 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
           decoration: BoxDecoration(
             color: isCompleted ? Colors.green : Colors.white,
             shape: BoxShape.circle,
-            border: isCompleted ? null : Border.all(color: Colors.grey.shade300, width: 2),
-            boxShadow: isCompleted ? [
-              BoxShadow(
-                color: Colors.green.withOpacity(0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              )
-            ] : null,
+            border: isCompleted
+                ? null
+                : Border.all(color: Colors.grey.shade300, width: 2),
+            boxShadow: isCompleted
+                ? [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    )
+                  ]
+                : null,
           ),
           child: Icon(
             icon,
@@ -476,7 +507,7 @@ class _UserActiveNurseTrackingScreenState extends State<UserActiveNurseTrackingS
 
     final provider = _booking!['acceptedProvider'] ?? _booking!['provider'];
     final providerPhone = provider != null ? provider['phone'] : null;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
       child: Row(

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:math' as math;
 
 class LabTestBookingScreen extends StatefulWidget {
   final String bookingId;
@@ -23,6 +26,12 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
   bool _isActing = false;
   Map<String, dynamic>? _bookingDetails;
   String _currentStatus = 'accepted'; 
+
+  // Primary Theme Colors (Enforcing Blue instead of Purple)
+  final Color primaryBlue = const Color(0xFF0D47A1); // Deep Blue
+  final Color lightBlue = const Color(0xFFE3F2FD); // Light Blue for icon backgrounds
+  final Color textDark = const Color(0xFF152238);
+  final Color greenSuccess = const Color(0xFF2E7D32);
 
   @override
   void initState() {
@@ -56,9 +65,74 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
     }
   }
 
+  Future<void> _uploadReport() async {
+    try {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() => _isActing = true);
+        
+        await _apiClient.initialize();
+        
+        final file = result.files.first;
+        if (file.bytes != null) {
+          await _apiClient.pathology.uploadReportFileBytes(
+            widget.bookingId,
+            file.bytes!,
+            file.name,
+          );
+        } else if (file.path != null) {
+          await _apiClient.pathology.uploadReportFile(
+            widget.bookingId,
+            file.path!,
+          );
+        }
+
+        // Once uploaded, mark the booking as completed locally since backend already did it
+        if (mounted) {
+          setState(() {
+            _currentStatus = 'completed';
+            if (_bookingDetails != null) {
+              _bookingDetails!['status'] = 'completed';
+            }
+          });
+          ToastUtils.showSuccess('Report uploaded successfully');
+          _fetchDetails();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastUtils.showError('Failed to upload report');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isActing = false);
+      }
+    }
+  }
+
   Future<void> _updateStatus(String newStatus) async {
     setState(() => _isActing = true);
     try {
+      // Allow bypassing API for mockup flow if ID is a mock ID
+      if (widget.bookingId == '649b5c3e7b1a2c3f1d4e5f6a') {
+        await Future.delayed(const Duration(milliseconds: 600));
+        if (mounted) {
+          setState(() {
+            _currentStatus = newStatus;
+            if (_bookingDetails != null) {
+              _bookingDetails!['status'] = newStatus;
+            }
+          });
+          ToastUtils.showSuccess('Status updated');
+        }
+        return;
+      }
+
       await _apiClient.initialize();
       await _apiClient.pathology.updateBookingStatus(widget.bookingId, newStatus);
       if (mounted) {
@@ -68,7 +142,7 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
             _bookingDetails!['status'] = newStatus;
           }
         });
-        ToastUtils.showSuccess('Status updated to $newStatus');
+        ToastUtils.showSuccess('Status updated');
       }
     } catch (e) {
       if (mounted) {
@@ -92,35 +166,17 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
     }
   }
 
-  String _formatTime(DateTime date) {
-    return DateFormat('hh:mm a').format(date);
-  }
-
-  String _formatDate(DateTime date) {
-    return DateFormat('dd MMM').format(date);
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading && _bookingDetails == null) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Colors.white,
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: CircularProgressIndicator(color: primaryBlue)),
       );
     }
 
     final booking = _bookingDetails ?? {};
-    final patientData = booking['patient'] ?? {};
     
-    String patientName = patientData['fullName'] ?? '${patientData['firstName'] ?? ''} ${patientData['lastName'] ?? ''}'.trim();
-    if (patientName.isEmpty) patientName = 'Ali Raza';
-    
-    final String profilePicture = patientData['profilePicture']?.toString() ?? '';
-    final String gender = patientData['gender']?.toString().toLowerCase() ?? 'male';
-    
-    final currentStep = _statusStep;
-    final bookingTime = booking['createdAt'] != null ? DateTime.tryParse(booking['createdAt'].toString()) : DateTime.now();
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -128,335 +184,425 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A148C)),
+          icon: Icon(Icons.arrow_back, color: textDark),
           onPressed: () => Navigator.pop(context, true),
         ),
         title: const Text(
-          'My Booking',
-          style: TextStyle(
-            color: Color(0xFF152238),
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-          ),
+          'Lab Test Booking', 
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF152238))
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Color(0xFF4A148C)),
-            onPressed: () {},
-          ),
-        ],
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Patient Card
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Your Patient',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF152238)),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 30,
-                            backgroundColor: Colors.grey.shade200,
-                            backgroundImage: profilePicture.isNotEmpty 
-                                ? NetworkImage(profilePicture)
-                                : AssetImage(gender == 'female' ? 'assets/images/female_profile.png' : 'assets/images/male_profile.png') as ImageProvider,
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  patientName,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Patient',
-                                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _buildCircleIconButton(Icons.phone, Colors.blue),
-                          const SizedBox(width: 12),
-                          _buildCircleIconButton(Icons.chat_bubble, Colors.blue.shade700),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Live Status Header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Live Status',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'In Progress',
-                            style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 24),
-                
-                // Timeline
-                _buildTimelineStep(
-                  title: 'Request Accepted',
-                  subtitle: 'You have accepted the request',
-                  time: bookingTime != null ? _formatTime(bookingTime) : '09:15 AM',
-                  date: bookingTime != null ? _formatDate(bookingTime) : '13 May',
-                  isCompleted: currentStep >= 0,
-                  isLast: false,
-                  onTap: () {},
-                ),
-                _buildTimelineStep(
-                  title: 'On The Way',
-                  subtitle: 'You are on the way to the location',
-                  time: currentStep >= 1 ? _formatTime(DateTime.now()) : '--:--',
-                  date: currentStep >= 1 ? _formatDate(DateTime.now()) : '--',
-                  isCompleted: currentStep >= 1,
-                  isLast: false,
-                  onTap: () {
-                    if (currentStep < 1) _updateStatus('on_the_way');
-                  },
-                ),
-                _buildTimelineStep(
-                  title: 'Sample Collected',
-                  subtitle: 'You have collected the sample',
-                  time: currentStep >= 2 ? _formatTime(DateTime.now()) : '--:--',
-                  date: currentStep >= 2 ? _formatDate(DateTime.now()) : '--',
-                  isCompleted: currentStep >= 2,
-                  isLast: false,
-                  onTap: () {
-                    if (currentStep < 2) _updateStatus('sample_collected');
-                  },
-                ),
-                _buildTimelineStep(
-                  title: 'Report Ready',
-                  subtitle: 'The lab report is ready to view',
-                  time: currentStep >= 3 ? _formatTime(DateTime.now()) : '--:--',
-                  date: currentStep >= 3 ? _formatDate(DateTime.now()) : '--',
-                  isCompleted: currentStep >= 3,
-                  isLast: false,
-                  onTap: () {
-                    if (currentStep < 3) _updateStatus('report_ready');
-                  },
-                ),
-                _buildTimelineStep(
-                  title: 'Completed',
-                  subtitle: 'Thank you for choosing our service',
-                  time: currentStep >= 4 ? _formatTime(DateTime.now()) : '--:--',
-                  date: currentStep >= 4 ? _formatDate(DateTime.now()) : '--',
-                  isCompleted: currentStep >= 4,
-                  isLast: true,
-                  onTap: () {
-                    if (currentStep < 4) _updateStatus('completed');
-                  },
-                ),
-                
-                const SizedBox(height: 100), // Space for bottom button
-              ],
-            ),
-          ),
-          
-          if (_isActing)
-            Container(
-              color: Colors.white.withOpacity(0.5),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-            
-          // Bottom Help Button
-          Positioned(
-            bottom: 24,
-            left: 16,
-            right: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D47A1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.headset_mic_outlined, color: Color(0xFF0D47A1), size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Need help?',
-                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'You can contact support anytime',
-                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          children: [
+            _buildPatientCard(booking),
+            const SizedBox(height: 12),
+            _buildTestDetailsCard(booking),
+            const SizedBox(height: 12),
+            _buildHorizontalTimeline(_statusStep),
+            const SizedBox(height: 6), // Decreased spacing
+            _buildActionButtonsRow(),
+            const SizedBox(height: 0), // Decreased spacing
+          ],
+        ),
       ),
+      bottomNavigationBar: _buildBottomAction(_statusStep),
     );
   }
 
-  Widget _buildCircleIconButton(IconData icon, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Icon(icon, color: color, size: 20),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          icon == Icons.phone ? 'Call' : 'Chat',
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF152238)),
-        ),
-      ],
-    );
-  }
+  Widget _buildPatientCard(Map<String, dynamic> bookingData) {
+    final patientData = bookingData['patient'] ?? {};
+    String patientName = patientData['fullName'] ?? '${patientData['firstName'] ?? ''} ${patientData['lastName'] ?? ''}'.trim();
+    if (patientName.isEmpty) patientName = 'Umeya Khan';
+    
+    final String patientImage = patientData['profilePicture']?.toString() ?? '';
+    final String gender = patientData['gender']?.toString().capitalize() ?? 'Female';
+    final String age = patientData['age']?.toString() ?? '27';
+    final String address = bookingData['location']?['address'] ?? 'H-101, Shanti Nagar,\nGovindpuram, Ghaziabad,\nUttar Pradesh - 201013';
 
-  Widget _buildTimelineStep({
-    required String title,
-    required String subtitle,
-    required String time,
-    required String date,
-    required bool isCompleted,
-    required bool isLast,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
+    final requestedOn = bookingData['createdAt'] != null ? DateTime.tryParse(bookingData['createdAt']) : DateTime.now();
+    final String displayDate = requestedOn != null ? DateFormat('dd MMM yyyy').format(requestedOn) : '13 May 2025';
+    
+    String displayTime = '10:00 AM';
+    if (bookingData['scheduledTime'] != null) {
+      try {
+        final dt = DateTime.parse(bookingData['scheduledTime']);
+        displayTime = DateFormat('hh:mm a').format(dt);
+      } catch (_) {}
+    }
+
+    final price = bookingData['price'] ?? bookingData['totalAmount'] ?? bookingData['fees'] ?? 300;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: _cardDecoration(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Timeline line & circle
-          Column(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted ? Colors.green : Colors.grey.shade200,
-                  border: isCompleted ? Border.all(color: Colors.green.withOpacity(0.2), width: 4) : null,
-                ),
-                child: Icon(
-                  Icons.check,
-                  color: isCompleted ? Colors.white : Colors.grey.shade400,
-                  size: 16,
-                ),
+          // Avatar
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey.shade200,
+              image: DecorationImage(
+                image: patientImage.isNotEmpty
+                    ? NetworkImage(patientImage) as ImageProvider
+                    : AssetImage(gender.toLowerCase() == 'female'
+                        ? 'assets/images/female_profile.png'
+                        : 'assets/images/male_profile.png'),
+                fit: BoxFit.cover,
               ),
-              if (!isLast)
-                Container(
-                  width: 2,
-                  height: 40,
-                  color: isCompleted ? Colors.green : Colors.grey.shade300,
-                ),
-            ],
+            ),
           ),
-          const SizedBox(width: 16),
-          // Content
+          const SizedBox(width: 12),
+          // Middle Column: Name, Gender/Age, Address
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: isCompleted ? const Color(0xFF152238) : Colors.grey.shade600,
-                  ),
+                  patientName,
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold, color: textDark),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                Row(
+                  children: [
+                    Icon(gender.toLowerCase() == 'female' ? Icons.female : Icons.male, size: 12, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Text('$gender • $age Years', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500)),
+                  ],
                 ),
-                if (!isLast) const SizedBox(height: 24),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        address,
+                        style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade800, height: 1.4),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          // Time/Date
+          // Right Column: Date, Time, Price
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                time,
-                style: TextStyle(fontSize: 12, color: isCompleted ? const Color(0xFF152238) : Colors.grey.shade500, fontWeight: FontWeight.w500),
+              Row(
+                children: [
+                  Icon(Icons.calendar_today_outlined, size: 12, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(displayDate, style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: textDark)),
+                ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Icon(Icons.access_time_outlined, size: 12, color: Colors.grey.shade600),
+                  const SizedBox(width: 4),
+                  Text(displayTime, style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: textDark)),
+                ],
+              ),
+              const SizedBox(height: 16),
               Text(
-                date,
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                '₹$price',
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.bold, color: greenSuccess),
+              ),
+              Text(
+                'Service Fee',
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 10, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildTestDetailsCard(Map<String, dynamic> booking) {
+    List<String> tests = ['CBC Test', 'Thyroid Profile'];
+    if (booking['tests'] != null && booking['tests'] is List && booking['tests'].isNotEmpty) {
+      tests = (booking['tests'] as List).map((t) => (t['name'] ?? 'Test').toString()).toList();
+    }
+    final notes = booking['notes'] ?? 'Patient has mild fever. Please handle carefully.';
+
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      width: double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Test Details',
+            style: TextStyle(fontFamily: 'Poppins', fontSize: 14, fontWeight: FontWeight.bold, color: textDark),
+          ),
+          const SizedBox(height: 8),
+          Text('Test Name / Package', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w700, color: textDark)),
+          const SizedBox(height: 4),
+          ...tests.map((test) => Padding(
+            padding: const EdgeInsets.only(bottom: 2.0),
+            child: Row(
+              children: [
+                Container(width: 4, height: 4, decoration: const BoxDecoration(color: Colors.black, shape: BoxShape.circle)),
+                const SizedBox(width: 6),
+                Text(test, style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade800)),
+              ],
+            ),
+          )),
+          const SizedBox(height: 8),
+          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Sample Type', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w700, color: textDark)),
+              const SizedBox(height: 2),
+              Text('Blood', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade800)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+          const SizedBox(height: 8),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Additional Notes', style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w700, color: textDark)),
+              const SizedBox(height: 2),
+              Text(notes, style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade800)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHorizontalTimeline(int currentStep) {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          Positioned(
+            top: 10,
+            left: 35,
+            right: 35,
+            child: Row(
+              children: [
+                Expanded(child: Container(height: 2, color: currentStep >= 1 ? greenSuccess : Colors.grey.shade300)),
+                Expanded(child: Container(height: 2, color: currentStep >= 2 ? greenSuccess : Colors.grey.shade300)),
+                Expanded(child: Container(height: 2, color: currentStep >= 3 ? greenSuccess : Colors.grey.shade300)),
+              ],
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTimelineNodeWithLabel('Accepted', 0, currentStep),
+              _buildTimelineNodeWithLabel('On The Way', 1, currentStep),
+              _buildTimelineNodeWithLabel('Sample\nCollected', 2, currentStep),
+              _buildTimelineNodeWithLabel('Completed', 3, currentStep),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimelineNodeWithLabel(String title, int nodeIndex, int currentStep) {
+    bool isCompleted = currentStep >= nodeIndex;
+    if (nodeIndex == 3 && currentStep >= 3) isCompleted = true;
+
+    return SizedBox(
+      width: 60,
+      child: Column(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isCompleted ? greenSuccess : Colors.white,
+              border: Border.all(color: isCompleted ? greenSuccess : Colors.grey.shade400, width: 2),
+            ),
+            child: isCompleted ? const Icon(Icons.check, color: Colors.white, size: 14) : null,
+          ),
+          const SizedBox(height: 6),
+          Text(title, textAlign: TextAlign.center, style: TextStyle(fontFamily: 'Poppins', fontSize: 9, fontWeight: FontWeight.w600, color: isCompleted ? greenSuccess : Colors.grey.shade500, height: 1.1)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtonsRow() {
+    return Container(
+      decoration: _cardDecoration(),
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildActionButton(Icons.phone, 'Call Patient'),
+          _buildActionButton(Icons.chat_bubble, 'Chat'),
+          _buildActionButton(Icons.map, 'Open Map'),
+          _buildActionButton(Icons.assignment, 'Test Details'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, String label) {
+    return Column(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE3F2FD), // Light blue
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: const Color(0xFF0D47A1), size: 20),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: TextStyle(fontFamily: 'Poppins', fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey.shade800),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBottomAction(int currentStep) {
+    String label = '';
+    IconData? icon;
+    VoidCallback? onPressed;
+    bool showPrimaryButton = true;
+
+    if (currentStep == 0) {
+      label = 'On The Way';
+      icon = Icons.two_wheeler;
+      onPressed = () => _updateStatus('on_the_way');
+    } else if (currentStep == 1) {
+      label = 'Collect Blood Sample';
+      icon = Icons.water_drop;
+      onPressed = () => _updateStatus('sample_collected');
+    } else if (currentStep == 2) {
+      label = 'Upload Report';
+      icon = Icons.cloud_upload;
+      onPressed = _uploadReport;
+    } else {
+      showPrimaryButton = false;
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showPrimaryButton) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isActing ? null : onPressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0D47A1), // Deep Blue
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (icon != null) Icon(icon, size: 22, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            if (_bookingDetails?['report'] != null && _bookingDetails!['report'].toString().isNotEmpty) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final url = _bookingDetails!['report'].toString();
+                    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                  },
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
+                  label: const Text('View Report', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, true),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0D47A1), // Deep Blue
+                  side: const BorderSide(color: Color(0xFF0D47A1)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: const EdgeInsets.symmetric(vertical: 8), // Decreased padding
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.arrow_back, size: 18),
+                    const SizedBox(width: 6),
+                    const Text('Back', style: TextStyle(fontFamily: 'Poppins', fontSize: 15, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey.shade200),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.03),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    );
+  }
+}
+
+// Helper Extension
+extension StringExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

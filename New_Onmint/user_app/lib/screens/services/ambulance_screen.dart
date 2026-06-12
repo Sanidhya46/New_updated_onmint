@@ -13,18 +13,30 @@ class AmbulanceScreen extends StatefulWidget {
 
 class _AmbulanceScreenState extends State<AmbulanceScreen> {
   late final PatientService _patientService;
-  
+
   List<Map<String, dynamic>> _ambulances = [];
   String _selectedType = '';
   bool _isLoading = true;
   Position? _currentPosition;
   String _currentAddress = 'Fetching location...';
-  
+
   final List<Map<String, dynamic>> _ambulanceTypes = [
     {'id': '', 'name': 'All Types', 'icon': Icons.local_shipping},
-    {'id': 'basic', 'name': 'Basic Life Support', 'icon': Icons.medical_services},
-    {'id': 'advanced', 'name': 'Advanced Life Support', 'icon': Icons.emergency},
-    {'id': 'patient_transport', 'name': 'Patient Transport', 'icon': Icons.accessible},
+    {
+      'id': 'basic',
+      'name': 'Basic Life Support',
+      'icon': Icons.medical_services
+    },
+    {
+      'id': 'advanced',
+      'name': 'Advanced Life Support',
+      'icon': Icons.emergency
+    },
+    {
+      'id': 'patient_transport',
+      'name': 'Patient Transport',
+      'icon': Icons.accessible
+    },
     {'id': 'cardiac', 'name': 'Cardiac Ambulance', 'icon': Icons.favorite},
     {'id': 'neonatal', 'name': 'Neonatal', 'icon': Icons.child_care},
     {'id': 'air', 'name': 'Air Ambulance', 'icon': Icons.flight},
@@ -43,20 +55,21 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
     try {
       // Request location permission
       final permission = await Permission.location.request();
-      
+
       if (permission.isGranted) {
         // Get current position
         final position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
-        
+
         if (mounted) {
           setState(() {
             _currentPosition = position;
-            _currentAddress = '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+            _currentAddress =
+                '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
           });
         }
-        
+
         // You can add reverse geocoding here to get actual address
         // For now, we'll use coordinates
       } else {
@@ -79,7 +92,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
   Future<void> _loadAmbulances() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    
+
     try {
       // Use searchAmbulances API to get ambulance providers
       final response = await _patientService.searchAmbulances(
@@ -87,11 +100,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         latitude: _currentPosition?.latitude,
         longitude: _currentPosition?.longitude,
       );
-      
+
       // Backend returns ambulances directly in 'data' array
-      final ambulances = (response['data'] as List?)
-          ?.cast<Map<String, dynamic>>() ?? [];
-      
+      final ambulances =
+          (response['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
       if (mounted) {
         setState(() {
           _ambulances = ambulances;
@@ -154,7 +167,10 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
               children: [
                 Text(
                   'Emergency Ambulance',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -199,7 +215,7 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
             itemBuilder: (context, index) {
               final type = _ambulanceTypes[index];
               final isSelected = _selectedType == type['id'];
-              
+
               return GestureDetector(
                 onTap: () => setState(() => _selectedType = type['id']),
                 child: Container(
@@ -211,7 +227,9 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFFFF9A9E) : Colors.grey[100],
+                          color: isSelected
+                              ? const Color(0xFFFF9A9E)
+                              : Colors.grey[100],
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
@@ -225,8 +243,11 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         type['name'],
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? const Color(0xFFFF9A9E) : Colors.grey[700],
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFFFF9A9E)
+                              : Colors.grey[700],
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 1,
@@ -246,7 +267,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
 
   Widget _buildAmbulancesList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF9A9E)));
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFFFF9A9E)));
     }
 
     if (_ambulances.isEmpty) {
@@ -288,28 +310,35 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         children: [
                           Text(
                             ambulance['driverName'] ?? 'Ambulance Service',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.w600),
                           ),
                           Text(
                             ambulance['vehicleType'] ?? 'Basic Life Support',
-                            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey[600]),
                           ),
                           Text(
                             'Vehicle: ${ambulance['vehicleNumber'] ?? 'N/A'}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500]),
                           ),
                         ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: Colors.green.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Text(
                         'Available',
-                        style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500),
                       ),
                     ),
                   ],
@@ -318,22 +347,28 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                 if (ambulance['equipmentAvailable'] != null) ...[
                   Text(
                     'Equipment Available:',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600], fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 4),
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
-                    children: (ambulance['equipmentAvailable'] as List).map((equipment) {
+                    children: (ambulance['equipmentAvailable'] as List)
+                        .map((equipment) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
                           color: Colors.blue.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           equipment.toString(),
-                          style: const TextStyle(fontSize: 10, color: Colors.blue),
+                          style:
+                              const TextStyle(fontSize: 10, color: Colors.blue),
                         ),
                       );
                     }).toList(),
@@ -348,19 +383,25 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                         children: [
                           Text(
                             'Response Time',
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[600]),
                           ),
                           const Text(
                             '5-10 mins',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green),
+                            style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green),
                           ),
                         ],
                       ),
                     ),
                     ElevatedButton(
                       onPressed: () => _bookAmbulance(ambulance),
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF9A9E)),
-                      child: const Text('Book Now', style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF9A9E)),
+                      child: const Text('Book Now',
+                          style: TextStyle(color: Colors.white)),
                     ),
                   ],
                 ),
@@ -387,7 +428,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Unable to get location. Please enable location services.'),
+              content: Text(
+                  'Unable to get location. Please enable location services.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -401,24 +443,28 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
       final response = await _patientService.triggerEmergency(
         location: {
           'type': 'Point',
-          'coordinates': [_currentPosition!.longitude, _currentPosition!.latitude],
+          'coordinates': [
+            _currentPosition!.longitude,
+            _currentPosition!.latitude
+          ],
         },
         address: _currentAddress,
         notes: 'Emergency call - 108. Immediate medical assistance required.',
         type: 'ambulance',
       );
-      
+
       debugPrint('Emergency response: $response');
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('🚑 Emergency ambulance requested! Help is on the way.'),
+            content:
+                Text('🚑 Emergency ambulance requested! Help is on the way.'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
         );
-        
+
         // Fetch and show nearby ambulances
         _fetchAndShowNearbyAmbulances();
       }
@@ -446,12 +492,13 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
         longitude: _currentPosition!.longitude,
         maxDistance: 50, // 50km radius
       );
-      
+
       debugPrint('Nearby ambulances response: $response');
-      
+
       // Backend returns ambulances directly in 'data' array, not nested in 'data.ambulances'
-      final ambulances = (response['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      
+      final ambulances =
+          (response['data'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
       if (mounted) {
         _showAmbulancesDialog(ambulances);
       }
@@ -508,9 +555,10 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                   itemCount: ambulances.length,
                   itemBuilder: (context, index) {
                     final ambulance = ambulances[index];
-                    final distance = ambulance['distance']?.toStringAsFixed(2) ?? 'N/A';
+                    final distance =
+                        ambulance['distance']?.toStringAsFixed(2) ?? 'N/A';
                     final isAssigned = ambulance['isAssigned'] == true;
-                    
+
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       color: isAssigned ? Colors.green.withOpacity(0.1) : null,
@@ -524,24 +572,29 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
-                                    color: isAssigned 
+                                    color: isAssigned
                                         ? Colors.green.withOpacity(0.2)
-                                        : const Color(0xFFFF9A9E).withOpacity(0.1),
+                                        : const Color(0xFFFF9A9E)
+                                            .withOpacity(0.1),
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Icon(
                                     Icons.local_shipping,
-                                    color: isAssigned ? Colors.green : const Color(0xFFFF9A9E),
+                                    color: isAssigned
+                                        ? Colors.green
+                                        : const Color(0xFFFF9A9E),
                                     size: 20,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        ambulance['driverName'] ?? 'Ambulance Service',
+                                        ambulance['driverName'] ??
+                                            'Ambulance Service',
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
@@ -581,18 +634,22 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                             const SizedBox(height: 8),
                             Row(
                               children: [
-                                Icon(Icons.location_on, size: 14, color: Colors.grey[600]),
+                                Icon(Icons.location_on,
+                                    size: 14, color: Colors.grey[600]),
                                 const SizedBox(width: 4),
                                 Text(
                                   'Distance: $distance km',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey[600]),
                                 ),
                                 const SizedBox(width: 16),
-                                Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
+                                Icon(Icons.access_time,
+                                    size: 14, color: Colors.grey[600]),
                                 const SizedBox(width: 4),
                                 Text(
                                   'ETA: ${_calculateETA(distance)} mins',
-                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey[600]),
                                 ),
                               ],
                             ),
@@ -600,7 +657,8 @@ class _AmbulanceScreenState extends State<AmbulanceScreen> {
                               const SizedBox(height: 4),
                               Text(
                                 'Type: ${ambulance['vehicleType']}',
-                                style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey[500]),
                               ),
                             ],
                           ],

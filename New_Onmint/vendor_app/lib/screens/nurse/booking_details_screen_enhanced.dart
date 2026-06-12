@@ -57,7 +57,14 @@ class _BookingDetailsScreenEnhancedState
     setState(() => _isActing = true);
     try {
       await _apiClient.initialize();
-      await _apiClient.nurse.acceptBooking(widget.bookingId);
+      final isRealtime = (_bookingDetails ?? widget.bookingData ?? {})['isRealtimeBooking'] == true || (_bookingDetails ?? widget.bookingData ?? {})['bookingType'] == 'realtime';
+      
+      if (isRealtime) {
+        await _apiClient.nurse.acceptRealtimeBooking(widget.bookingId);
+      } else {
+        await _apiClient.nurse.acceptBooking(widget.bookingId);
+      }
+      
       if (mounted) {
         ToastUtils.showSuccess('Booking accepted successfully');
         Navigator.pop(context, true);
@@ -74,7 +81,17 @@ class _BookingDetailsScreenEnhancedState
     setState(() => _isActing = true);
     try {
       await _apiClient.initialize();
-      await _apiClient.nurse.rejectBooking(widget.bookingId, reason: 'Rejected by nurse');
+      final isRealtime = (_bookingDetails ?? widget.bookingData ?? {})['isRealtimeBooking'] == true || (_bookingDetails ?? widget.bookingData ?? {})['bookingType'] == 'realtime';
+      
+      if (isRealtime) {
+        // Just mark as viewed and dismiss locally for realtime requests
+        try {
+          await _apiClient.nurse.markRealtimeBookingAsViewed(widget.bookingId);
+        } catch (_) {}
+      } else {
+        await _apiClient.nurse.rejectBooking(widget.bookingId, reason: 'Rejected by nurse');
+      }
+      
       if (mounted) {
         ToastUtils.showSuccess('Booking rejected');
         Navigator.pop(context, true);
@@ -122,7 +139,7 @@ class _BookingDetailsScreenEnhancedState
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F4CBA),
         elevation: 0,
@@ -204,7 +221,7 @@ class _BookingDetailsScreenEnhancedState
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             
             // Patient Details
             _buildCard(
@@ -212,96 +229,104 @@ class _BookingDetailsScreenEnhancedState
               child: Column(
                 children: [
                   _buildDetailRow(Icons.person_outline, 'Name', patientName),
-                  const Divider(color: Color(0xFFF1F5F9), height: 24),
-                  _buildDetailRow(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender'),
-                  const Divider(color: Color(0xFFF1F5F9), height: 24),
-                  _buildDetailRow(Icons.medical_services_outlined, 'Service Required', notes),
-                  const Divider(color: Color(0xFFF1F5F9), height: 24),
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
+                  _buildDetailRow(Icons.calendar_today_outlined, 'Age/Gender', '$age Years / $gender'),
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
+                  _buildDetailRow(Icons.medical_services_outlined, 'Service', notes),
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
                   _buildDetailRow(Icons.location_on_outlined, 'Address', address),
                 ],
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 10),
             
             // Service Request Details
             _buildCard(
               title: 'Service Request Details',
               child: Column(
                 children: [
-                  _buildDetailRow(Icons.health_and_safety_outlined, 'Service Type', 'Home Care Nursing'),
-                  const Divider(color: Color(0xFFF1F5F9), height: 24),
-                  _buildDetailRow(Icons.warning_amber_rounded, 'Emergency Type', emergencyType),
-                  const Divider(color: Color(0xFFF1F5F9), height: 24),
-                  _buildDetailRow(Icons.assignment_outlined, 'Request Status', status.toUpperCase()),
-                  const Divider(color: Color(0xFFF1F5F9), height: 24),
-                  _buildDetailRow(Icons.note_alt_outlined, 'Patient Note', notes),
+                  _buildDetailRow(Icons.health_and_safety_outlined, 'Type', 'Home Care Nursing'),
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
+                  _buildDetailRow(Icons.warning_amber_rounded, 'Emergency', emergencyType),
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
+                  _buildDetailRow(Icons.assignment_outlined, 'Status', status.toUpperCase()),
+                  const Divider(color: Color(0xFFF1F5F9), height: 16),
+                  _buildDetailRow(Icons.note_alt_outlined, 'Note', notes),
                 ],
               ),
             ),
             
-            const SizedBox(height: 32),
-            
-            // Actions
-            if (status.toLowerCase() == 'requested' || status.toLowerCase() == 'pending')
-              _isActing
-                  ? const Center(child: CircularProgressIndicator())
-                  : Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _rejectBooking,
-                            icon: const Icon(Icons.close, color: Color(0xFFE53935)),
-                            label: const Text(
-                              'Reject Request',
-                              style: TextStyle(color: Color(0xFFE53935), fontWeight: FontWeight.bold),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: const BorderSide(color: Color(0xFFE53935), width: 1.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _acceptBooking,
-                            icon: const Icon(Icons.check, color: Color(0xFF2E7D32)),
-                            label: const Text(
-                              'Accept Request',
-                              style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             
             const Text(
-              'Once accepted, your details will be shared with\nthe patient and request status can be updated.',
+              'Once accepted, your details will be shared with the patient.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Color(0xFF64748B),
-                fontSize: 12,
-                height: 1.5,
+                fontSize: 11,
               ),
             ),
             
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
+            
           ],
         ),
       ),
+      bottomNavigationBar: (status.toLowerCase() == 'requested' || status.toLowerCase() == 'pending')
+          ? Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: _isActing
+                    ? const SizedBox(height: 48, child: Center(child: CircularProgressIndicator()))
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _rejectBooking,
+                              icon: const Icon(Icons.close, color: Color(0xFFE53935), size: 18),
+                              label: const Text(
+                                'Reject',
+                                style: TextStyle(color: Color(0xFFE53935), fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: const BorderSide(color: Color(0xFFE53935), width: 1.5),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              onPressed: _acceptBooking,
+                              icon: const Icon(Icons.check, color: Color(0xFF2E7D32), size: 18),
+                              label: const Text(
+                                'Accept',
+                                style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                side: const BorderSide(color: Color(0xFF2E7D32), width: 1.5),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -317,11 +342,11 @@ class _BookingDetailsScreenEnhancedState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: Text(
               title,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF0F172A),
               ),
@@ -329,7 +354,7 @@ class _BookingDetailsScreenEnhancedState
           ),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(12.0),
             child: child,
           ),
         ],
@@ -345,21 +370,21 @@ class _BookingDetailsScreenEnhancedState
         const SizedBox(width: 12),
         Expanded(
           flex: 2,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF64748B),
-              fontWeight: FontWeight.w500,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
-        Expanded(
-          flex: 3,
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontSize: 14,
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
               color: Color(0xFF1E293B),
               fontWeight: FontWeight.w500,
             ),

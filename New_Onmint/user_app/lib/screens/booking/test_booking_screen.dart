@@ -23,7 +23,7 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
   final _apiClient = OnMintApiClient();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   DateTime? _selectedDate;
   String? _selectedTimeSlot;
   bool _homeCollection = false;
@@ -67,7 +67,7 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
+
       final bookingData = {
         'lab': widget.lab['_id'],
         'test': widget.test['name'],
@@ -142,7 +142,7 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
   Widget build(BuildContext context) {
     final homeCollectionAvailable = widget.lab['homeCollection'] ?? false;
     final preparationRequired = widget.test['preparationRequired'] ?? false;
-    
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Test'),
@@ -164,7 +164,8 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.science, color: Colors.purple, size: 32),
+                        const Icon(Icons.science,
+                            color: Colors.purple, size: 32),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -208,7 +209,8 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.warning_amber, color: Colors.orange, size: 16),
+                            Icon(Icons.warning_amber,
+                                color: Colors.orange, size: 16),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -237,7 +239,8 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
             const SizedBox(height: 12),
             Card(
               child: ListTile(
-                leading: const Icon(Icons.calendar_today, color: AppColors.primary),
+                leading:
+                    const Icon(Icons.calendar_today, color: AppColors.primary),
                 title: Text(
                   _selectedDate == null
                       ? 'Choose a date'
@@ -283,7 +286,8 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
                     decoration: BoxDecoration(
                       color: isSelected ? Colors.purple : Colors.white,
                       border: Border.all(
-                        color: isSelected ? Colors.purple : Colors.grey.shade300,
+                        color:
+                            isSelected ? Colors.purple : Colors.grey.shade300,
                       ),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -292,7 +296,8 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -310,7 +315,8 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
                     setState(() => _homeCollection = value ?? false);
                   },
                   title: const Text('Home Sample Collection'),
-                  subtitle: const Text('Sample will be collected from your address'),
+                  subtitle:
+                      const Text('Sample will be collected from your address'),
                   secondary: const Icon(Icons.home, color: AppColors.primary),
                   activeColor: AppColors.primary,
                 ),
@@ -369,7 +375,20 @@ class _TestBookingScreenState extends State<TestBookingScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return '${date.day} ${months[date.month - 1]}, ${date.year}';
   }
 }

@@ -4,9 +4,9 @@ import 'package:api_client/api_client.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
-  
+
   const OrderTrackingScreen({super.key, required this.orderId});
-  
+
   @override
   State<OrderTrackingScreen> createState() => _OrderTrackingScreenState();
 }
@@ -16,29 +16,30 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Timer? _timer;
   Map<String, dynamic>? _order;
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
     _loadOrder();
-    
+
     // Poll every 5 seconds for real-time updates
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _loadOrder();
     });
   }
-  
+
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
   }
-  
+
   Future<void> _loadOrder() async {
     try {
       await _apiClient.initialize();
-      final booking = await _apiClient.patient.getBookingDetails(widget.orderId);
-      
+      final booking =
+          await _apiClient.patient.getBookingDetails(widget.orderId);
+
       if (mounted) {
         setState(() {
           _order = booking.toJson();
@@ -51,7 +52,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       }
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,30 +79,29 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       children: [
                         // Order Status Card
                         _buildStatusCard(),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Status Timeline
                         _buildStatusTimeline(),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Pharmacist Info (if assigned)
-                        if (_order!['provider'] != null)
-                          _buildPharmacistCard(),
-                        
+                        if (_order!['provider'] != null) _buildPharmacistCard(),
+
                         const SizedBox(height: 24),
-                        
+
                         // Order Items
                         _buildOrderItems(),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Delivery Address
                         _buildDeliveryAddress(),
-                        
+
                         const SizedBox(height: 24),
-                        
+
                         // Order Details
                         _buildOrderDetails(),
                       ],
@@ -110,10 +110,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 ),
     );
   }
-  
+
   Widget _buildStatusCard() {
     final status = _order!['status'] ?? 'requested';
-    
+
     return Card(
       elevation: 4,
       child: Padding(
@@ -161,12 +161,19 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   Widget _buildStatusTimeline() {
     final status = _order!['status'] ?? 'requested';
-    final statuses = ['requested', 'accepted', 'preparing', 'ready', 'on_the_way', 'completed'];
+    final statuses = [
+      'requested',
+      'accepted',
+      'preparing',
+      'ready',
+      'on_the_way',
+      'completed'
+    ];
     final currentIndex = statuses.indexOf(status);
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -186,7 +193,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               final statusName = entry.value;
               final isCompleted = index <= currentIndex;
               final isCurrent = index == currentIndex;
-              
+
               return _buildTimelineItem(
                 statusName,
                 isCompleted,
@@ -199,8 +206,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
   }
-  
-  Widget _buildTimelineItem(String status, bool isCompleted, bool isCurrent, bool showLine) {
+
+  Widget _buildTimelineItem(
+      String status, bool isCompleted, bool isCurrent, bool showLine) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -258,10 +266,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ],
     );
   }
-  
+
   Widget _buildPharmacistCard() {
     final provider = _order!['provider'];
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -302,8 +310,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        provider['pharmacyName'] ?? 
-                        '${provider['firstName']} ${provider['lastName']}',
+                        provider['pharmacyName'] ??
+                            '${provider['firstName']} ${provider['lastName']}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -334,10 +342,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   Widget _buildOrderItems() {
     final items = _order!['items'] as List? ?? [];
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -408,10 +416,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   Widget _buildDeliveryAddress() {
     final location = _order!['location'];
-    
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -441,7 +449,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   Widget _buildOrderDetails() {
     return Card(
       child: Padding(
@@ -457,17 +465,20 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
             ),
             const Divider(height: 24),
-            _buildDetailRow('Order ID', _order!['_id']?.substring(0, 12) ?? 'N/A'),
-            _buildDetailRow('Payment Method', _order!['paymentMethod'] ?? 'COD'),
+            _buildDetailRow(
+                'Order ID', _order!['_id']?.substring(0, 12) ?? 'N/A'),
+            _buildDetailRow(
+                'Payment Method', _order!['paymentMethod'] ?? 'COD'),
             _buildDetailRow('Order Date', _formatDate(_order!['createdAt'])),
-            if (_order!['notes'] != null && _order!['notes'].toString().isNotEmpty)
+            if (_order!['notes'] != null &&
+                _order!['notes'].toString().isNotEmpty)
               _buildDetailRow('Notes', _order!['notes']),
           ],
         ),
       ),
     );
   }
-  
+
   Widget _buildDetailRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -497,7 +508,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
   }
-  
+
   IconData _getStatusIcon(String status) {
     switch (status) {
       case 'requested':
@@ -518,7 +529,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         return Icons.info;
     }
   }
-  
+
   Color _getStatusColor(String status) {
     switch (status) {
       case 'requested':
@@ -537,7 +548,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         return Colors.grey;
     }
   }
-  
+
   String _getStatusText(String status) {
     switch (status) {
       case 'requested':
@@ -558,7 +569,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         return 'Unknown Status';
     }
   }
-  
+
   String _getStatusDescription(String status) {
     switch (status) {
       case 'requested':
@@ -579,7 +590,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         return '';
     }
   }
-  
+
   String _formatDate(String? dateStr) {
     if (dateStr == null) return 'N/A';
     try {

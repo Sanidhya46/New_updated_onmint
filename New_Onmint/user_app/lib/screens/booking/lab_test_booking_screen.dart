@@ -5,7 +5,7 @@ import 'package:user_app/screens/booking/confirm_lab_test_booking_screen.dart';
 
 class LabTestBookingScreen extends StatefulWidget {
   final Map<String, dynamic>? lab;
-  
+
   const LabTestBookingScreen({Key? key, this.lab}) : super(key: key);
 
   @override
@@ -110,7 +110,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA), // Very light grey/white background
+      backgroundColor:
+          const Color(0xFFF8F9FA), // Very light grey/white background
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -131,10 +132,11 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                 height: 150,
                 color: Colors.purple[100],
                 alignment: Alignment.center,
-                child: const Text('Banner Image Missing', style: TextStyle(color: Colors.purple)),
+                child: const Text('Banner Image Missing',
+                    style: TextStyle(color: Colors.purple)),
               ),
             ),
-            
+
             // Booking Form Card
             Container(
               margin: const EdgeInsets.all(16),
@@ -164,7 +166,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                               color: Colors.purple[50],
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(Icons.science_outlined, color: Colors.purple[700], size: 24),
+                            child: Icon(Icons.science_outlined,
+                                color: Colors.purple[700], size: 24),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -182,7 +185,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'Fill in your details and we\'ll arrange a sample collection at your home.',
-                                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey[600]),
                                 ),
                               ],
                             ),
@@ -190,7 +194,7 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      
+
                       _buildFieldLabel('Your Area / Address'),
                       TextFormField(
                         controller: _addressController,
@@ -207,7 +211,7 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                         },
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Contact & Phone Row
                       Row(
                         children: [
@@ -248,9 +252,12 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                                     Icons.phone_outlined,
                                   ),
                                   validator: (value) {
-                                    if (value == null || value.isEmpty) return 'Required';
-                                    if (value.length < 10) return 'Invalid 10-digit number';
-                                    if (!RegExp(r'^[0-9]+$').hasMatch(value)) return 'Digits only';
+                                    if (value == null || value.isEmpty)
+                                      return 'Required';
+                                    if (value.length < 10)
+                                      return 'Invalid 10-digit number';
+                                    if (!RegExp(r'^[0-9]+$').hasMatch(value))
+                                      return 'Digits only';
                                     return null;
                                   },
                                 ),
@@ -260,16 +267,21 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Select Tests
                       const Padding(
                         padding: EdgeInsets.only(bottom: 8.0),
-                        child: Text('Select Tests', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600, fontSize: 12)),
+                        child: Text('Select Tests',
+                            style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12)),
                       ),
                       InkWell(
                         onTap: _navigateToTestSelection,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.grey[300]!),
                             borderRadius: BorderRadius.circular(8),
@@ -286,15 +298,17 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                                       color: Colors.purple[50],
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: Icon(Icons.science_outlined, color: Colors.purple[700], size: 20),
+                                    child: Icon(Icons.science_outlined,
+                                        color: Colors.purple[700], size: 20),
                                   ),
                                   const SizedBox(width: 12),
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        _selectedTests.isEmpty 
-                                            ? 'Choose Test / Package' 
+                                        _selectedTests.isEmpty
+                                            ? 'Choose Test / Package'
                                             : '${_selectedTests.length} Tests Selected',
                                         style: TextStyle(
                                           color: Colors.black87,
@@ -305,18 +319,21 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                                       if (_selectedTests.isEmpty)
                                         Text(
                                           'Select from popular tests or packages',
-                                          style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                                          style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 10),
                                         ),
                                     ],
                                   ),
                                 ],
                               ),
-                              Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 14),
+                              Icon(Icons.arrow_forward_ios,
+                                  color: Colors.grey[400], size: 14),
                             ],
                           ),
                         ),
                       ),
-                      
+
                       // Show selected tests chips if any
                       if (_selectedTests.isNotEmpty)
                         Padding(
@@ -324,22 +341,27 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: _selectedTests.map((test) => Chip(
-                              label: Text(test.name, style: const TextStyle(fontSize: 11)),
-                              backgroundColor: Colors.purple[50],
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () {
-                                setState(() {
-                                  _selectedTests.remove(test);
-                                });
-                              },
-                              side: BorderSide(color: Colors.purple[100]!),
-                            )).toList(),
+                            children: _selectedTests
+                                .map((test) => Chip(
+                                      label: Text(test.name,
+                                          style: const TextStyle(fontSize: 11)),
+                                      backgroundColor: Colors.purple[50],
+                                      deleteIcon:
+                                          const Icon(Icons.close, size: 16),
+                                      onDeleted: () {
+                                        setState(() {
+                                          _selectedTests.remove(test);
+                                        });
+                                      },
+                                      side: BorderSide(
+                                          color: Colors.purple[100]!),
+                                    ))
+                                .toList(),
                           ),
                         ),
-                        
+
                       const SizedBox(height: 16),
-                      
+
                       // Preferred Date (Calendar picker)
                       Row(
                         children: [
@@ -358,7 +380,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                                     'Select date',
                                     Icons.calendar_today_outlined,
                                   ).copyWith(
-                                    suffixIcon: Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 14),
+                                    suffixIcon: Icon(Icons.arrow_forward_ios,
+                                        color: Colors.grey[400], size: 14),
                                   ),
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
@@ -370,11 +393,13 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                               ],
                             ),
                           ),
-                          const Expanded(flex: 4, child: SizedBox()), // Reduce width to roughly 60%
+                          const Expanded(
+                              flex: 4,
+                              child: SizedBox()), // Reduce width to roughly 60%
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
+
                       // Additional Notes (Optional)
                       _buildFieldLabel('Additional Notes (Optional)'),
                       TextFormField(
@@ -384,10 +409,12 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                         maxLength: 150,
                         decoration: InputDecoration(
                           hintText: 'Any special instructions...',
-                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+                          hintStyle:
+                              TextStyle(color: Colors.grey[400], fontSize: 11),
                           prefixIcon: Padding(
                             padding: const EdgeInsets.only(bottom: 40),
-                            child: Icon(Icons.note_alt_outlined, color: Colors.grey[500], size: 20),
+                            child: Icon(Icons.note_alt_outlined,
+                                color: Colors.grey[500], size: 20),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -399,17 +426,19 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.purple[700]!, width: 1.5),
+                            borderSide: BorderSide(
+                                color: Colors.purple[700]!, width: 1.5),
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
                           alignLabelWithHint: true,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 24),
-                      
+
                       // Proceed Button
                       SizedBox(
                         width: double.infinity,
@@ -417,7 +446,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                         child: ElevatedButton(
                           onPressed: _proceedToConfirmation,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6C2BD9), // Purple button matching design
+                            backgroundColor: const Color(
+                                0xFF6C2BD9), // Purple button matching design
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -440,7 +470,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                                   color: Colors.white,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(Icons.arrow_forward, color: Color(0xFF6C2BD9), size: 16),
+                                child: Icon(Icons.arrow_forward,
+                                    color: Color(0xFF6C2BD9), size: 16),
                               ),
                             ],
                           ),
@@ -450,12 +481,16 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.verified_user_outlined, color: Colors.grey[600], size: 14),
+                          Icon(Icons.verified_user_outlined,
+                              color: Colors.grey[600], size: 14),
                           const SizedBox(width: 6),
                           Flexible(
                             child: Text(
                               'We\'ll assign a nearby lab technician & confirm shortly',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500),
                               textAlign: TextAlign.center,
                             ),
                           ),

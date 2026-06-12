@@ -1,0 +1,34 @@
+Patient Login
+{
+  "phone": "9876543219",
+  "password": "SecurePass@123!"
+}
+
+Ambulance Login
+{
+  "phone": "9876543244",
+  "password": "SecurePass@123!"
+}
+
+Nurse Login
+{
+  "phone": "9876543255",
+  "password": "Secure@Pass123!"
+}
+
+Pathology Login 
+{
+  "phone": "9876543233",
+  "password": "SecurePass@123!"
+}
+
+Blood Bank Login
+{
+  "phone": "9876543223",
+  "password": "SecurePass@123!"
+}
+
+
+vendor locatin
+lat: 72.877
+lon: 19.06

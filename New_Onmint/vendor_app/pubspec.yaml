@@ -45,7 +45,7 @@ dependencies:
   webview_flutter: ^4.4.2
   
   # File handling - image_picker is more stable and v2 embedding compatible
-  image_picker: ^1.0.7
+  image_picker: ^1.2.2
   path_provider: ^2.1.1
   open_file: ^3.3.2
   mime: ^1.0.4
@@ -71,3 +71,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/pathology/
+    - assets/images/bloodbank/
+    - assets/images/request_order/
+    - assets/images/register_login/

@@ -14,7 +14,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   late final OnMintApiClient _apiClient;
   List<Booking> _orders = [];
   bool _isLoading = false;
-  String _filterStatus = 'all'; // all, requested, accepted, in_progress, completed, expired
+  String _filterStatus =
+      'all'; // all, requested, accepted, in_progress, completed, expired
 
   @override
   void initState() {
@@ -27,20 +28,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     setState(() => _isLoading = true);
     try {
       await _apiClient.initialize();
-      
+
       // Get medicine orders from realtime bookings
       final response = await _apiClient.patient.getMyRealtimeBookings(
         page: 1,
         limit: 100,
       );
-      
+
       if (response['data'] is List) {
         // Filter only pharmacist orders
         final medicineOrders = (response['data'] as List)
             .where((e) => e['serviceType'] == 'pharmacist')
             .map((e) => Booking.fromJson(e))
             .toList();
-        
+
         if (mounted) {
           setState(() {
             _orders = medicineOrders;
@@ -79,7 +80,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     // Apply filter
     final filteredOrders = _filterStatus == 'all'
         ? _orders
-        : _orders.where((o) => o.status.toLowerCase() == _filterStatus).toList();
+        : _orders
+            .where((o) => o.status.toLowerCase() == _filterStatus)
+            .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -118,12 +121,18 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                         value: _filterStatus,
                         isExpanded: true,
                         items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All Orders')),
-                          DropdownMenuItem(value: 'requested', child: Text('Requested')),
-                          DropdownMenuItem(value: 'accepted', child: Text('Accepted')),
-                          DropdownMenuItem(value: 'in_progress', child: Text('In Progress')),
-                          DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                          DropdownMenuItem(value: 'expired', child: Text('Expired')),
+                          DropdownMenuItem(
+                              value: 'all', child: Text('All Orders')),
+                          DropdownMenuItem(
+                              value: 'requested', child: Text('Requested')),
+                          DropdownMenuItem(
+                              value: 'accepted', child: Text('Accepted')),
+                          DropdownMenuItem(
+                              value: 'in_progress', child: Text('In Progress')),
+                          DropdownMenuItem(
+                              value: 'completed', child: Text('Completed')),
+                          DropdownMenuItem(
+                              value: 'expired', child: Text('Expired')),
                         ],
                         onChanged: (value) {
                           setState(() => _filterStatus = value!);
@@ -137,16 +146,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator(color: Color(0xFF4CAF50)))
+                ? const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF4CAF50)))
                 : filteredOrders.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.medication, size: 64, color: Colors.grey[400]),
+                            Icon(Icons.medication,
+                                size: 64, color: Colors.grey[400]),
                             const SizedBox(height: 16),
                             Text(
-                              _filterStatus == 'all' ? 'No medicine orders yet' : 'No $_filterStatus orders',
+                              _filterStatus == 'all'
+                                  ? 'No medicine orders yet'
+                                  : 'No $_filterStatus orders',
                               style: TextStyle(color: Colors.grey[600]),
                             ),
                           ],
@@ -172,7 +185,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget _buildOrderCard(Booking order) {
     final status = order.status;
     final totalAmount = order.price;
-    final createdAt = DateFormat('dd MMM yyyy, hh:mm a').format(order.createdAt);
+    final createdAt =
+        DateFormat('dd MMM yyyy, hh:mm a').format(order.createdAt);
 
     return GestureDetector(
       onTap: () {
@@ -232,7 +246,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // Order date
               Text(
                 'Ordered on $createdAt',
@@ -242,7 +256,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
               ),
               const SizedBox(height: 12),
-              
+
               // Notes/Description
               if (order.notes != null && order.notes!.isNotEmpty) ...[
                 Text(
@@ -256,7 +270,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ),
                 const SizedBox(height: 12),
               ],
-              
+
               // Total amount
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -279,7 +293,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              
+
               // Action button
               SizedBox(
                 width: double.infinity,
@@ -288,7 +302,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BookingDetailScreen(bookingId: order.id),
+                        builder: (context) =>
+                            BookingDetailScreen(bookingId: order.id),
                       ),
                     );
                   },

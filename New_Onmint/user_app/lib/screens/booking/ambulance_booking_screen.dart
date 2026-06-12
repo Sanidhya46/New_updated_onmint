@@ -56,14 +56,14 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
           desiredAccuracy: LocationAccuracy.high,
         );
         _currentPosition = position;
-        
+
         List<Placemark> placemarks = await placemarkFromCoordinates(
-          position.latitude, position.longitude
-        );
-        
+            position.latitude, position.longitude);
+
         if (placemarks.isNotEmpty) {
           Placemark place = placemarks[0];
-          String address = '${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}';
+          String address =
+              '${place.street}, ${place.subLocality}, ${place.locality}, ${place.administrativeArea}';
           if (mounted) {
             setState(() {
               _pickupController.text = address;
@@ -120,11 +120,13 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
             dropoffLocation: _dropoffController.text,
             name: _nameController.text,
             phone: _phoneController.text,
-            age: _ageController.text.isNotEmpty ? int.tryParse(_ageController.text) ?? 0 : 0,
+            age: _ageController.text.isNotEmpty
+                ? int.tryParse(_ageController.text) ?? 0
+                : 0,
             gender: _selectedGender ?? 'Other',
             notes: _notesController.text,
-            coordinates: _currentPosition != null 
-                ? [_currentPosition!.longitude, _currentPosition!.latitude] 
+            coordinates: _currentPosition != null
+                ? [_currentPosition!.longitude, _currentPosition!.latitude]
                 : [0.0, 0.0],
           ),
         ),
@@ -154,14 +156,19 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
                   alignment: Alignment.topCenter,
                   errorBuilder: (context, error, stackTrace) => Container(
                     color: Colors.red[50],
-                    child: const Center(child: Icon(Icons.image_not_supported, color: Colors.red)),
+                    child: const Center(
+                        child:
+                            Icon(Icons.image_not_supported, color: Colors.red)),
                   ),
                 ),
                 Positioned(
-                  top: MediaQuery.of(context).padding.top > 0 ? MediaQuery.of(context).padding.top - 5 : 10,
+                  top: MediaQuery.of(context).padding.top > 0
+                      ? MediaQuery.of(context).padding.top - 5
+                      : 10,
                   left: 10,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black87, size: 24),
+                    icon: const Icon(Icons.arrow_back,
+                        color: Colors.black87, size: 24),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -169,245 +176,270 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
             ),
             // Form Card Section
             Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 10,
-                          spreadRadius: 1,
-                          offset: const Offset(0, 4),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 10,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.airport_shuttle,
+                              color: Colors.red[700], size: 24),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Book an Ambulance',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Fill in your details and we\'ll reach you with the nearest ambulance.',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 20),
+
+                      _buildFieldLabel('Pickup Location'),
+                      _buildTextField(
+                        controller: _pickupController,
+                        hintText: 'Enter pickup location / address',
+                        prefixIcon: Icons.location_on_outlined,
+                        suffixIcon: Icons.my_location,
+                        onSuffixTap: _fetchCurrentLocation,
+                        validator: (v) => v!.isEmpty ? 'Required' : null,
+                      ),
+                      if (_isFetchingLocation)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 4.0),
+                          child: Text('Fetching location...',
+                              style:
+                                  TextStyle(fontSize: 10, color: Colors.blue)),
                         ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      const SizedBox(height: 12),
+
+                      _buildFieldLabel('Drop-off Location'),
+                      _buildTextField(
+                        controller: _dropoffController,
+                        hintText: 'Enter drop-off location / hospital',
+                        prefixIcon: Icons.location_on_outlined,
+                        iconColor: Colors.red[700],
+                        validator: (v) => v!.isEmpty ? 'Required' : null,
+                      ),
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.airport_shuttle, color: Colors.red[700], size: 24),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Book an Ambulance',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
+                                _buildFieldLabel('Contact Name'),
+                                _buildTextField(
+                                  controller: _nameController,
+                                  hintText: 'Enter Name',
+                                  prefixIcon: Icons.person_outline,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Fill in your details and we\'ll reach you with the nearest ambulance.',
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                            ),
-                            const SizedBox(height: 20),
-
-                            _buildFieldLabel('Pickup Location'),
-                            _buildTextField(
-                              controller: _pickupController,
-                              hintText: 'Enter pickup location / address',
-                              prefixIcon: Icons.location_on_outlined,
-                              suffixIcon: Icons.my_location,
-                              onSuffixTap: _fetchCurrentLocation,
-                              validator: (v) => v!.isEmpty ? 'Required' : null,
-                            ),
-                            if (_isFetchingLocation)
-                              const Padding(
-                                padding: EdgeInsets.only(top: 4.0),
-                                child: Text('Fetching location...', style: TextStyle(fontSize: 10, color: Colors.blue)),
-                              ),
-                            const SizedBox(height: 12),
-
-                            _buildFieldLabel('Drop-off Location'),
-                            _buildTextField(
-                              controller: _dropoffController,
-                              hintText: 'Enter drop-off location / hospital',
-                              prefixIcon: Icons.location_on_outlined,
-                              iconColor: Colors.red[700],
-                              validator: (v) => v!.isEmpty ? 'Required' : null,
-                            ),
-                            const SizedBox(height: 12),
-
-                            Row(
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildFieldLabel('Contact Name'),
-                                      _buildTextField(
-                                        controller: _nameController,
-                                        hintText: 'Enter Name',
-                                        prefixIcon: Icons.person_outline,
-                                        validator: (v) => v!.isEmpty ? 'Required' : null,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildFieldLabel('Phone Number'),
-                                      _buildTextField(
-                                        controller: _phoneController,
-                                        hintText: 'Enter Mob No.',
-                                        prefixIcon: Icons.phone_outlined,
-                                        keyboardType: TextInputType.phone,
-                                        validator: (v) {
-                                          if (v == null || v.isEmpty) return 'Required';
-                                          if (v.length < 10) return 'Invalid 10-digit number';
-                                          if (!RegExp(r'^[0-9]+$').hasMatch(v)) return 'Digits only';
-                                          return null;
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                ],
-                              ),
-                            const SizedBox(height: 12),
-
-                            // Row 1.5: Age | Gender
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildFieldLabel('Age'),
-                                      _buildTextField(
-                                        controller: _ageController,
-                                        hintText: 'Enter Age',
-                                        prefixIcon: Icons.calendar_today_outlined,
-                                        keyboardType: TextInputType.number,
-                                        validator: (v) => v!.isEmpty ? 'Required' : null,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildFieldLabel('Gender'),
-                                      DropdownButtonFormField<String>(
-                                        value: _selectedGender,
-                                        isDense: true,
-                                        isExpanded: true,
-                                        decoration: InputDecoration(
-                                          hintText: 'Select Gender',
-                                          hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
-                                          prefixIcon: Padding(
-                                            padding: const EdgeInsets.only(bottom: 0),
-                                            child: Icon(Icons.person_outline, color: Colors.red[700], size: 18),
-                                          ),
-                                          filled: true,
-                                          fillColor: Colors.white,
-                                          contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-                                          enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: Colors.grey[200]!),
-                                          ),
-                                          focusedBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(10),
-                                            borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
-                                          ),
-                                        ),
-                                        style: const TextStyle(fontSize: 12, color: Colors.black87),
-                                        icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87, size: 16),
-                                        items: ['Male', 'Female', 'Other'].map((String value) {
-                                          return DropdownMenuItem<String>(
-                                            value: value,
-                                            child: Text(value, style: const TextStyle(fontSize: 12)),
-                                          );
-                                        }).toList(),
-                                        onChanged: (newValue) {
-                                          setState(() {
-                                            _selectedGender = newValue;
-                                          });
-                                        },
-                                        validator: (v) => v == null ? 'Required' : null,
-                                      ),
-                                    ],
-                                  ),
+                                _buildFieldLabel('Phone Number'),
+                                _buildTextField(
+                                  controller: _phoneController,
+                                  hintText: 'Enter Mob No.',
+                                  prefixIcon: Icons.phone_outlined,
+                                  keyboardType: TextInputType.phone,
+                                  validator: (v) {
+                                    if (v == null || v.isEmpty)
+                                      return 'Required';
+                                    if (v.length < 10)
+                                      return 'Invalid 10-digit number';
+                                    if (!RegExp(r'^[0-9]+$').hasMatch(v))
+                                      return 'Digits only';
+                                    return null;
+                                  },
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
 
-                            _buildFieldLabel('Additional Details (Optional)'),
-                            _buildTextField(
-                              controller: _notesController,
-                              hintText: 'Patient condition, requirements, any other details...',
-                              prefixIcon: Icons.note_alt_outlined,
-                              maxLines: 3,
-                              alignTopIcon: true,
-                            ),
-                            
-                            const SizedBox(height: 16),
-                            
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _navigateToConfirm,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFE53935), // Red color
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  elevation: 0,
+                      // Row 1.5: Age | Gender
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Age'),
+                                _buildTextField(
+                                  controller: _ageController,
+                                  hintText: 'Enter Age',
+                                  prefixIcon: Icons.calendar_today_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (v) =>
+                                      v!.isEmpty ? 'Required' : null,
                                 ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    SizedBox(width: 24),
-                                    Text(
-                                      'Proceed',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('Gender'),
+                                DropdownButtonFormField<String>(
+                                  value: _selectedGender,
+                                  isDense: true,
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    hintText: 'Select Gender',
+                                    hintStyle: TextStyle(
+                                        color: Colors.grey[400], fontSize: 11),
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(bottom: 0),
+                                      child: Icon(Icons.person_outline,
+                                          color: Colors.red[700], size: 18),
                                     ),
-                                    Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.verified_user_outlined, color: Colors.grey[600], size: 14),
-                                const SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    'We\'ll notify the nearest ambulance and contact you immediately',
-                                    style: TextStyle(fontSize: 10, color: Colors.grey[700], fontWeight: FontWeight.w500),
-                                    textAlign: TextAlign.center,
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        vertical: 12, horizontal: 12),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide:
+                                          BorderSide(color: Colors.grey[200]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(
+                                          color: Colors.red[300]!, width: 1.5),
+                                    ),
                                   ),
+                                  style: const TextStyle(
+                                      fontSize: 12, color: Colors.black87),
+                                  icon: const Icon(Icons.keyboard_arrow_down,
+                                      color: Colors.black87, size: 16),
+                                  items: ['Male', 'Female', 'Other']
+                                      .map((String value) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(value,
+                                          style: const TextStyle(fontSize: 12)),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newValue) {
+                                    setState(() {
+                                      _selectedGender = newValue;
+                                    });
+                                  },
+                                  validator: (v) =>
+                                      v == null ? 'Required' : null,
                                 ),
                               ],
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildFieldLabel('Additional Details (Optional)'),
+                      _buildTextField(
+                        controller: _notesController,
+                        hintText:
+                            'Patient condition, requirements, any other details...',
+                        prefixIcon: Icons.note_alt_outlined,
+                        maxLines: 3,
+                        alignTopIcon: true,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: _navigateToConfirm,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color(0xFFE53935), // Red color
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SizedBox(width: 24),
+                              Text(
+                                'Proceed',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_rounded,
+                                  color: Colors.white, size: 20),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.verified_user_outlined,
+                              color: Colors.grey[600], size: 14),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'We\'ll notify the nearest ambulance and contact you immediately',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w500),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
-            
+
             // Trust Badges Section
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -418,14 +450,17 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
               ),
               child: Row(
                 children: [
-                  _buildTrustItem(Icons.airport_shuttle, 'Quick Response', 'Ambulance at your\nlocation in minutes'),
-                  _buildTrustItem(Icons.verified_user_outlined, 'Safe & Reliable', 'Fully equipped &\nverified services'),
-                  _buildTrustItem(Icons.support_agent, '24/7 Available', 'Round the clock\nemergency support'),
+                  _buildTrustItem(Icons.airport_shuttle, 'Quick Response',
+                      'Ambulance at your\nlocation in minutes'),
+                  _buildTrustItem(Icons.verified_user_outlined,
+                      'Safe & Reliable', 'Fully equipped &\nverified services'),
+                  _buildTrustItem(Icons.support_agent, '24/7 Available',
+                      'Round the clock\nemergency support'),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            
+
             // Available Ambulances Section
             if (_isLoadingAmbulances)
               const Center(child: CircularProgressIndicator(color: Colors.red))
@@ -444,7 +479,9 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    ..._nearbyAmbulances.map((amb) => _buildAmbulanceCard(amb)).toList(),
+                    ..._nearbyAmbulances
+                        .map((amb) => _buildAmbulanceCard(amb))
+                        .toList(),
                   ],
                 ),
               ),
@@ -479,7 +516,8 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
               color: Colors.red[50],
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.airport_shuttle, color: Colors.red[600], size: 24),
+            child:
+                Icon(Icons.airport_shuttle, color: Colors.red[600], size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -488,7 +526,8 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
               children: [
                 Text(
                   amb['driverName'] ?? 'Ambulance Driver',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 14),
                 ),
                 Text(
                   amb['vehicleType'] ?? 'Basic Life Support',
@@ -500,7 +539,9 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
                     Icon(Icons.location_on, color: Colors.grey[500], size: 12),
                     const SizedBox(width: 4),
                     Text(
-                      amb['distance'] != null ? '${amb['distance']} km away' : 'Nearby',
+                      amb['distance'] != null
+                          ? '${amb['distance']} km away'
+                          : 'Nearby',
                       style: TextStyle(color: Colors.grey[600], fontSize: 11),
                     ),
                   ],
@@ -511,19 +552,23 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
           ElevatedButton(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Calling ${amb['driverName'] ?? 'Driver'}...')),
+                SnackBar(
+                    content:
+                        Text('Calling ${amb['driverName'] ?? 'Driver'}...')),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: Colors.red[700],
               side: BorderSide(color: Colors.red[300]!),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               minimumSize: Size.zero,
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            child: const Text('Call', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text('Call',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -566,8 +611,10 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
         hintText: hintText,
         hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
         prefixIcon: Padding(
-          padding: EdgeInsets.only(bottom: alignTopIcon ? (maxLines > 1 ? 40.0 : 0.0) : 0),
-          child: Icon(prefixIcon, color: iconColor ?? Colors.red[700], size: 18),
+          padding: EdgeInsets.only(
+              bottom: alignTopIcon ? (maxLines > 1 ? 40.0 : 0.0) : 0),
+          child:
+              Icon(prefixIcon, color: iconColor ?? Colors.red[700], size: 18),
         ),
         suffixIcon: suffixIcon != null
             ? GestureDetector(
@@ -577,7 +624,8 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
             : null,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide(color: Colors.grey[200]!),

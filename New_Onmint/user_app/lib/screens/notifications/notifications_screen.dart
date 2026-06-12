@@ -14,7 +14,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     {
       'id': '1',
       'title': 'Appointment Confirmed',
-      'body': 'Your appointment with Dr. Smith is confirmed for tomorrow at 10:00 AM',
+      'body':
+          'Your appointment with Dr. Smith is confirmed for tomorrow at 10:00 AM',
       'type': 'appointment',
       'time': DateTime.now().subtract(const Duration(hours: 2)),
       'read': false,
@@ -65,7 +66,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 64, color: Colors.grey[400]),
+                  Icon(Icons.notifications_none,
+                      size: 64, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No notifications',

@@ -33,8 +33,11 @@ const createBookingRequest = async (req, res) => {
         coordinates: req.body.coordinates || req.body.location?.coordinates || [0, 0],
       },
       destination: req.body.dropOffLocation || req.body.destination,
+      dropOffLocation: req.body.dropOffLocation,
       patientName: req.body.name || req.body.patientName,
       patientPhone: req.body.phone || req.body.patientPhone || req.body.contactNumber,
+      patientAge: req.body.age || req.body.patientAge,
+      patientGender: req.body.gender || req.body.patientGender,
       hospitalName: req.body.hospitalName,
       bloodGroup: req.body.bloodGroup,
       unitsRequired: req.body.unitsRequired,
@@ -46,6 +49,27 @@ const createBookingRequest = async (req, res) => {
     // Validate required fields
     if (!bookingData.serviceType) {
       return res.status(400).json(errorResponse("Service type is required"));
+    }
+
+    if (bookingData.serviceType === 'ambulance') {
+      if (!bookingData.location.address) {
+        return res.status(400).json(errorResponse("Pickup location is required for ambulance booking"));
+      }
+      if (!bookingData.dropOffLocation) {
+        return res.status(400).json(errorResponse("Drop-off location is required for ambulance booking"));
+      }
+      if (!bookingData.patientName) {
+        return res.status(400).json(errorResponse("Contact Name is required for ambulance booking"));
+      }
+      if (!bookingData.patientPhone) {
+        return res.status(400).json(errorResponse("Phone number is required for ambulance booking"));
+      }
+      if (!bookingData.patientAge) {
+        return res.status(400).json(errorResponse("Patient Age is required for ambulance booking"));
+      }
+      if (!bookingData.patientGender) {
+        return res.status(400).json(errorResponse("Patient Gender is required for ambulance booking"));
+      }
     }
 
     if (bookingData.serviceType === 'doctor') {
@@ -202,7 +226,7 @@ const updateStatus = async (req, res) => {
       return res.status(400).json(errorResponse("Status is required"));
     }
 
-    const validStatuses = ["on_the_way", "reached", "in_progress", "completed", "cancelled"];
+    const validStatuses = ["preparing", "ready", "on_the_way", "reached", "in_progress", "completed", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json(errorResponse("Invalid status"));
     }
@@ -262,6 +286,17 @@ const getMyBookings = async (req, res) => {
     const patientId = req.user.userId;
     const { status, page, limit } = req.query;
 
+    // Auto-expire requested bookings older than 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await RealTimeBooking.updateMany(
+      {
+        patient: patientId,
+        status: { $in: ['pending', 'requested'] },
+        createdAt: { $lt: twentyFourHoursAgo }
+      },
+      { $set: { status: 'expired' } }
+    );
+
     const filters = {
       status,
       page: parseInt(page) || 1,
@@ -288,6 +323,17 @@ const getMyBookings = async (req, res) => {
 const getPatientDashboard = async (req, res) => {
   try {
     const patientId = req.user.userId;
+
+    // Auto-expire requested bookings older than 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await RealTimeBooking.updateMany(
+      {
+        patient: patientId,
+        status: { $in: ['pending', 'requested'] },
+        createdAt: { $lt: twentyFourHoursAgo }
+      },
+      { $set: { status: 'expired' } }
+    );
 
     const [
       activeBookings,
@@ -341,6 +387,17 @@ const getProviderBookings = async (req, res) => {
     const providerId = req.user.userId;
     const { status, page, limit } = req.query;
 
+    // Auto-expire requested bookings older than 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await RealTimeBooking.updateMany(
+      {
+        "notifiedProviders.provider": providerId,
+        status: { $in: ['pending', 'requested'] },
+        createdAt: { $lt: twentyFourHoursAgo }
+      },
+      { $set: { status: 'expired' } }
+    );
+
     const filters = {
       status,
       page: parseInt(page) || 1,
@@ -367,6 +424,17 @@ const getProviderBookings = async (req, res) => {
 const getProviderDashboard = async (req, res) => {
   try {
     const providerId = req.user.userId;
+
+    // Auto-expire requested bookings older than 24 hours
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    await RealTimeBooking.updateMany(
+      {
+        "notifiedProviders.provider": providerId,
+        status: { $in: ['pending', 'requested'] },
+        createdAt: { $lt: twentyFourHoursAgo }
+      },
+      { $set: { status: 'expired' } }
+    );
 
     const [
       pendingRequests,

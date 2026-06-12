@@ -20,7 +20,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
     super.initState();
     // Load delivery info if this is from an order
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
       final bookingId = args?['bookingId'] as String?;
       if (bookingId != null) {
         _loadDeliveryInfo(bookingId);
@@ -50,7 +51,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     final medicine = args?['medicine'] as Map<String, dynamic>?;
 
     if (medicine == null) {
@@ -127,18 +129,21 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                     height: 300,
                     width: double.infinity,
                     color: AppColors.pharmacy.withOpacity(0.1),
-                    child: medicine['images'] != null && medicine['images'].isNotEmpty
+                    child: medicine['images'] != null &&
+                            medicine['images'].isNotEmpty
                         ? Image.network(
                             medicine['images'][0],
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return const Center(
-                                child: Icon(Icons.medication, size: 100, color: AppColors.pharmacy),
+                                child: Icon(Icons.medication,
+                                    size: 100, color: AppColors.pharmacy),
                               );
                             },
                           )
                         : const Center(
-                            child: Icon(Icons.medication, size: 100, color: AppColors.pharmacy),
+                            child: Icon(Icons.medication,
+                                size: 100, color: AppColors.pharmacy),
                           ),
                   ),
 
@@ -160,7 +165,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                         // Category
                         if (medicine['category'] != null)
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
                               color: AppColors.pharmacy.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
@@ -198,7 +204,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
                                   color: Colors.green,
                                   borderRadius: BorderRadius.circular(4),
@@ -236,7 +243,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
 
                         // Manufacturer
                         if (medicine['manufacturer'] != null) ...[
-                          _buildInfoRow('Manufacturer', medicine['manufacturer']),
+                          _buildInfoRow(
+                              'Manufacturer', medicine['manufacturer']),
                           const SizedBox(height: 12),
                         ],
 
@@ -249,13 +257,18 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                         // Stock Status
                         _buildInfoRow(
                           'Stock',
-                          medicine['inStock'] == true ? 'In Stock' : 'Out of Stock',
-                          valueColor: medicine['inStock'] == true ? Colors.green : Colors.red,
+                          medicine['inStock'] == true
+                              ? 'In Stock'
+                              : 'Out of Stock',
+                          valueColor: medicine['inStock'] == true
+                              ? Colors.green
+                              : Colors.red,
                         ),
                         const SizedBox(height: 12),
 
                         // Delivery Status (if medicine is from an order with tracking)
-                        if (_deliveryInfo != null && _deliveryInfo!['deliveryStatus'] != null) ...[
+                        if (_deliveryInfo != null &&
+                            _deliveryInfo!['deliveryStatus'] != null) ...[
                           const SizedBox(height: 24),
                           const Text(
                             'Delivery Tracking',
@@ -265,8 +278,9 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          _buildDeliveryTracker(_deliveryInfo!['deliveryStatus']),
-                          
+                          _buildDeliveryTracker(
+                              _deliveryInfo!['deliveryStatus']),
+
                           // Tracking ID
                           if (_deliveryInfo!['trackingId'] != null) ...[
                             const SizedBox(height: 16),
@@ -279,11 +293,13 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(Icons.local_shipping, size: 20, color: AppColors.pharmacy),
+                                  const Icon(Icons.local_shipping,
+                                      size: 20, color: AppColors.pharmacy),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         const Text(
                                           'Tracking ID',
@@ -371,7 +387,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                   child: ElevatedButton(
                     onPressed: medicine['inStock'] == true
                         ? () {
-                            final cart = Provider.of<CartService>(context, listen: false);
+                            final cart = Provider.of<CartService>(context,
+                                listen: false);
                             for (int i = 0; i < _quantity; i++) {
                               cart.addItem(
                                 medicine['_id'] ?? medicine['id'],
@@ -382,7 +399,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                             }
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('$_quantity x ${medicine['name']} added to cart'),
+                                content: Text(
+                                    '$_quantity x ${medicine['name']} added to cart'),
                                 duration: const Duration(seconds: 2),
                                 action: SnackBarAction(
                                   label: 'View Cart',
@@ -402,8 +420,11 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                       disabledBackgroundColor: Colors.grey,
                     ),
                     child: Text(
-                      medicine['inStock'] == true ? 'Add to Cart' : 'Out of Stock',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      medicine['inStock'] == true
+                          ? 'Add to Cart'
+                          : 'Out of Stock',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -449,12 +470,16 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
       {'key': 'ordered', 'label': 'Ordered', 'icon': Icons.shopping_cart},
       {'key': 'packed', 'label': 'Packed', 'icon': Icons.inventory_2},
       {'key': 'shipped', 'label': 'Shipped', 'icon': Icons.local_shipping},
-      {'key': 'out_for_delivery', 'label': 'Out for Delivery', 'icon': Icons.delivery_dining},
+      {
+        'key': 'out_for_delivery',
+        'label': 'Out for Delivery',
+        'icon': Icons.delivery_dining
+      },
       {'key': 'delivered', 'label': 'Delivered', 'icon': Icons.check_circle},
     ];
 
     final currentIndex = stages.indexWhere((s) => s['key'] == status);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -468,7 +493,7 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
             final stage = stages[index];
             final isCompleted = index <= currentIndex;
             final isCurrent = index == currentIndex;
-            
+
             return Column(
               children: [
                 Row(
@@ -478,9 +503,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isCompleted 
-                            ? AppColors.pharmacy 
-                            : Colors.grey[300],
+                        color:
+                            isCompleted ? AppColors.pharmacy : Colors.grey[300],
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -490,7 +514,7 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    
+
                     // Label
                     Expanded(
                       child: Column(
@@ -500,7 +524,8 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                             stage['label'] as String,
                             style: TextStyle(
                               fontSize: 16,
-                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                              fontWeight:
+                                  isCurrent ? FontWeight.bold : FontWeight.w500,
                               color: isCompleted ? Colors.black87 : Colors.grey,
                             ),
                           ),
@@ -516,7 +541,7 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                         ],
                       ),
                     ),
-                    
+
                     // Checkmark
                     if (isCompleted && !isCurrent)
                       const Icon(
@@ -526,7 +551,7 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                       ),
                   ],
                 ),
-                
+
                 // Connector Line
                 if (index < stages.length - 1)
                   Container(

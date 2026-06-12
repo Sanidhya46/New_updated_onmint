@@ -24,7 +24,7 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
   bool _isSpeakerOn = true;
   bool _isConnecting = true;
   bool _hasError = false;
-  
+
   Timer? _timer;
   int _secondsElapsed = 0;
 
@@ -43,11 +43,12 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
   Future<void> _connectToZoom() async {
     try {
       // Fetch zoom token (user side)
-      final tokenResponse = await _apiClient.client.get('/video/token/${widget.bookingId}');
-      
+      final tokenResponse =
+          await _apiClient.client.get('/video/token/${widget.bookingId}');
+
       // Simulate connection time
       await Future.delayed(const Duration(seconds: 3));
-      
+
       if (mounted) {
         setState(() {
           _isConnecting = false;
@@ -99,7 +100,8 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
         ),
         title: Column(
           children: [
-            const Text('Consultation Call', style: TextStyle(color: Colors.white, fontSize: 18)),
+            const Text('Consultation Call',
+                style: TextStyle(color: Colors.white, fontSize: 18)),
             Text(
               _formatDuration(),
               style: const TextStyle(color: Colors.white70, fontSize: 14),
@@ -118,7 +120,7 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
         child: Column(
           children: [
             const Spacer(),
-            
+
             // Doctor Avatar Circle
             Center(
               child: Stack(
@@ -142,31 +144,31 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
                         setState(() {}); // Loop
                       },
                     ),
-                  
                   Container(
                     width: 180,
                     height: 180,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.blue.shade50, width: 8),
-                      image: widget.doctorImage != null 
-                        ? DecorationImage(
-                            image: NetworkImage(widget.doctorImage!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
+                      image: widget.doctorImage != null
+                          ? DecorationImage(
+                              image: NetworkImage(widget.doctorImage!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
                       color: Colors.blue.shade100,
                     ),
                     child: widget.doctorImage == null
-                        ? const Icon(Icons.person, size: 80, color: Color(0xFF0D47A1))
+                        ? const Icon(Icons.person,
+                            size: 80, color: Color(0xFF0D47A1))
                         : null,
                   ),
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             Text(
               widget.doctorName,
               style: const TextStyle(
@@ -175,14 +177,14 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
                 color: Color(0xFF152238),
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             Text(
-              _isConnecting 
-                  ? 'Connecting...' 
-                  : _hasError 
-                      ? 'Connection Failed' 
+              _isConnecting
+                  ? 'Connecting...'
+                  : _hasError
+                      ? 'Connection Failed'
                       : 'Live',
               style: TextStyle(
                 fontSize: 16,
@@ -190,9 +192,9 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            
+
             const Spacer(),
-            
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Row(
@@ -220,9 +222,9 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
-            
+
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               padding: const EdgeInsets.all(16),
@@ -238,15 +240,18 @@ class _UserVideoCallScreenState extends State<UserVideoCallScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Your call is secure and encrypted', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                        Text('Do not share any personal information.', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        Text('Your call is secure and encrypted',
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.bold)),
+                        Text('Do not share any personal information.',
+                            style: TextStyle(fontSize: 11, color: Colors.grey)),
                       ],
                     ),
                   )
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 16),
           ],
         ),

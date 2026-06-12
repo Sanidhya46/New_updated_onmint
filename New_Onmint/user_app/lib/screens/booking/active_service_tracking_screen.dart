@@ -12,31 +12,46 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
 
   String get _title {
     switch (serviceType) {
-      case 'ambulance': return 'Ambulance';
-      case 'doctor': return 'Doctor';
-      case 'nurse': return 'Nurse';
-      case 'lab_test': return 'Lab Test';
-      default: return 'Service';
+      case 'ambulance':
+        return 'Ambulance';
+      case 'doctor':
+        return 'Doctor';
+      case 'nurse':
+        return 'Nurse';
+      case 'lab_test':
+        return 'Lab Test';
+      default:
+        return 'Service';
     }
   }
 
   String get _providerName {
     switch (serviceType) {
-      case 'ambulance': return 'ambulance provider';
-      case 'doctor': return 'doctor';
-      case 'nurse': return 'nurse provider';
-      case 'lab_test': return 'lab partner';
-      default: return 'provider';
+      case 'ambulance':
+        return 'ambulance provider';
+      case 'doctor':
+        return 'doctor';
+      case 'nurse':
+        return 'nurse provider';
+      case 'lab_test':
+        return 'lab partner';
+      default:
+        return 'provider';
     }
   }
 
   Color get _themeColor {
     switch (serviceType) {
-      case 'ambulance': return Colors.red;
-      case 'doctor': return Colors.blue;
-      case 'nurse': return Colors.blue;
-      case 'lab_test': return Colors.teal;
-      default: return const Color(0xFF0D47A1);
+      case 'ambulance':
+        return Colors.red;
+      case 'doctor':
+        return Colors.blue;
+      case 'nurse':
+        return Colors.blue;
+      case 'lab_test':
+        return Colors.teal;
+      default:
+        return const Color(0xFF0D47A1);
     }
   }
 
@@ -58,11 +73,13 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = bookingDetails['status']?.toString().toLowerCase() ?? 'pending';
+    final status =
+        bookingDetails['status']?.toString().toLowerCase() ?? 'pending';
     final isAccepted = status != 'pending' && status != 'requested';
-    
+
     String statusTitle = 'Request Sent Successfully';
-    String statusSubtitle = 'We are waiting for a $_providerName to accept\nyour request.';
+    String statusSubtitle =
+        'We are waiting for a $_providerName to accept\nyour request.';
     String bottomStatus = 'Waiting for $_providerName to accept';
 
     if (status == 'accepted') {
@@ -77,16 +94,22 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
       statusTitle = 'Sample Collected';
       statusSubtitle = 'Your sample has been collected successfully.';
       bottomStatus = 'Processing sample...';
-    } else if (status == 'reached' || (serviceType == 'ambulance' && status == 'in_progress')) {
-      statusTitle = serviceType == 'ambulance' ? 'At Pickup Point' : 'Provider Reached';
-      statusSubtitle = serviceType == 'ambulance' ? 'Ambulance has reached the pickup location.' : 'Your $_providerName has arrived at your location.';
-      bottomStatus = serviceType == 'ambulance' ? 'Ambulance arrived' : 'Provider has arrived';
+    } else if (status == 'reached' ||
+        (serviceType == 'ambulance' && status == 'in_progress')) {
+      statusTitle =
+          serviceType == 'ambulance' ? 'At Pickup Point' : 'Provider Reached';
+      statusSubtitle = serviceType == 'ambulance'
+          ? 'Ambulance has reached the pickup location.'
+          : 'Your $_providerName has arrived at your location.';
+      bottomStatus = serviceType == 'ambulance'
+          ? 'Ambulance arrived'
+          : 'Provider has arrived';
     } else if (status == 'completed') {
       statusTitle = 'Service Completed';
       statusSubtitle = 'The service has been completed successfully.';
       bottomStatus = 'Completed';
     }
-    
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -107,7 +130,8 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Color(0xFF4A148C)),
+            icon: const Icon(Icons.headset_mic_outlined,
+                color: Color(0xFF4A148C)),
             onPressed: () {},
           ),
         ],
@@ -121,26 +145,36 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
               children: [
                 Text(
                   _title,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: _themeColor),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: _themeColor),
                 ),
                 const Text(
                   ' Booking',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF152238)),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+                const Icon(Icons.calendar_today_outlined,
+                    size: 14, color: Colors.grey),
                 const SizedBox(width: 6),
                 Text(
                   'Requested on 12 May 2025, 11:20 AM',
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500),
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 12),
 
             // Animated Status Image Area
@@ -155,7 +189,8 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
                     height: 130,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: _themeColor.withOpacity(0.2), width: 2),
+                      border: Border.all(
+                          color: _themeColor.withOpacity(0.2), width: 2),
                     ),
                   ),
                   Container(
@@ -163,7 +198,8 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
                     height: 90,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: _themeColor.withOpacity(0.5), width: 1.5),
+                      border: Border.all(
+                          color: _themeColor.withOpacity(0.5), width: 1.5),
                     ),
                   ),
                   Positioned(
@@ -189,16 +225,20 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 8),
-            
+
             Text(
               statusTitle,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF152238)),
             ),
             const SizedBox(height: 4),
             Text(
               statusSubtitle,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, height: 1.3),
+              style: TextStyle(
+                  fontSize: 12, color: Colors.grey.shade600, height: 1.3),
             ),
 
             const SizedBox(height: 12),
@@ -210,28 +250,40 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: Colors.grey.shade100),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 2)),
+                  BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2)),
                 ],
               ),
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Booking Details', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF152238))),
+                  const Text('Booking Details',
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF152238))),
                   const SizedBox(height: 8),
-                  _buildDetailRow(Icons.person_outline, 'Patient Name', 'Ali Raza'),
+                  _buildDetailRow(
+                      Icons.person_outline, 'Patient Name', 'Ali Raza'),
                   _buildDivider(),
-                  _buildDetailRow(Icons.phone_outlined, 'Phone Number', '+92 300 1234567'),
+                  _buildDetailRow(
+                      Icons.phone_outlined, 'Phone Number', '+92 300 1234567'),
                   _buildDivider(),
                   if (serviceType != 'ambulance') ...[
-                    _buildDetailRow(Icons.calendar_today_outlined, 'Age', '45 Years'),
+                    _buildDetailRow(
+                        Icons.calendar_today_outlined, 'Age', '45 Years'),
                     _buildDivider(),
                   ],
                   if (serviceType == 'lab_test') ...[
-                    _buildDetailRow(Icons.science_outlined, 'Test Name', 'CBC (Complete Blood Count)'),
+                    _buildDetailRow(Icons.science_outlined, 'Test Name',
+                        'CBC (Complete Blood Count)'),
                     _buildDivider(),
                   ],
-                  _buildDetailRow(Icons.location_on_outlined, 'Location', 'Gulshan-e-Iqbal, Karachi'),
+                  _buildDetailRow(Icons.location_on_outlined, 'Location',
+                      'Gulshan-e-Iqbal, Karachi'),
                 ],
               ),
             ),
@@ -245,7 +297,8 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -291,13 +344,19 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF152238)),
+              style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF152238)),
             ),
           ),
         ],
@@ -312,7 +371,8 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionRow(IconData icon, String title, String subtitle, Color titleColor) {
+  Widget _buildActionRow(
+      IconData icon, String title, String subtitle, Color titleColor) {
     return Row(
       children: [
         Icon(icon, size: 22, color: Colors.blue),
@@ -322,12 +382,16 @@ class ActiveServiceTrackingScreen extends StatelessWidget {
           children: [
             Text(
               title,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: titleColor),
+              style: TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: titleColor),
             ),
             const SizedBox(height: 2),
             Text(
               subtitle,
-              style: TextStyle(fontSize: 11, color: Colors.grey.shade600, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500),
             ),
           ],
         ),

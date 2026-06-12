@@ -37,7 +37,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     try {
       var options = JitsiMeetConferenceOptions(
         room: widget.meetingId,
-        serverURL: 'https://meet.jit.si', // Use your own Jitsi server if available
+        serverURL:
+            'https://meet.jit.si', // Use your own Jitsi server if available
         configOverrides: {
           "startWithAudioMuted": widget.isAudioMuted,
           "startWithVideoMuted": widget.isVideoMuted,

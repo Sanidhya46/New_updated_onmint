@@ -39,9 +39,9 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
     try {
       final response = await _apiClient.patient.searchDoctors(
         limit: 5,
-        specialization: widget.categoryTitle, 
+        specialization: widget.categoryTitle,
       );
-      
+
       final doctorsData = response['data'] ?? [];
       setState(() {
         _doctors = List<Map<String, dynamic>>.from(doctorsData);
@@ -62,7 +62,8 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
         'serviceType': 'doctor',
         'category': widget.categoryTitle,
         'specialization': widget.categoryTitle,
-        'description': 'Online consultation for ${widget.categoryTitle} - ${widget.symptomName}',
+        'description':
+            'Online consultation for ${widget.categoryTitle} - ${widget.symptomName}',
         'urgency': 'medium',
         'address': 'Online',
         'isEmergency': false,
@@ -130,13 +131,14 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: Icon(Icons.medical_services, color: Colors.red[300], size: 30),
+                      child: Icon(Icons.medical_services,
+                          color: Colors.red[300], size: 30),
                     ),
                   )
                 ],
               ),
             ),
-            
+
             // Doctors Section
             Container(
               color: Colors.white,
@@ -173,7 +175,8 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                   else if (_doctors.isEmpty)
                     const Padding(
                       padding: EdgeInsets.all(16),
-                      child: Text('No doctors found for this category currently online.'),
+                      child: Text(
+                          'No doctors found for this category currently online.'),
                     )
                   else
                     SizedBox(
@@ -190,9 +193,9 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Language Section
             Container(
               color: Colors.white,
@@ -225,9 +228,9 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Consultation info
             Container(
               color: Colors.white,
@@ -239,7 +242,8 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.blue, size: 24),
+                      const Icon(Icons.check_circle,
+                          color: Colors.blue, size: 24),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -256,7 +260,8 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Chat, audio, video consultation and free 7 day follow-up',
-                              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey[600]),
                             ),
                           ],
                         ),
@@ -283,9 +288,9 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Apply Coupon
             Container(
               color: Colors.white,
@@ -309,9 +314,9 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 8),
-            
+
             // Privacy Section
             Container(
               color: Colors.white,
@@ -322,7 +327,8 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.lock_outline, color: Colors.grey[700], size: 20),
+                      Icon(Icons.lock_outline,
+                          color: Colors.grey[700], size: 20),
                       const SizedBox(width: 8),
                       const Text(
                         'Data and Privacy',
@@ -347,7 +353,7 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 ],
               ),
             ),
-            
+
             // Footer Text
             Container(
               width: double.infinity,
@@ -365,7 +371,7 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24), // padding for bottom bar
           ],
         ),
@@ -385,15 +391,22 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 const SizedBox(width: 12),
                 // Icons for payment
                 Container(
-                  width: 30, height: 30,
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.purple),
-                  child: const Center(child: Text('pe', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                  width: 30,
+                  height: 30,
+                  decoration: const BoxDecoration(
+                      shape: BoxShape.circle, color: Colors.purple),
+                  child: const Center(
+                      child: Text('pe',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold))),
                 ),
                 const SizedBox(width: 8),
                 const Spacer(),
                 const Text(
                   'More Payment Options >',
-                  style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      color: Colors.blue, fontWeight: FontWeight.w500),
                 )
               ],
             ),
@@ -405,13 +418,20 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 onPressed: _isBooking ? null : _handlePayAndConsult,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF03A9F4),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                 ),
                 child: _isBooking
-                    ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(color: Colors.white))
                     : const Text(
                         '₹934.15 | Pay & Consult',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                       ),
               ),
             )
@@ -483,7 +503,10 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
               backgroundColor: Colors.blue[100],
               child: Text(
                 doctor['firstName']?.substring(0, 1) ?? 'D',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue),
+                style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue),
               ),
             ),
             const SizedBox(width: 12),
@@ -494,7 +517,8 @@ class _DoctorSummaryScreenState extends State<DoctorSummaryScreen> {
                 children: [
                   Text(
                     'Dr. ${doctor['firstName']} ${doctor['lastName']}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

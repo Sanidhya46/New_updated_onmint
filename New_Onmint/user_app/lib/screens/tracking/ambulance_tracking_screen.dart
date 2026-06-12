@@ -77,7 +77,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
     await _loadBooking();
     _startSocketTracking();
     // Poll every 10 sec for status updates as fallback
-    _pollTimer = Timer.periodic(const Duration(seconds: 10), (_) => _loadBooking());
+    _pollTimer =
+        Timer.periodic(const Duration(seconds: 10), (_) => _loadBooking());
   }
 
   Future<void> _getUserLocation() async {
@@ -206,7 +207,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
       _markers.add(Marker(
         markerId: const MarkerId('user'),
         position: LatLng(_userPosition!.latitude, _userPosition!.longitude),
-        infoWindow: const InfoWindow(title: 'Your Location', snippet: 'Pickup point'),
+        infoWindow:
+            const InfoWindow(title: 'Your Location', snippet: 'Pickup point'),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
       ));
     }
@@ -242,11 +244,12 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
   void _calcETA() {
     if (_ambulancePosition == null || _userPosition == null) return;
     _distance = Geolocator.distanceBetween(
-      _ambulancePosition!.latitude,
-      _ambulancePosition!.longitude,
-      _userPosition!.latitude,
-      _userPosition!.longitude,
-    ) / 1000;
+          _ambulancePosition!.latitude,
+          _ambulancePosition!.longitude,
+          _userPosition!.latitude,
+          _userPosition!.longitude,
+        ) /
+        1000;
     final mins = (_distance / 40 * 60).round();
     if (mounted) {
       setState(() {
@@ -285,7 +288,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
         centerTitle: true,
         title: const Text(
           'Ambulance Booking',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
+          style: TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black),
         ),
         actions: [
           IconButton(
@@ -455,7 +459,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
                     const Icon(Icons.female, size: 14, color: Colors.pink),
                     const SizedBox(width: 2),
                     Text('$gender  •  $age Years',
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                        style:
+                            TextStyle(color: Colors.grey[600], fontSize: 13)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -467,8 +472,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(address,
-                          style: TextStyle(
-                              color: Colors.grey[700], fontSize: 12)),
+                          style:
+                              TextStyle(color: Colors.grey[700], fontSize: 12)),
                     ),
                   ],
                 ),
@@ -543,14 +548,16 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
           children: [
             Column(
               children: [
-                const Icon(Icons.location_on, color: Color(0xFF4CAF50), size: 22),
+                const Icon(Icons.location_on,
+                    color: Color(0xFF4CAF50), size: 22),
                 Expanded(
                   child: CustomPaint(
                     painter: _DashedLinePainter(),
                     child: const SizedBox(width: 2, height: double.infinity),
                   ),
                 ),
-                const Icon(Icons.location_on, color: Color(0xFFE52329), size: 22),
+                const Icon(Icons.location_on,
+                    color: Color(0xFFE52329), size: 22),
               ],
             ),
             const SizedBox(width: 12),
@@ -767,7 +774,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
           _shortcut(Icons.phone, 'Call Driver', _callDriver),
           _shortcut(Icons.chat_bubble_outline, 'Chat', () {}),
           _shortcut(Icons.map_outlined, 'Open Map', _openMaps),
-          _shortcut(Icons.description_outlined, 'Trip Details', _showTripDetails),
+          _shortcut(
+              Icons.description_outlined, 'Trip Details', _showTripDetails),
         ],
       ),
     );
@@ -789,7 +797,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
           ),
           const SizedBox(height: 6),
           Text(label,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+              style:
+                  const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
         ],
       ),
     );
@@ -866,8 +875,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
           ),
           Expanded(
             child: Text(value,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 13)),
+                style:
+                    const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
           ),
         ],
       ),
@@ -983,8 +992,8 @@ class _AmbulanceTrackingScreenState extends State<AmbulanceTrackingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Thank you!',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 SizedBox(height: 4),
                 Text('You have completed the service successfully.',
                     style: TextStyle(color: Colors.black87, fontSize: 13)),

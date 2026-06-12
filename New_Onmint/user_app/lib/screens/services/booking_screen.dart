@@ -146,9 +146,13 @@ class _BookingScreenState extends State<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final providerName = '${widget.provider['firstName'] ?? ''} ${widget.provider['lastName'] ?? ''}'.trim();
-    final specialization = widget.provider['specialization']?.toString() ?? 'Service Provider';
-    final consultationFee = widget.provider['consultationFee']?.toString() ?? '0';
+    final providerName =
+        '${widget.provider['firstName'] ?? ''} ${widget.provider['lastName'] ?? ''}'
+            .trim();
+    final specialization =
+        widget.provider['specialization']?.toString() ?? 'Service Provider';
+    final consultationFee =
+        widget.provider['consultationFee']?.toString() ?? '0';
 
     return Scaffold(
       appBar: AppBar(
@@ -390,7 +394,8 @@ class _BookingScreenState extends State<BookingScreen> {
                         )
                       : const Text(
                           'Confirm Booking',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),

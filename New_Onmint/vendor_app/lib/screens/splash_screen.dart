@@ -35,12 +35,12 @@ class _SplashScreenState extends State<SplashScreen> {
       if (user != null && AppConfig.vendorRoles.contains(user.role.toLowerCase())) {
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        // Not a vendor, logout and go to login
+        // Not a vendor, logout and go to register
         await authProvider.logout();
-        Navigator.pushReplacementNamed(context, '/login');
+        Navigator.pushReplacementNamed(context, '/register');
       }
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      Navigator.pushReplacementNamed(context, '/register');
     }
   }
 

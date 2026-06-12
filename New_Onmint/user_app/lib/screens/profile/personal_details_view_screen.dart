@@ -25,7 +25,8 @@ class PersonalDetailsViewScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20),
+          icon:
+              const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
@@ -46,7 +47,8 @@ class PersonalDetailsViewScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const EditProfileScreen()),
               );
             },
           ),
@@ -100,8 +102,8 @@ class PersonalDetailsViewScreen extends StatelessWidget {
               _buildDetailRow(
                 icon: Icons.calendar_today_outlined,
                 label: 'Date of Birth',
-                value: user.dateOfBirth != null 
-                    ? DateFormat('dd MMM yyyy').format(user.dateOfBirth!) 
+                value: user.dateOfBirth != null
+                    ? DateFormat('dd MMM yyyy').format(user.dateOfBirth!)
                     : 'Not Specified',
               ),
               _buildDivider(),

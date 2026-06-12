@@ -6,6 +6,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../services/error_handler_service.dart';
 
+import '../booking/order_request_screen.dart';
+
 class BookAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic> doctor;
 
@@ -46,7 +48,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   Future<void> _useCurrentLocation() async {
     try {
       setState(() => _isLoading = true);
-      
+
       // Request location permission
       final permission = await Permission.location.request();
       if (!permission.isGranted) {
@@ -65,17 +67,18 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
-      
+
       // Store position for later use
       _currentPosition = position;
-      
+
       // Use a simple address format with coordinates
-      final address = 'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)}';
-      
+      final address =
+          'Lat: ${position.latitude.toStringAsFixed(4)}, Lng: ${position.longitude.toStringAsFixed(4)}';
+
       setState(() {
         _addressController.text = address;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -103,7 +106,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   Future<void> _selectDate() async {
     // Get available days from doctor's availability
     final availability = widget.doctor['availability'] as List?;
-    
+
     final date = await showDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 1)),
@@ -114,15 +117,14 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
         if (availability == null || availability.isEmpty) {
           return true;
         }
-        
+
         // Check if the day is in doctor's availability
         final dayName = _getDayName(date.weekday);
-        return availability.any((avail) => 
-          avail['day']?.toString().toUpperCase() == dayName.toUpperCase()
-        );
+        return availability.any((avail) =>
+            avail['day']?.toString().toUpperCase() == dayName.toUpperCase());
       },
     );
-    
+
     if (date != null) {
       setState(() {
         _selectedDate = date;
@@ -132,7 +134,15 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
   }
 
   String _getDayName(int weekday) {
-    const days = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
+    const days = [
+      'MONDAY',
+      'TUESDAY',
+      'WEDNESDAY',
+      'THURSDAY',
+      'FRIDAY',
+      'SATURDAY',
+      'SUNDAY'
+    ];
     return days[weekday - 1];
   }
 
@@ -150,23 +160,24 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     // Get available time slots for the selected date
     final availability = widget.doctor['availability'] as List?;
     final dayName = _getDayName(_selectedDate!.weekday);
-    
+
     List<Map<String, dynamic>> availableSlots = [];
-    
+
     if (availability != null) {
       final dayAvailability = availability.firstWhere(
-        (avail) => avail['day']?.toString().toUpperCase() == dayName.toUpperCase(),
+        (avail) =>
+            avail['day']?.toString().toUpperCase() == dayName.toUpperCase(),
         orElse: () => null,
       );
-      
+
       if (dayAvailability != null && dayAvailability['slots'] != null) {
         final slots = dayAvailability['slots'] as List;
         availableSlots = slots
             .where((slot) => slot['isAvailable'] == true)
             .map((slot) => {
-              'startTime': slot['startTime'],
-              'endTime': slot['endTime'],
-            })
+                  'startTime': slot['startTime'],
+                  'endTime': slot['endTime'],
+                })
             .toList()
             .cast<Map<String, dynamic>>();
       }
@@ -260,7 +271,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
 
       // Calculate price based on consultation type
       final basePrice = widget.doctor['consultationFee'] ?? 0;
-      final consultationPrice = _consultationType == 'video-call' 
+      final consultationPrice = _consultationType == 'video-call'
           ? (basePrice * 0.8).round() // 20% discount for video calls
           : basePrice;
 
@@ -278,12 +289,14 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       // Only add location for in-person consultations
       if (_consultationType == 'in-person') {
         // Use current position if available, otherwise use user's stored location
-        final latitude = _currentPosition?.latitude ?? user.location?.latitude ?? 0.0;
-        final longitude = _currentPosition?.longitude ?? user.location?.longitude ?? 0.0;
-        
+        final latitude =
+            _currentPosition?.latitude ?? user.location?.latitude ?? 0.0;
+        final longitude =
+            _currentPosition?.longitude ?? user.location?.longitude ?? 0.0;
+
         bookingData['location'] = {
-          'address': _addressController.text.trim().isNotEmpty 
-              ? _addressController.text.trim() 
+          'address': _addressController.text.trim().isNotEmpty
+              ? _addressController.text.trim()
               : 'Patient Location',
           'coordinates': [longitude, latitude],
         };
@@ -292,8 +305,18 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       await _patientService.createBooking(bookingData);
 
       if (mounted) {
-        ErrorHandlerService.showSuccess(context, 'Appointment booked successfully!');
-        Navigator.pop(context, true);
+        ErrorHandlerService.showSuccess(
+            context, 'Appointment booked successfully!');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderRequestScreen(
+              bookingId: '',
+              bookingData: bookingData,
+              serviceType: 'doctor',
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -308,8 +331,11 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final doctorName = '${widget.doctor['firstName'] ?? ''} ${widget.doctor['lastName'] ?? ''}'.trim();
-    final specialization = widget.doctor['specialization']?.toString() ?? 'Doctor';
+    final doctorName =
+        '${widget.doctor['firstName'] ?? ''} ${widget.doctor['lastName'] ?? ''}'
+            .trim();
+    final specialization =
+        widget.doctor['specialization']?.toString() ?? 'Doctor';
     final consultationFee = widget.doctor['consultationFee']?.toString() ?? '0';
 
     return Scaffold(
@@ -560,7 +586,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                           prefixIcon: Icon(Icons.location_on),
                         ),
                         validator: (value) {
-                          if (_consultationType == 'in-person' && (value == null || value.trim().isEmpty)) {
+                          if (_consultationType == 'in-person' &&
+                              (value == null || value.trim().isEmpty)) {
                             return 'Please enter location for in-person visit';
                           }
                           return null;
@@ -573,7 +600,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                       icon: const Icon(Icons.my_location),
                       label: const Text('Current'),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 16),
                       ),
                     ),
                   ],
@@ -629,7 +657,8 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
                         )
                       : const Text(
                           'Book Appointment',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w600),
                         ),
                 ),
               ),

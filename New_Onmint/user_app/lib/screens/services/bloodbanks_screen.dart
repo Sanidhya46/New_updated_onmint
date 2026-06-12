@@ -14,12 +14,12 @@ class BloodBanksScreen extends StatefulWidget {
 class _BloodBanksScreenState extends State<BloodBanksScreen> {
   final _apiClient = OnMintApiClient();
   final _searchController = TextEditingController();
-  
+
   List<dynamic> _bloodBanks = [];
   bool _isLoading = true;
   String? _error;
   String _selectedBloodGroup = 'All';
-  
+
   final List<String> _bloodGroups = [
     'All',
     'A+',
@@ -52,7 +52,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
 
     try {
       await _apiClient.initialize();
-      
+
       final result = await _apiClient.patient.searchBloodBanks(
         bloodGroup: _selectedBloodGroup == 'All' ? null : _selectedBloodGroup,
         city: _searchController.text.isEmpty ? null : _searchController.text,
@@ -116,7 +116,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
               itemBuilder: (context, index) {
                 final bloodGroup = _bloodGroups[index];
                 final isSelected = _selectedBloodGroup == bloodGroup;
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
@@ -132,7 +132,8 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                     selectedColor: Colors.red.shade700,
                     labelStyle: TextStyle(
                       color: isSelected ? Colors.white : Colors.black87,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 );
@@ -178,13 +179,13 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
     final bloodStock = bloodBank['bloodStock'] ?? {};
     final rating = bloodBank['rating']?.toDouble() ?? 0.0;
     final reviewCount = bloodBank['reviewCount'] ?? 0;
-    
+
     // Calculate total available units
     int totalUnits = 0;
     bloodStock.forEach((key, value) {
       totalUnits += (value as int? ?? 0);
     });
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
@@ -192,7 +193,8 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BloodBankDetailScreen(bloodBankId: bloodBank['_id']),
+              builder: (context) =>
+                  BloodBankDetailScreen(bloodBankId: bloodBank['_id']),
             ),
           );
         },
@@ -218,7 +220,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  
+
                   // Blood Bank Info
                   Expanded(
                     child: Column(
@@ -232,12 +234,13 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        
+
                         // Rating
                         if (rating > 0)
                           Row(
                             children: [
-                              const Icon(Icons.star, size: 16, color: Colors.amber),
+                              const Icon(Icons.star,
+                                  size: 16, color: Colors.amber),
                               const SizedBox(width: 4),
                               Text(
                                 rating.toStringAsFixed(1),
@@ -256,12 +259,13 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                             ],
                           ),
                         const SizedBox(height: 8),
-                        
+
                         // Location
                         if (bloodBank['address'] != null)
                           Row(
                             children: [
-                              const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                              const Icon(Icons.location_on,
+                                  size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
@@ -277,12 +281,13 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                             ],
                           ),
                         const SizedBox(height: 4),
-                        
+
                         // Phone
                         if (bloodBank['phone'] != null)
                           Row(
                             children: [
-                              const Icon(Icons.phone, size: 16, color: Colors.grey),
+                              const Icon(Icons.phone,
+                                  size: 16, color: Colors.grey),
                               const SizedBox(width: 4),
                               Text(
                                 bloodBank['phone'],
@@ -298,11 +303,11 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 8),
-              
+
               // Blood Stock Summary
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -324,7 +329,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // Blood Group Stock Grid
               GridView.builder(
                 shrinkWrap: true,
@@ -340,7 +345,7 @@ class _BloodBanksScreenState extends State<BloodBanksScreen> {
                   final group = _bloodGroups[index + 1];
                   final units = bloodStock[group] ?? 0;
                   final color = _getStockColor(units);
-                  
+
                   return Container(
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.1),

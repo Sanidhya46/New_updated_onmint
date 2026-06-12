@@ -25,7 +25,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final PatientService _patientService = PatientService();
   final TextEditingController _searchController = TextEditingController();
-  
+
   List<Map<String, dynamic>> _medicines = [];
   bool _isLoading = true;
   bool _isLocationLoading = false;
@@ -73,45 +73,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _getCurrentLocation() async {
     if (!mounted) return;
-    
+
     setState(() => _isLocationLoading = true);
-    
+
     try {
       // For web, location services work differently
       // Try to get location without strict permission check
       try {
         final position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.low,  // Use low accuracy for faster response
-          timeLimit: const Duration(seconds: 3),  // Shorter timeout
+          desiredAccuracy:
+              LocationAccuracy.low, // Use low accuracy for faster response
+          timeLimit: const Duration(seconds: 3), // Shorter timeout
         ).timeout(
           const Duration(seconds: 3),
           onTimeout: () {
             throw TimeoutException('Location timeout');
           },
         );
-        
+
         // Try OpenStreetMap Nominatim API first
         try {
           final response = await http.get(
-            Uri.parse(
-              'https://nominatim.openstreetmap.org/reverse?'
-              'format=json&lat=${position.latitude}&lon=${position.longitude}&'
-              'addressdetails=1'
-            ),
+            Uri.parse('https://nominatim.openstreetmap.org/reverse?'
+                'format=json&lat=${position.latitude}&lon=${position.longitude}&'
+                'addressdetails=1'),
             headers: {'User-Agent': 'OnMintHealthcare/1.0'},
           ).timeout(const Duration(seconds: 3));
-          
+
           if (response.statusCode == 200 && mounted) {
             final data = json.decode(response.body);
             final address = data['address'];
-            
+
             if (address != null) {
               setState(() {
-                _currentCity = address['city'] ?? 
-                              address['town'] ?? 
-                              address['village'] ?? 
-                              address['suburb'] ??
-                              _getCityFromCoordinates(position.latitude, position.longitude);
+                _currentCity = address['city'] ??
+                    address['town'] ??
+                    address['village'] ??
+                    address['suburb'] ??
+                    _getCityFromCoordinates(
+                        position.latitude, position.longitude);
                 _currentState = address['state'] ?? 'India';
                 _isLocationLoading = false;
               });
@@ -121,11 +121,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         } catch (e) {
           print('Nominatim API error: $e');
         }
-        
+
         // Fallback to coordinate-based city detection
         if (mounted) {
           setState(() {
-            _currentCity = _getCityFromCoordinates(position.latitude, position.longitude);
+            _currentCity =
+                _getCityFromCoordinates(position.latitude, position.longitude);
             _currentState = 'India';
             _isLocationLoading = false;
           });
@@ -137,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } catch (e) {
       print('Location permission error: $e');
     }
-    
+
     // Fallback to default (always executed if location fails)
     if (mounted) {
       setState(() {
@@ -192,39 +193,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
       {'name': 'Raipur', 'lat': 21.2514, 'lon': 81.6296, 'range': 0.5},
       {'name': 'Kota', 'lat': 25.2138, 'lon': 75.8648, 'range': 0.5},
     ];
-    
+
     // Find closest city
     double minDistance = double.infinity;
     String closestCity = 'Mumbai';
-    
+
     for (var city in cities) {
       final cityLat = city['lat'] as double;
       final cityLon = city['lon'] as double;
       final range = city['range'] as double;
-      
+
       final distance = ((lat - cityLat).abs() + (lon - cityLon).abs());
-      
+
       if (distance < range && distance < minDistance) {
         minDistance = distance;
         closestCity = city['name'] as String;
       }
     }
-    
+
     return closestCity;
   }
 
   Future<void> _loadData() async {
     if (!mounted) return;
-    
+
     if (mounted) {
       setState(() => _isLoading = true);
     }
-    
+
     try {
       // Load medicines only
-      final medicinesResponse = await _patientService.searchMedicines(limit: 20);
+      final medicinesResponse =
+          await _patientService.searchMedicines(limit: 20);
       final medicines = medicinesResponse['data'] ?? [];
-      
+
       if (mounted) {
         setState(() {
           _medicines = List<Map<String, dynamic>>.from(medicines);
@@ -251,37 +253,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
               children: [
                 // Header with Location and Search (now scrollable)
                 _buildScrollableHeader(),
-                
+
                 // 4 Service Cards with Images
                 _buildQuickServiceCards(),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Appointment Section with Image
                 _buildAppointmentSection(),
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Advertisement Banner with Image
                 _buildAdvertisementBanner(),
-                
+
                 const SizedBox(height: 16),
-                
+
                 // Popular Categories Section (16 categories)
                 _buildPopularCategoriesSection(),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // 1. Generic Medicines Section
                 if (!_isLoading && _medicines.isNotEmpty) ...[
                   _buildMedicineSection('Genric medicines', _medicines),
                   const SizedBox(height: 24),
                 ],
-                
+
                 // 2. Pet Care Section
                 _buildPetCareSection(),
                 const SizedBox(height: 24),
-                
+
                 // 3. Two medicine rows
                 if (!_isLoading && _medicines.isNotEmpty) ...[
                   _buildMedicineSection('Top Selling Medicines', _medicines),
@@ -289,11 +291,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _buildMedicineSection('Seasonal Health Needs', _medicines),
                   const SizedBox(height: 24),
                 ],
-                
+
                 // 4. Advertisement Banner Again
                 _buildAdvertisementBanner(),
                 const SizedBox(height: 24),
-                
+
                 // 5. Two medicine rows again
                 if (!_isLoading && _medicines.isNotEmpty) ...[
                   _buildMedicineSection('Everyday Essentials', _medicines),
@@ -301,7 +303,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _buildMedicineSection('Healthcare Devices', _medicines),
                   const SizedBox(height: 24),
                 ],
-                
+
                 // 6. Last minute app banner
                 _buildLastMinuteBanner(),
                 const SizedBox(height: 32),
@@ -395,9 +397,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Large Search Bar - Centered
           Container(
             height: 42,
@@ -513,7 +515,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         color: const Color(0xFFF5F5F5),
-                        border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                        border:
+                            Border.all(color: Colors.grey.shade300, width: 1.5),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
@@ -526,27 +529,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(12),
                         child: Padding(
                           padding: EdgeInsets.only(
-                            top: category['id'] == 'doctor' ? 4.0 : 
-                                 category['id'] == 'ambulance' ? 6.0 : 
-                                 category['id'] == 'pathology' ? 0.0 : 
-                                 category['id'] == 'nurse' ? 4.0 : 0.0,
+                            top: category['id'] == 'doctor'
+                                ? 4.0
+                                : category['id'] == 'ambulance'
+                                    ? 6.0
+                                    : category['id'] == 'pathology'
+                                        ? 0.0
+                                        : category['id'] == 'nurse'
+                                            ? 4.0
+                                            : 0.0,
                             bottom: 0,
                             left: 0,
                             right: 0,
                           ),
                           child: Align(
-                            alignment: (category['id'] == 'ambulance' || category['id'] == 'pathology' || category['id'] == 'nurse')
+                            alignment: (category['id'] == 'ambulance' ||
+                                    category['id'] == 'pathology' ||
+                                    category['id'] == 'nurse')
                                 ? Alignment.bottomCenter
                                 : Alignment.center,
                             child: Image.asset(
                               'assets/${category['imagePath']}',
-                              width: category['id'] == 'ambulance' ? 62 : 
-                                     category['id'] == 'pathology' ? 60 : 
-                                     category['id'] == 'nurse' ? 66 : 70,
-                              height: category['id'] == 'ambulance' ? 62 : 
-                                      category['id'] == 'pathology' ? 60 : 
-                                      category['id'] == 'nurse' ? 66 : 70,
-                              fit: BoxFit.contain, // Changed from cover to contain to prevent chopped icons
+                              width: category['id'] == 'ambulance'
+                                  ? 62
+                                  : category['id'] == 'pathology'
+                                      ? 60
+                                      : category['id'] == 'nurse'
+                                          ? 66
+                                          : 70,
+                              height: category['id'] == 'ambulance'
+                                  ? 62
+                                  : category['id'] == 'pathology'
+                                      ? 60
+                                      : category['id'] == 'nurse'
+                                          ? 66
+                                          : 70,
+                              fit: BoxFit
+                                  .contain, // Changed from cover to contain to prevent chopped icons
                               errorBuilder: (context, error, stackTrace) {
                                 return Icon(
                                   category['icon'],
@@ -585,11 +604,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildDoctorCard(Map<String, dynamic> doctor) {
-    final name = 'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'.trim();
-    final specialization = doctor['specialization']?.toString() ?? 'General Physician';
+    final name =
+        'Dr. ${doctor['firstName'] ?? ''} ${doctor['lastName'] ?? ''}'.trim();
+    final specialization =
+        doctor['specialization']?.toString() ?? 'General Physician';
     final experience = doctor['experience']?.toString() ?? '0';
     final fee = doctor['consultationFee']?.toString() ?? '500';
-    
+
     return GestureDetector(
       onTap: () {
         // Convert Map to User object for navigation
@@ -612,7 +633,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         margin: const EdgeInsets.only(right: 12),
         child: Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -675,11 +697,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildNurseCard(Map<String, dynamic> nurse) {
-    final name = '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'.trim();
-    final specialization = nurse['specialization']?.toString() ?? 'General Nursing';
+    final name =
+        '${nurse['firstName'] ?? ''} ${nurse['lastName'] ?? ''}'.trim();
+    final specialization =
+        nurse['specialization']?.toString() ?? 'General Nursing';
     final experience = nurse['experience']?.toString() ?? '0';
     final fee = nurse['consultationFee']?.toString() ?? '300';
-    
+
     return GestureDetector(
       onTap: () {
         // Navigate to nurse detail screen
@@ -701,7 +725,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         margin: const EdgeInsets.only(right: 12),
         child: Card(
           elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -768,7 +793,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'doctor':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const DoctorCategoriesScreen()),
+          MaterialPageRoute(
+              builder: (context) => const DoctorCategoriesScreen()),
         );
         break;
       case 'nurse':
@@ -780,7 +806,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 'ambulance':
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const AmbulanceBookingScreen()),
+          MaterialPageRoute(
+              builder: (context) => const AmbulanceBookingScreen()),
         );
         break;
       case 'pathology':
@@ -861,7 +888,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Row(
                 children: [
-                  const Icon(Icons.location_city, color: Color(0xFF4A90E2), size: 20),
+                  const Icon(Icons.location_city,
+                      color: Color(0xFF4A90E2), size: 20),
                   const SizedBox(width: 8),
                   const Text(
                     'Or Select City & State',
@@ -921,7 +949,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildCityTile(String city, String state) {
     return ListTile(
-      leading: const Icon(Icons.location_on_outlined, color: Color(0xFF4A90E2), size: 20),
+      leading: const Icon(Icons.location_on_outlined,
+          color: Color(0xFF4A90E2), size: 20),
       title: Text(
         city,
         style: const TextStyle(
@@ -968,74 +997,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Color(0xFF4A90E2),
             ),
             child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'अपॉइंटमेंट टोकन प्राप्त करें',
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'अपॉइंटमेंट टोकन प्राप्त करें',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      ElevatedButton(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('QR स्कैनर'),
+                              content: const Text(
+                                  'QR स्कैन करने की कार्यक्षमता को यहाँ लागू किया जाएगा।'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('बंद करें'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF4A90E2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
+                        child: const Text(
+                          'QR स्कैन करें',
                           style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('QR स्कैनर'),
-                                content: const Text('QR स्कैन करने की कार्यक्षमता को यहाँ लागू किया जाएगा।'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('बंद करें'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: const Color(0xFF4A90E2),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          child: const Text(
-                            'QR स्कैन करें',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Container(
-                    width: 50,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.local_hospital,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                ),
+                Container(
+                  width: 50,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ],
-              ),
-            );
-          },
-        ),
+                  child: const Icon(
+                    Icons.local_hospital,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1108,7 +1139,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF1F2937),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
                               ),
@@ -1236,13 +1268,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       {
         'name': 'Food &\nNutrition',
-        'image': 'images/categories/Food_and_nutrition.png', 
+        'image': 'images/categories/Food_and_nutrition.png',
         'color': Color(0xFFF1F8E9),
         'icon': Icons.restaurant_rounded,
         'iconColor': Color(0xFF8BC34A),
       },
       {
-        'name': 'Hair Care', 
+        'name': 'Hair Care',
         'image': 'images/categories/Hair_care.png',
         'color': Color(0xFFE8E4FF),
         'icon': Icons.content_cut_rounded,
@@ -1342,7 +1374,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Expanded(
                         child: Center(
                           child: Padding(
-                            padding: const EdgeInsets.all(0.0), // Maximized image size
+                            padding: const EdgeInsets.all(
+                                0.0), // Maximized image size
                             child: Image.asset(
                               'assets/${category['image']}',
                               fit: BoxFit.contain,
@@ -1361,9 +1394,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Container(
                         width: double.infinity,
                         height: 36, // Fixed height for consistent bottom area
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
                         decoration: BoxDecoration(
-                          color: category['color'], // Colorful background for names
+                          color: category[
+                              'color'], // Colorful background for names
                           borderRadius: const BorderRadius.only(
                             bottomLeft: Radius.circular(12),
                             bottomRight: Radius.circular(12),
@@ -1384,7 +1419,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
                                 child: Text(
-                                  category['name'].length > 9 ? category['name'] : category['name'].replaceAll('\n', ' '),
+                                  category['name'].length > 9
+                                      ? category['name']
+                                      : category['name'].replaceAll('\n', ' '),
                                   style: const TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w600,
@@ -1409,7 +1446,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildMedicineSection(String title, List<Map<String, dynamic>> medicines) {
+  Widget _buildMedicineSection(
+      String title, List<Map<String, dynamic>> medicines) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1450,7 +1488,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(height: 12),
         SizedBox(
           height: 280, // Card height
-          child: ListView.builder(        
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: medicines.length.clamp(0, 5),
@@ -1465,7 +1503,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildMedicineCardUI(Map<String, dynamic> medicine) {
     final name = medicine['name']?.toString() ?? 'Medicine Name';
-    
+
     // Parse price properly regardless of whether it's String or num
     double getPrice(dynamic val, double fallback) {
       if (val == null) return fallback;
@@ -1473,19 +1511,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (val is String) return double.tryParse(val) ?? fallback;
       return fallback;
     }
-    
-    final price = getPrice(medicine['discountedPrice'], getPrice(medicine['price'], 267.0));
+
+    final price = getPrice(
+        medicine['discountedPrice'], getPrice(medicine['price'], 267.0));
     final originalPrice = getPrice(medicine['price'], price + 108.0);
-    final discountPercent = originalPrice > price ? ((originalPrice - price) / originalPrice * 100).round() : 21;
-    
+    final discountPercent = originalPrice > price
+        ? ((originalPrice - price) / originalPrice * 100).round()
+        : 21;
+
     // Extract image URL from either imageUrl or images array
     String? imageUrl = medicine['imageUrl']?.toString();
     if (imageUrl == null || imageUrl.isEmpty) {
-      if (medicine['images'] != null && medicine['images'] is List && medicine['images'].isNotEmpty) {
+      if (medicine['images'] != null &&
+          medicine['images'] is List &&
+          medicine['images'].isNotEmpty) {
         imageUrl = medicine['images'][0]?.toString();
       }
     }
-    
+
     return Container(
       width: 160,
       margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -1506,27 +1549,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: (imageUrl != null && imageUrl.isNotEmpty) 
-                  ? Image.network(
-                      imageUrl,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Column(
+                child: (imageUrl != null && imageUrl.isNotEmpty)
+                    ? Image.network(
+                        imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) => Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.image_not_supported,
+                                size: 40, color: Colors.grey[400]),
+                            const SizedBox(height: 4),
+                            Text('No Image',
+                                style: TextStyle(
+                                    fontSize: 10, color: Colors.grey[500])),
+                          ],
+                        ),
+                      )
+                    : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.image_not_supported, size: 40, color: Colors.grey[400]),
+                          Icon(Icons.medication,
+                              size: 40, color: Colors.grey[300]),
                           const SizedBox(height: 4),
-                          Text('No Image', style: TextStyle(fontSize: 10, color: Colors.grey[500])),
+                          Text('No Image',
+                              style: TextStyle(
+                                  fontSize: 10, color: Colors.grey[400])),
                         ],
                       ),
-                    )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.medication, size: 40, color: Colors.grey[300]),
-                        const SizedBox(height: 4),
-                        Text('No Image', style: TextStyle(fontSize: 10, color: Colors.grey[400])),
-                      ],
-                    ),
               ),
             ),
           ),
@@ -1620,7 +1669,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ],
       ),
     );
-}
+  }
 
   Widget _buildPetCareSection() {
     final List<Map<String, dynamic>> petCategories = [
@@ -1701,7 +1750,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: Image.asset(
                             cat['image'],
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => Icon(Icons.pets, color: Colors.grey[400]),
+                            errorBuilder: (context, error, stackTrace) =>
+                                Icon(Icons.pets, color: Colors.grey[400]),
                           ),
                         ),
                       ),

@@ -18,6 +18,8 @@ const STATUS = [
   "on_the_way",     // Provider is traveling/delivering
   "reached",        // Provider has reached the location
   "in_progress",    // Service in progress
+  "sample_collected", // Pathology sample collected
+  "report_uploaded",  // Pathology report uploaded
   "completed",      // Service completed
   "cancelled",      // Cancelled by patient or system
   "expired",        // No provider accepted within time limit
@@ -161,6 +163,14 @@ const RealTimeBookingSchema = new mongoose.Schema(
       },
     }],
 
+    report: {
+      type: String,
+    },
+    
+    reportUploadedAt: {
+      type: Date,
+    },
+
     // Nursing care details (for nurse service type)
     nursingCares: [{
       name: {
@@ -184,6 +194,11 @@ const RealTimeBookingSchema = new mongoose.Schema(
         required: true,
         index: "2dsphere",
       },
+    },
+
+    dropOffLocation: {
+      type: String,
+      trim: true,
     },
 
     notifiedProviders: [{
@@ -290,10 +305,10 @@ RealTimeBookingSchema.index({ "notifiedProviders.provider": 1, status: 1 });
 // FIXED: TTL index for automatic expiration of old bookings
 RealTimeBookingSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-// Auto-expire bookings after 15 minutes if not accepted
+// Auto-expire bookings after 24 hours if not accepted
 RealTimeBookingSchema.pre("save", function () {
   if (this.isNew && !this.expiresAt) {
-    this.expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    this.expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   }
 });
 

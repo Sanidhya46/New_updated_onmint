@@ -18,7 +18,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _pincodeController = TextEditingController();
   final _notesController = TextEditingController();
   final _apiClient = OnMintApiClient();
-  
+
   String? _selectedState;
   String? _selectedCity;
   String _paymentMethod = 'cash';
@@ -27,23 +27,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   // Indian States
   final List<String> _states = [
-    'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-    'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand',
-    'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur',
-    'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
-    'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
-    'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu and Kashmir',
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
+    'Gujarat',
+    'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
+    'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
+    'West Bengal',
+    'Delhi',
+    'Jammu and Kashmir',
   ];
 
   // Cities by state (sample - add more as needed)
   final Map<String, List<String>> _citiesByState = {
-    'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Aurangabad', 'Thane', 'Kolhapur'],
+    'Maharashtra': [
+      'Mumbai',
+      'Pune',
+      'Nagpur',
+      'Nashik',
+      'Aurangabad',
+      'Thane',
+      'Kolhapur'
+    ],
     'Delhi': ['New Delhi', 'Dwarka', 'Rohini', 'Karol Bagh', 'Connaught Place'],
     'Karnataka': ['Bangalore', 'Mysore', 'Mangalore', 'Hubli', 'Belgaum'],
-    'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Tiruchirappalli', 'Salem'],
+    'Tamil Nadu': [
+      'Chennai',
+      'Coimbatore',
+      'Madurai',
+      'Tiruchirappalli',
+      'Salem'
+    ],
     'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar'],
     'Rajasthan': ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Ajmer'],
-    'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Agra', 'Varanasi', 'Meerut', 'Noida'],
+    'Uttar Pradesh': [
+      'Lucknow',
+      'Kanpur',
+      'Agra',
+      'Varanasi',
+      'Meerut',
+      'Noida'
+    ],
     'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Asansol', 'Siliguri'],
     'Punjab': ['Chandigarh', 'Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala'],
     'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar'],
@@ -57,12 +102,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _loadUserAddress() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
+
     // Refresh user profile to get latest data
     await authProvider.refreshProfile();
-    
+
     final user = authProvider.currentUser;
-    
+
     if (user?.address != null) {
       final address = user!.address!;
       setState(() {
@@ -71,7 +116,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _selectedState = address.state;
         _pincodeController.text = address.pincode ?? '';
       });
-      
+
       // Debug print to check address data
       print('Loaded user address: ${address.fullAddress}');
       print('Street: ${address.street}');
@@ -88,7 +133,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() {
       _useRegisteredAddress = value ?? false;
     });
-    
+
     if (value == true) {
       await _loadUserAddress();
       // Force UI update after loading address
@@ -108,7 +153,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    if (!_useRegisteredAddress && (_selectedState == null || _selectedCity == null)) {
+    if (!_useRegisteredAddress &&
+        (_selectedState == null || _selectedCity == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select state and city')),
       );
@@ -125,76 +171,99 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       // Build medicines array with details
       final items = cart.items.values.toList();
-      
+
       // Build medicines array for API (only medicineId and quantity)
-      final medicines = items.map((item) => {
-        'medicineId': item.medicineId,
-        'quantity': item.quantity,
-      }).toList();
-      
+      final medicines = items
+          .map((item) => {
+                'medicineId': item.medicineId,
+                'quantity': item.quantity,
+              })
+          .toList();
+
       // Build description from cart items
-      final medicineList = items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
-      
+      final medicineList =
+          items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
+
       // Use registered address or form address
       String address;
       List<double> coordinates;
-      
+
       if (_useRegisteredAddress && user?.address != null) {
         final userAddress = user!.address!;
-        
+
         // Use the fullAddress method if available, otherwise build manually
         if (userAddress.fullAddress.isNotEmpty) {
           address = userAddress.fullAddress;
         } else {
           // Fallback to manual building with better defaults
-          final street = userAddress.street?.isNotEmpty == true ? userAddress.street! : 'Address not provided';
-          final city = userAddress.city?.isNotEmpty == true ? userAddress.city! : 'City not provided';
-          final state = userAddress.state?.isNotEmpty == true ? userAddress.state! : 'State not provided';
-          final pincode = userAddress.pincode?.isNotEmpty == true ? userAddress.pincode! : '000000';
-          
+          final street = userAddress.street?.isNotEmpty == true
+              ? userAddress.street!
+              : 'Address not provided';
+          final city = userAddress.city?.isNotEmpty == true
+              ? userAddress.city!
+              : 'City not provided';
+          final state = userAddress.state?.isNotEmpty == true
+              ? userAddress.state!
+              : 'State not provided';
+          final pincode = userAddress.pincode?.isNotEmpty == true
+              ? userAddress.pincode!
+              : '000000';
+
           address = '$street, $city, $state - $pincode';
         }
-        
+
         // Use user's location coordinates if available
         coordinates = user.location?.coordinates ?? [0.0, 0.0];
-        
+
         // Debug print
         print('Using registered address: $address');
       } else {
-        final street = _streetController.text.isNotEmpty ? _streetController.text : 'Street not provided';
-        final city = _selectedCity?.isNotEmpty == true ? _selectedCity! : 'City not provided';
-        final state = _selectedState?.isNotEmpty == true ? _selectedState! : 'State not provided';
-        final pincode = _pincodeController.text.isNotEmpty ? _pincodeController.text : '000000';
-        
+        final street = _streetController.text.isNotEmpty
+            ? _streetController.text
+            : 'Street not provided';
+        final city = _selectedCity?.isNotEmpty == true
+            ? _selectedCity!
+            : 'City not provided';
+        final state = _selectedState?.isNotEmpty == true
+            ? _selectedState!
+            : 'State not provided';
+        final pincode = _pincodeController.text.isNotEmpty
+            ? _pincodeController.text
+            : '000000';
+
         address = '$street, $city, $state - $pincode';
         // Default coordinates (will be updated by backend if needed)
         coordinates = [0.0, 0.0];
-        
+
         // Debug print
         print('Using form address: $address');
       }
 
       final orderData = {
         'serviceType': 'pharmacist',
-        'description': 'Medicine order: $medicineList. Total: ₹${cart.totalAmount.toStringAsFixed(2)}',
-        'medicines': medicines, // Send medicines array with medicineId and quantity
+        'description':
+            'Medicine order: $medicineList. Total: ₹${cart.totalAmount.toStringAsFixed(2)}',
+        'medicines':
+            medicines, // Send medicines array with medicineId and quantity
         'address': address,
         'coordinates': coordinates,
         'urgency': 'medium',
         'isEmergency': false,
-        'notes': _notesController.text.isEmpty 
-          ? 'Payment method: $_paymentMethod. ${cart.totalQuantity} items ordered.'
-          : _notesController.text,
+        'notes': _notesController.text.isEmpty
+            ? 'Payment method: $_paymentMethod. ${cart.totalQuantity} items ordered.'
+            : _notesController.text,
       };
 
-      final response = await _apiClient.patient.createRealtimeBooking(orderData);
+      final response =
+          await _apiClient.patient.createRealtimeBooking(orderData);
 
       cart.clear();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Order placed successfully! Nearby pharmacists will be notified.'),
+            content: Text(
+                'Order placed successfully! Nearby pharmacists will be notified.'),
             backgroundColor: Colors.green,
             duration: Duration(seconds: 3),
           ),
@@ -338,7 +407,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         onChanged: (value) {
                           setState(() {
                             _selectedState = value;
-                            _selectedCity = null; // Reset city when state changes
+                            _selectedCity =
+                                null; // Reset city when state changes
                           });
                         },
                         validator: (value) {
@@ -358,7 +428,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.location_on),
                         ),
-                        items: _selectedState != null && _citiesByState.containsKey(_selectedState)
+                        items: _selectedState != null &&
+                                _citiesByState.containsKey(_selectedState)
                             ? _citiesByState[_selectedState]!.map((city) {
                                 return DropdownMenuItem(
                                   value: city,
@@ -414,7 +485,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 children: [
                                   const Row(
                                     children: [
-                                      Icon(Icons.check_circle, color: Colors.green),
+                                      Icon(Icons.check_circle,
+                                          color: Colors.green),
                                       SizedBox(width: 8),
                                       Text(
                                         'Using Registered Address',
@@ -516,12 +588,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 width: 20,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
                                 ),
                               )
                             : const Text(
                                 'Place Order',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),

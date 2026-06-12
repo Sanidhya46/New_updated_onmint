@@ -6,7 +6,7 @@ class CartItem {
   final double price;
   int quantity;
   final String? imageUrl;
-  
+
   CartItem({
     required this.medicineId,
     required this.name,
@@ -14,7 +14,7 @@ class CartItem {
     this.quantity = 1,
     this.imageUrl,
   });
-  
+
   double get totalPrice => price * quantity;
 }
 
@@ -22,13 +22,13 @@ class CartService with ChangeNotifier {
   static final CartService _instance = CartService._internal();
   factory CartService() => _instance;
   CartService._internal();
-  
+
   final Map<String, CartItem> _items = {};
-  
+
   Map<String, CartItem> get items => {..._items};
-  
+
   int get itemCount => _items.length;
-  
+
   int get totalQuantity {
     int total = 0;
     _items.forEach((key, item) {
@@ -36,7 +36,7 @@ class CartService with ChangeNotifier {
     });
     return total;
   }
-  
+
   double get totalAmount {
     double total = 0.0;
     _items.forEach((key, item) {
@@ -44,7 +44,7 @@ class CartService with ChangeNotifier {
     });
     return total;
   }
-  
+
   void addItem(String medicineId, String name, double price, String? imageUrl) {
     if (_items.containsKey(medicineId)) {
       _items.update(
@@ -70,12 +70,12 @@ class CartService with ChangeNotifier {
     }
     notifyListeners();
   }
-  
+
   void removeItem(String medicineId) {
     _items.remove(medicineId);
     notifyListeners();
   }
-  
+
   void updateQuantity(String medicineId, int quantity) {
     if (_items.containsKey(medicineId)) {
       if (quantity <= 0) {
@@ -95,17 +95,19 @@ class CartService with ChangeNotifier {
       notifyListeners();
     }
   }
-  
+
   void clear() {
     _items.clear();
     notifyListeners();
   }
-  
+
   List<Map<String, dynamic>> getOrderItems() {
-    return _items.values.map((item) => {
-      'medicine': item.medicineId,
-      'quantity': item.quantity,
-      'price': item.price,
-    }).toList();
+    return _items.values
+        .map((item) => {
+              'medicine': item.medicineId,
+              'quantity': item.quantity,
+              'price': item.price,
+            })
+        .toList();
   }
 }

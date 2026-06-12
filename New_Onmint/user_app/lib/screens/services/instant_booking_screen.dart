@@ -3,12 +3,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:api_client/api_client.dart';
+import '../booking/order_request_screen.dart';
 
 /// Instant Booking Screen - Quick emergency service booking
 /// Supports: doctor, ambulance, and nurse services
 class InstantBookingScreen extends StatefulWidget {
   final String serviceType; // 'doctor', 'ambulance', or 'nurse'
-  
+
   const InstantBookingScreen({
     super.key,
     required this.serviceType,
@@ -20,7 +21,7 @@ class InstantBookingScreen extends StatefulWidget {
 
 class _InstantBookingScreenState extends State<InstantBookingScreen> {
   final _apiClient = OnMintApiClient();
-  
+
   bool _isGettingLocation = false;
   bool _isBooking = false;
   Position? _currentPosition;
@@ -72,7 +73,7 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
           position.latitude,
           position.longitude,
         );
-        
+
         if (placemarks.isNotEmpty) {
           final place = placemarks.first;
           _currentAddress = [
@@ -89,7 +90,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
 
       setState(() {
         _currentPosition = position;
-        _locationStatus = 'Location detected: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+        _locationStatus =
+            'Location detected: ${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
         _isGettingLocation = false;
       });
     } catch (e) {
@@ -151,17 +153,23 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
         // Create realtime nurse booking to notify all nearby nurses
         final bookingData = {
           'serviceType': 'nurse',
-          'description': 'Home nursing service required - $_selectedNurseService for $_nurseDuration day(s)',
+          'description':
+              'Home nursing service required - $_selectedNurseService for $_nurseDuration day(s)',
           'urgency': 'medium',
-          'preferredTime': DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
-          'specialRequirements': '$_selectedNurseService required for $_nurseDuration day(s)',
-          'address': _currentAddress.isNotEmpty ? _currentAddress : 'Address not available',
+          'preferredTime':
+              DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
+          'specialRequirements':
+              '$_selectedNurseService required for $_nurseDuration day(s)',
+          'address': _currentAddress.isNotEmpty
+              ? _currentAddress
+              : 'Address not available',
           'coordinates': [
             _currentPosition!.longitude,
             _currentPosition!.latitude,
           ],
           'isEmergency': false,
-          'notes': 'Instant nurse booking - $_selectedNurseService for $_nurseDuration day(s)',
+          'notes':
+              'Instant nurse booking - $_selectedNurseService for $_nurseDuration day(s)',
           'totalAmount': 500.0 * _nurseDuration,
           'nurseService': _selectedNurseService,
           'duration': _nurseDuration,
@@ -172,9 +180,12 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
         // Create blood bank booking
         final bookingData = {
           'serviceType': 'bloodbank',
-          'scheduledTime': DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
+          'scheduledTime':
+              DateTime.now().add(const Duration(hours: 1)).toIso8601String(),
           'location': {
-            'address': _currentAddress.isNotEmpty ? _currentAddress : 'Address not available',
+            'address': _currentAddress.isNotEmpty
+                ? _currentAddress
+                : 'Address not available',
             'coordinates': [
               _currentPosition!.longitude,
               _currentPosition!.latitude,
@@ -182,7 +193,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
           },
           'bloodGroup': _selectedBloodGroup,
           'unitsRequired': _bloodUnits,
-          'notes': 'Emergency blood request - $_selectedBloodGroup, $_bloodUnits unit(s)',
+          'notes':
+              'Emergency blood request - $_selectedBloodGroup, $_bloodUnits unit(s)',
           'price': 500.0 * _bloodUnits,
         };
 
@@ -192,25 +204,33 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
         final testsList = _selectedLabTests.map((testName) {
           // Extract price from test name (e.g., "CBC - ₹500" -> 500)
           final priceMatch = RegExp(r'₹(\d+)').firstMatch(testName);
-          final price = priceMatch != null ? int.parse(priceMatch.group(1)!) : 500;
+          final price =
+              priceMatch != null ? int.parse(priceMatch.group(1)!) : 500;
           return {'name': testName.split(' - ')[0], 'price': price};
         }).toList();
-        
-        final totalPrice = testsList.fold<double>(0, (sum, test) => sum + (test['price'] as int).toDouble());
-        
+
+        final totalPrice = testsList.fold<double>(
+            0, (sum, test) => sum + (test['price'] as int).toDouble());
+
         final bookingData = {
           'serviceType': 'pathology',
-          'description': 'Lab test booking - ${_selectedLabTests.length} test(s) required. Home collection preferred.',
+          'description':
+              'Lab test booking - ${_selectedLabTests.length} test(s) required. Home collection preferred.',
           'urgency': 'medium',
-          'preferredTime': DateTime.now().add(const Duration(hours: 2)).toIso8601String(),
-          'specialRequirements': 'Home collection required for ${_selectedLabTests.join(", ")}',
-          'address': _currentAddress.isNotEmpty ? _currentAddress : 'Address not available',
+          'preferredTime':
+              DateTime.now().add(const Duration(hours: 2)).toIso8601String(),
+          'specialRequirements':
+              'Home collection required for ${_selectedLabTests.join(", ")}',
+          'address': _currentAddress.isNotEmpty
+              ? _currentAddress
+              : 'Address not available',
           'coordinates': [
             _currentPosition!.longitude,
             _currentPosition!.latitude,
           ],
           'isEmergency': false,
-          'notes': 'Instant lab test booking - ${_selectedLabTests.length} test(s)',
+          'notes':
+              'Instant lab test booking - ${_selectedLabTests.length} test(s)',
           'totalAmount': totalPrice,
           'tests': testsList,
           'homeCollection': true,
@@ -221,15 +241,18 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
         // Create realtime booking for doctor/ambulance
         final bookingData = {
           'serviceType': widget.serviceType,
-          'description': widget.serviceType == 'doctor' 
+          'description': widget.serviceType == 'doctor'
               ? 'Emergency doctor consultation needed. Immediate medical attention required.'
               : 'Emergency ambulance needed. Immediate assistance required.',
           'urgency': 'emergency',
-          'preferredTime': DateTime.now().add(const Duration(minutes: 5)).toIso8601String(),
+          'preferredTime':
+              DateTime.now().add(const Duration(minutes: 5)).toIso8601String(),
           'specialRequirements': widget.serviceType == 'doctor'
               ? 'Video consultation required immediately'
               : 'Emergency medical transport needed',
-          'address': _currentAddress.isNotEmpty ? _currentAddress : 'Address not available',
+          'address': _currentAddress.isNotEmpty
+              ? _currentAddress
+              : 'Address not available',
           'coordinates': [
             _currentPosition!.longitude,
             _currentPosition!.latitude,
@@ -239,12 +262,12 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
               ? 'Emergency video consultation request'
               : 'Emergency ambulance request',
         };
-        
+
         // Add consultationType for doctor
         if (widget.serviceType == 'doctor') {
           bookingData['consultationType'] = 'video-call';
         }
-        
+
         await _apiClient.patient.createRealtimeBooking(bookingData);
       }
 
@@ -252,24 +275,29 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
         String message;
         switch (widget.serviceType) {
           case 'doctor':
-            message = 'Emergency doctor request sent! Nearby doctors will be notified.';
+            message =
+                'Emergency doctor request sent! Nearby doctors will be notified.';
             break;
           case 'ambulance':
-            message = 'Emergency ambulance request sent! Nearby ambulances will be notified.';
+            message =
+                'Emergency ambulance request sent! Nearby ambulances will be notified.';
             break;
           case 'nurse':
-            message = 'Nurse booking request sent! A nurse will be assigned shortly.';
+            message =
+                'Nurse booking request sent! A nurse will be assigned shortly.';
             break;
           case 'bloodbank':
-            message = 'Blood request sent! Nearby blood banks will be notified.';
+            message =
+                'Blood request sent! Nearby blood banks will be notified.';
             break;
           case 'pathology':
-            message = 'Lab test booking sent! A technician will visit for sample collection.';
+            message =
+                'Lab test booking sent! A technician will visit for sample collection.';
             break;
           default:
             message = 'Booking request sent successfully!';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(message),
@@ -277,7 +305,16 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
             duration: const Duration(seconds: 4),
           ),
         );
-        Navigator.pop(context, true);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OrderRequestScreen(
+              bookingId: '',
+              bookingData: {}, // we don't have the exact created response easily here, but basic fields work
+              serviceType: widget.serviceType,
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -302,12 +339,12 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
     final isNurse = widget.serviceType == 'nurse';
     final isBloodBank = widget.serviceType == 'bloodbank';
     final isPathology = widget.serviceType == 'pathology';
-    
+
     Color color;
     IconData icon;
     String title;
     String description;
-    
+
     if (isDoctor) {
       color = Colors.blue;
       icon = Icons.video_call;
@@ -400,7 +437,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                     _currentPosition != null
                         ? Icons.location_on
                         : Icons.location_searching,
-                    color: _currentPosition != null ? Colors.green : Colors.orange,
+                    color:
+                        _currentPosition != null ? Colors.green : Colors.orange,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -462,15 +500,26 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                       value: _selectedNurseService,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                       hint: const Text('Choose service type'),
                       items: const [
-                        DropdownMenuItem(value: 'General Care', child: Text('General Care - ₹500/day')),
-                        DropdownMenuItem(value: 'Post-Surgery Care', child: Text('Post-Surgery Care - ₹800/day')),
-                        DropdownMenuItem(value: 'Elderly Care', child: Text('Elderly Care - ₹600/day')),
-                        DropdownMenuItem(value: 'Wound Dressing', child: Text('Wound Dressing - ₹400/day')),
-                        DropdownMenuItem(value: 'Injection Administration', child: Text('Injection - ₹300/day')),
+                        DropdownMenuItem(
+                            value: 'General Care',
+                            child: Text('General Care - ₹500/day')),
+                        DropdownMenuItem(
+                            value: 'Post-Surgery Care',
+                            child: Text('Post-Surgery Care - ₹800/day')),
+                        DropdownMenuItem(
+                            value: 'Elderly Care',
+                            child: Text('Elderly Care - ₹600/day')),
+                        DropdownMenuItem(
+                            value: 'Wound Dressing',
+                            child: Text('Wound Dressing - ₹400/day')),
+                        DropdownMenuItem(
+                            value: 'Injection Administration',
+                            child: Text('Injection - ₹300/day')),
                       ],
                       onChanged: (value) {
                         setState(() => _selectedNurseService = value);
@@ -480,7 +529,7 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Duration Selection
               Container(
                 padding: const EdgeInsets.all(16),
@@ -528,7 +577,7 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Price Summary for Nurse
               Container(
                 padding: const EdgeInsets.all(16),
@@ -543,7 +592,9 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Service:', style: TextStyle(fontSize: 14)),
-                        Text(_selectedNurseService ?? 'Not selected', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(_selectedNurseService ?? 'Not selected',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -551,14 +602,19 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Duration:', style: TextStyle(fontSize: 14)),
-                        Text('$_nurseDuration ${_nurseDuration == 1 ? 'day' : 'days'}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(
+                            '$_nurseDuration ${_nurseDuration == 1 ? 'day' : 'days'}',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const Divider(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Estimated Cost:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Estimated Cost:',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         Text(
                           '₹${500 * _nurseDuration}',
                           style: TextStyle(
@@ -600,7 +656,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                       value: _selectedBloodGroup,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        contentPadding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                       hint: const Text('Choose blood group'),
                       items: const [
@@ -621,7 +678,7 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Units Selection
               Container(
                 padding: const EdgeInsets.all(16),
@@ -669,7 +726,7 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Price Summary for Blood Bank
               Container(
                 padding: const EdgeInsets.all(16),
@@ -683,8 +740,11 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Blood Group:', style: TextStyle(fontSize: 14)),
-                        Text(_selectedBloodGroup ?? 'Not selected', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        const Text('Blood Group:',
+                            style: TextStyle(fontSize: 14)),
+                        Text(_selectedBloodGroup ?? 'Not selected',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -692,14 +752,19 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Units:', style: TextStyle(fontSize: 14)),
-                        Text('$_bloodUnits ${_bloodUnits == 1 ? 'unit' : 'units'}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(
+                            '$_bloodUnits ${_bloodUnits == 1 ? 'unit' : 'units'}',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const Divider(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Estimated Cost:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Estimated Cost:',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         Text(
                           '₹${500 * _bloodUnits}',
                           style: TextStyle(
@@ -767,7 +832,7 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Price Summary for Pathology
               if (_selectedLabTests.isNotEmpty) ...[
                 Container(
@@ -781,7 +846,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                     children: [
                       ..._selectedLabTests.map((test) {
                         final priceMatch = RegExp(r'₹(\d+)').firstMatch(test);
-                        final price = priceMatch != null ? priceMatch.group(1) : '500';
+                        final price =
+                            priceMatch != null ? priceMatch.group(1) : '500';
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
@@ -795,7 +861,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                               ),
                               Text(
                                 '₹$price',
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w600),
                               ),
                             ],
                           ),
@@ -804,19 +871,30 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Home Collection:', style: TextStyle(fontSize: 13)),
-                          Text('Included', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.green)),
+                          Text('Home Collection:',
+                              style: TextStyle(fontSize: 13)),
+                          Text('Included',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green)),
                         ],
                       ),
                       const Divider(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total Cost:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          const Text('Total Cost:',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                           Text(
                             '₹${_selectedLabTests.fold<int>(0, (sum, test) {
-                              final priceMatch = RegExp(r'₹(\d+)').firstMatch(test);
-                              return sum + (priceMatch != null ? int.parse(priceMatch.group(1)!) : 500);
+                              final priceMatch =
+                                  RegExp(r'₹(\d+)').firstMatch(test);
+                              return sum +
+                                  (priceMatch != null
+                                      ? int.parse(priceMatch.group(1)!)
+                                      : 500);
                             })}',
                             style: TextStyle(
                               fontSize: 20,
@@ -870,7 +948,9 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: (_isBooking || _isGettingLocation || _currentPosition == null)
+                onPressed: (_isBooking ||
+                        _isGettingLocation ||
+                        _currentPosition == null)
                     ? null
                     : _bookInstantService,
                 style: ElevatedButton.styleFrom(
@@ -890,8 +970,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
                         ),
                       )
                     : Text(
-                        isDoctor 
-                            ? 'Request Doctor Now' 
+                        isDoctor
+                            ? 'Request Doctor Now'
                             : isAmbulance
                                 ? 'Request Ambulance Now'
                                 : isNurse

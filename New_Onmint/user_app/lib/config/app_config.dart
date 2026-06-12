@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 class AppConfig {
   static const String appName = 'OnMint';
   static const String apiBaseUrl = 'http://localhost:5000/api/v1';
-  
+
   // Development mode
   static const bool developmentMode = true;
   static const bool forceLogoutOnStart = false;
-  
+
   // Theme
   static ThemeData get lightTheme {
     return ThemeData(
@@ -42,7 +42,7 @@ class AppConfig {
       ),
     );
   }
-  
+
   // Service Types
   static const List<String> serviceTypes = [
     'doctor',
@@ -52,7 +52,7 @@ class AppConfig {
     'bloodbank',
     'pathology',
   ];
-  
+
   // Blood Groups
   static const List<String> bloodGroups = [
     'A+',

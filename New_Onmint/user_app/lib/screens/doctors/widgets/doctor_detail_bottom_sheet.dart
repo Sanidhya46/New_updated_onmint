@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-void showDoctorDetailBottomSheet(BuildContext context, Map<String, dynamic> doctor) {
+void showDoctorDetailBottomSheet(
+    BuildContext context, Map<String, dynamic> doctor) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -12,7 +13,8 @@ void showDoctorDetailBottomSheet(BuildContext context, Map<String, dynamic> doct
 class _DoctorDetailBottomSheetContent extends StatelessWidget {
   final Map<String, dynamic> doctor;
 
-  const _DoctorDetailBottomSheetContent({Key? key, required this.doctor}) : super(key: key);
+  const _DoctorDetailBottomSheetContent({Key? key, required this.doctor})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +40,7 @@ class _DoctorDetailBottomSheetContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             // Top Section (Avatar + Name)
             Row(
               children: [
@@ -78,9 +80,9 @@ class _DoctorDetailBottomSheetContent extends StatelessWidget {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Experience
             const Text(
               'EXPERIENCE',
@@ -100,9 +102,9 @@ class _DoctorDetailBottomSheetContent extends StatelessWidget {
               '${doctor['totalConsultations'] ?? 0} online consultations completed',
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Qualifications
             const Text(
               'QUALIFICATION',
@@ -115,14 +117,15 @@ class _DoctorDetailBottomSheetContent extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              (doctor['qualifications'] != null && doctor['qualifications'].isNotEmpty)
+              (doctor['qualifications'] != null &&
+                      doctor['qualifications'].isNotEmpty)
                   ? (doctor['qualifications'] as List).join(', ')
                   : 'Not provided',
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Badges
             const Text(
               'DOCTOR BADGES',
@@ -170,7 +173,7 @@ class _DoctorDetailBottomSheetContent extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 32),
           ],
         ),

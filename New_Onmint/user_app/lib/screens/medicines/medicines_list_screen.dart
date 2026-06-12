@@ -14,7 +14,7 @@ class MedicinesListScreen extends StatefulWidget {
 class _MedicinesListScreenState extends State<MedicinesListScreen> {
   final _searchController = TextEditingController();
   final _apiClient = OnMintApiClient();
-  
+
   List<Map<String, dynamic>> _medicines = [];
   List<Map<String, dynamic>> _filteredMedicines = [];
   bool _isLoading = true;
@@ -25,14 +25,15 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _category = args?['category'];
     _loadMedicines();
   }
 
   Future<void> _loadMedicines() async {
     setState(() => _isLoading = true);
-    
+
     try {
       await _apiClient.initialize();
       final response = await _apiClient.patient.searchMedicines(
@@ -40,7 +41,7 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
         category: _category,
         limit: 50,
       );
-      
+
       setState(() {
         _medicines = List<Map<String, dynamic>>.from(response['data'] ?? []);
         _applyFilters();
@@ -58,25 +59,26 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
 
   void _applyFilters() {
     _filteredMedicines = List.from(_medicines);
-    
+
     // Apply sorting
     switch (_sortBy) {
       case 'price_low':
-        _filteredMedicines.sort((a, b) => 
-          ((a['price'] ?? 0) as num).compareTo((b['price'] ?? 0) as num));
+        _filteredMedicines.sort((a, b) =>
+            ((a['price'] ?? 0) as num).compareTo((b['price'] ?? 0) as num));
         break;
       case 'price_high':
-        _filteredMedicines.sort((a, b) => 
-          ((b['price'] ?? 0) as num).compareTo((a['price'] ?? 0) as num));
+        _filteredMedicines.sort((a, b) =>
+            ((b['price'] ?? 0) as num).compareTo((a['price'] ?? 0) as num));
         break;
       case 'discount':
-        _filteredMedicines.sort((a, b) => 
-          ((b['discount'] ?? 0) as num).compareTo((a['discount'] ?? 0) as num));
+        _filteredMedicines.sort((a, b) => ((b['discount'] ?? 0) as num)
+            .compareTo((a['discount'] ?? 0) as num));
         break;
       case 'name':
       default:
-        _filteredMedicines.sort((a, b) => 
-          (a['name'] ?? '').toString().compareTo((b['name'] ?? '').toString()));
+        _filteredMedicines.sort((a, b) => (a['name'] ?? '')
+            .toString()
+            .compareTo((b['name'] ?? '').toString()));
         break;
     }
   }
@@ -106,7 +108,9 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
               ListTile(
                 leading: const Icon(Icons.sort_by_alpha),
                 title: const Text('Name (A-Z)'),
-                trailing: _sortBy == 'name' ? const Icon(Icons.check, color: AppColors.pharmacy) : null,
+                trailing: _sortBy == 'name'
+                    ? const Icon(Icons.check, color: AppColors.pharmacy)
+                    : null,
                 onTap: () {
                   setState(() {
                     _sortBy = 'name';
@@ -118,7 +122,9 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
               ListTile(
                 leading: const Icon(Icons.arrow_upward),
                 title: const Text('Price: Low to High'),
-                trailing: _sortBy == 'price_low' ? const Icon(Icons.check, color: AppColors.pharmacy) : null,
+                trailing: _sortBy == 'price_low'
+                    ? const Icon(Icons.check, color: AppColors.pharmacy)
+                    : null,
                 onTap: () {
                   setState(() {
                     _sortBy = 'price_low';
@@ -130,7 +136,9 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
               ListTile(
                 leading: const Icon(Icons.arrow_downward),
                 title: const Text('Price: High to Low'),
-                trailing: _sortBy == 'price_high' ? const Icon(Icons.check, color: AppColors.pharmacy) : null,
+                trailing: _sortBy == 'price_high'
+                    ? const Icon(Icons.check, color: AppColors.pharmacy)
+                    : null,
                 onTap: () {
                   setState(() {
                     _sortBy = 'price_high';
@@ -142,7 +150,9 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
               ListTile(
                 leading: const Icon(Icons.local_offer),
                 title: const Text('Discount: High to Low'),
-                trailing: _sortBy == 'discount' ? const Icon(Icons.check, color: AppColors.pharmacy) : null,
+                trailing: _sortBy == 'discount'
+                    ? const Icon(Icons.check, color: AppColors.pharmacy)
+                    : null,
                 onTap: () {
                   setState(() {
                     _sortBy = 'discount';
@@ -166,7 +176,7 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
       (medicine['price'] ?? 0).toDouble(),
       medicine['images']?[0],
     );
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('${medicine['name']} added to cart'),
@@ -261,7 +271,7 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
               onSubmitted: _searchMedicines,
             ),
           ),
-          
+
           // Medicines Grid
           Expanded(
             child: _isLoading
@@ -271,18 +281,21 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.medication_outlined, size: 80, color: Colors.grey[300]),
+                            Icon(Icons.medication_outlined,
+                                size: 80, color: Colors.grey[300]),
                             const SizedBox(height: 16),
                             Text(
                               'No medicines found',
-                              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey[600]),
                             ),
                           ],
                         ),
                       )
                     : GridView.builder(
                         padding: const EdgeInsets.all(16),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           childAspectRatio: 0.7,
                           crossAxisSpacing: 12,
@@ -307,9 +320,12 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
 
     // Get image URL - support both 'images' array and 'imageUrl' single field
     String? imageUrl;
-    if (medicine['images'] != null && medicine['images'] is List && (medicine['images'] as List).isNotEmpty) {
+    if (medicine['images'] != null &&
+        medicine['images'] is List &&
+        (medicine['images'] as List).isNotEmpty) {
       imageUrl = medicine['images'][0];
-    } else if (medicine['imageUrl'] != null && medicine['imageUrl'].toString().isNotEmpty) {
+    } else if (medicine['imageUrl'] != null &&
+        medicine['imageUrl'].toString().isNotEmpty) {
       imageUrl = medicine['imageUrl'];
     }
 
@@ -334,26 +350,31 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.pharmacy.withOpacity(0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(12)),
                 ),
                 child: imageUrl != null
                     ? ClipRRect(
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(12)),
                         child: Image.network(
                           imageUrl,
                           width: double.infinity,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return const Center(
-                              child: Icon(Icons.medication, size: 50, color: AppColors.pharmacy),
+                              child: Icon(Icons.medication,
+                                  size: 50, color: AppColors.pharmacy),
                             );
                           },
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Center(
                               child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                value: loadingProgress.expectedTotalBytes !=
+                                        null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
                                     : null,
                               ),
                             );
@@ -361,11 +382,12 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
                         ),
                       )
                     : const Center(
-                        child: Icon(Icons.medication, size: 50, color: AppColors.pharmacy),
+                        child: Icon(Icons.medication,
+                            size: 50, color: AppColors.pharmacy),
                       ),
               ),
             ),
-            
+
             // Medicine Details
             Expanded(
               flex: 2,
@@ -420,7 +442,8 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                        child: const Text('Add to Cart',
+                            style: TextStyle(fontSize: 12)),
                       ),
                     ),
                   ],

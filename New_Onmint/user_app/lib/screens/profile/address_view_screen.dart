@@ -26,7 +26,8 @@ class AddressViewScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20),
+          icon:
+              const Icon(Icons.arrow_back_ios, color: Colors.black87, size: 20),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
@@ -47,7 +48,8 @@ class AddressViewScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AddressesScreen()),
+                MaterialPageRoute(
+                    builder: (context) => const AddressesScreen()),
               );
             },
           ),
@@ -83,13 +85,17 @@ class AddressViewScreen extends StatelessWidget {
               _buildDetailRow(
                 icon: Icons.home_outlined,
                 label: 'House / Flat No.',
-                value: address?.street != null && address!.street!.isNotEmpty ? address.street! : 'Not Specified',
+                value: address?.street != null && address!.street!.isNotEmpty
+                    ? address.street!
+                    : 'Not Specified',
               ),
               _buildDivider(),
               _buildDetailRow(
                 icon: Icons.location_on_outlined,
                 label: 'Street / Area',
-                value: address?.street != null && address!.street!.isNotEmpty ? address.street! : 'Not Specified',
+                value: address?.street != null && address!.street!.isNotEmpty
+                    ? address.street!
+                    : 'Not Specified',
               ),
               _buildDivider(),
               _buildDetailRow(

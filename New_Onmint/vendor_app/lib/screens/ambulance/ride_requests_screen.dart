@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
+import 'package:ui_components/ui_components.dart';
 import 'ride_details_screen.dart';
 
-/// Ride requests list screen for ambulance drivers
+/// Ride requests list screen for ambulance drivers (matching Nurse UI)
 class RideRequestsScreen extends StatefulWidget {
   const RideRequestsScreen({super.key});
 
@@ -10,69 +11,87 @@ class RideRequestsScreen extends StatefulWidget {
   State<RideRequestsScreen> createState() => _RideRequestsScreenState();
 }
 
-class _RideRequestsScreenState extends State<RideRequestsScreen> {
+class _RideRequestsScreenState extends State<RideRequestsScreen>
+    with SingleTickerProviderStateMixin {
   final _apiClient = OnMintApiClient();
-  List<dynamic> _rides = [];
+  late TabController _tabController;
+
+  List<Map<String, dynamic>> _allBookings = [];
+  List<Map<String, dynamic>> _pendingBookings = [];
+  List<Map<String, dynamic>> _inProgressBookings = [];
+  List<Map<String, dynamic>> _completedBookings = [];
   bool _isLoading = true;
-  String _selectedStatus = 'all'; // Show all by default
 
   @override
   void initState() {
     super.initState();
-    _loadRides();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadBookings();
   }
 
-  Future<void> _loadRides() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadBookings() async {
+    if (_allBookings.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     try {
       await _apiClient.initialize();
-      
-      // Map frontend status to backend status
-      // Backend uses: requested, accepted, on_the_way, in_progress, completed
-      // Frontend uses: pending, confirmed, on-the-way, in-progress, completed
-      String? backendStatus;
-      switch (_selectedStatus) {
-        case 'all':
-          backendStatus = 'all'; // Pass 'all' to backend
-          break;
-        case 'pending':
-          backendStatus = 'requested'; // Backend uses 'requested' for pending
-          break;
-        case 'confirmed':
-          backendStatus = 'accepted'; // Backend uses 'accepted' for confirmed
-          break;
-        case 'on-the-way':
-          backendStatus = 'on_the_way'; // Backend uses underscore
-          break;
-        case 'in-progress':
-          backendStatus = 'in_progress'; // Backend uses underscore
-          break;
-        case 'completed':
-          backendStatus = 'completed';
-          break;
-        case 'cancelled':
-          backendStatus = 'cancelled';
-          break;
-        default:
-          backendStatus = null;
-      }
-      
+      // Fetch ambulance rides
       final data = await _apiClient.ambulance.getRideRequests(
-        status: backendStatus,
+        status: 'all',
         page: 1,
-        limit: 50,
+        limit: 100,
       );
-      
-      setState(() {
-        _rides = data['data'] ?? [];
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
+
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading rides: $e')),
-        );
+        setState(() {
+          final regularBookings = data['data'] ?? [];
+
+          final Map<String, Map<String, dynamic>> uniqueBookings = {};
+
+          if (regularBookings is List) {
+            for (var e in regularBookings) {
+              final b = Map<String, dynamic>.from(e);
+              final id = b['_id']?.toString() ?? b['id']?.toString() ?? '';
+              if (id.isNotEmpty) uniqueBookings[id] = b;
+            }
+          }
+
+          _allBookings = uniqueBookings.values.toList();
+            
+          // Sort newest first
+          _allBookings.sort((a, b) {
+            final timeA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime(0);
+            final timeB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime(0);
+            return timeB.compareTo(timeA);
+          });
+
+          _pendingBookings = [];
+          _inProgressBookings = [];
+          _completedBookings = [];
+
+          for (var b in _allBookings) {
+            final status = b['status']?.toString().toLowerCase() ?? '';
+            if (status == 'requested' || status == 'pending') {
+              _pendingBookings.add(b);
+            } else if (status == 'completed' || status == 'cancelled' || status == 'rejected') {
+              _completedBookings.add(b);
+            } else {
+              _inProgressBookings.add(b);
+            }
+          }
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ToastUtils.showError('Failed to load requests');
       }
     }
   }
@@ -80,279 +99,353 @@ class _RideRequestsScreenState extends State<RideRequestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Ride Requests'),
-        backgroundColor: Colors.red,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF152238),
+        centerTitle: true,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'My Booking',
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: 18),
+        ),
         actions: [
-          PopupMenuButton<String>(
-            initialValue: _selectedStatus,
-            icon: const Icon(Icons.filter_list),
-            onSelected: (value) {
-              setState(() => _selectedStatus = value);
-              _loadRides();
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'all', child: Text('🔵 All Rides')),
-              const PopupMenuItem(value: 'pending', child: Text('🟠 Pending')),
-              const PopupMenuItem(value: 'confirmed', child: Text('🟢 Confirmed')),
-              const PopupMenuItem(value: 'on-the-way', child: Text('🟣 On The Way')),
-              const PopupMenuItem(value: 'in-progress', child: Text('🔵 In Progress')),
-              const PopupMenuItem(value: 'completed', child: Text('✅ Completed')),
-              const PopupMenuItem(value: 'cancelled', child: Text('❌ Cancelled')),
-            ],
+          IconButton(
+            icon: const Icon(Icons.headset_mic_outlined),
+            onPressed: () {},
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF1565C0),
+          indicatorWeight: 3,
+          labelColor: const Color(0xFF1565C0),
+          unselectedLabelColor: Colors.grey.shade500,
+          labelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 13),
+          tabs: const [
+            Tab(text: 'All'),
+            Tab(text: 'In Progress'),
+            Tab(text: 'Completed'),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-              onRefresh: _loadRides,
-              child: _rides.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.local_shipping, size: 64, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No $_selectedStatus rides',
-                            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _rides.length,
-                      itemBuilder: (context, index) {
-                        final ride = _rides[index];
-                        return _buildRideCard(ride);
-                      },
+              onRefresh: _loadBookings,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildAllTab(),
+                        _buildList(_inProgressBookings, 'In Progress'),
+                        _buildList(_completedBookings, 'Completed'),
+                      ],
                     ),
+                  ),
+                  _buildBottomButton(),
+                ],
+              ),
             ),
     );
   }
 
-  String _getPatientName(Map<String, dynamic> patient) {
-    if (patient['firstName'] != null || patient['lastName'] != null) {
-      return '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim();
+  Widget _buildAllTab() {
+    if (_allBookings.isEmpty) {
+      return const Center(child: Text('No requests found.', style: TextStyle(color: Colors.grey)));
     }
-    return patient['fullName'] ?? patient['name'] ?? 'Unknown Patient';
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        if (_pendingBookings.isNotEmpty) _buildSectionHeader('Pending', _pendingBookings.length, Colors.orange),
+        ..._pendingBookings.map((b) => _buildBookingCard(b)),
+        if (_inProgressBookings.isNotEmpty) _buildSectionHeader('In Progress', _inProgressBookings.length, const Color(0xFF1565C0)),
+        ..._inProgressBookings.map((b) => _buildBookingCard(b)),
+        if (_completedBookings.isNotEmpty) _buildSectionHeader('Completed', _completedBookings.length, Colors.green),
+        ..._completedBookings.map((b) => _buildBookingCard(b)),
+      ],
+    );
   }
 
-  Widget _buildRideCard(Map<String, dynamic> ride) {
-    final patient = ride['patient'] ?? {};
-    final createdAt = DateTime.parse(ride['createdAt']);
-    final status = ride['status'] ?? 'requested';
-    final isEmergency = ride['isEmergency'] ?? false;
-    
-    // Map backend status to display status
-    Color statusColor;
-    String statusLabel;
-    switch (status) {
-      case 'requested': // Backend uses 'requested' for pending
-        statusColor = Colors.orange;
-        statusLabel = 'Pending';
-        break;
-      case 'accepted': // Backend uses 'accepted' for confirmed
-        statusColor = Colors.blue;
-        statusLabel = 'Confirmed';
-        break;
-      case 'on-the-way':
-      case 'on_the_way': // Backend uses underscore
-        statusColor = Colors.purple;
-        statusLabel = 'On The Way';
-        break;
-      case 'in-progress':
-      case 'in_progress': // Backend uses underscore
-        statusColor = Colors.teal;
-        statusLabel = 'In Progress';
-        break;
-      case 'completed':
-        statusColor = Colors.green;
-        statusLabel = 'Completed';
-        break;
-      case 'cancelled':
-        statusColor = Colors.red;
-        statusLabel = 'Cancelled';
-        break;
-      default:
-        statusColor = Colors.grey;
-        statusLabel = status;
+  Widget _buildList(List<Map<String, dynamic>> list, String type) {
+    if (list.isEmpty) {
+      return Center(child: Text('No $type requests.', style: const TextStyle(color: Colors.grey)));
     }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: list.length,
+      itemBuilder: (context, index) => _buildBookingCard(list[index]),
+    );
+  }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RideDetailsScreen(
-                rideId: ride['_id'],
+  Widget _buildSectionHeader(String title, int count, Color badgeColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 8),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF152238),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: badgeColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              count.toString(),
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: badgeColor,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBookingCard(Map<String, dynamic> request) {
+    final patientData = request['patient'] ?? request['patientDetails'] ?? {};
+    String pName = 'Patient';
+    if (patientData is Map) {
+      pName = patientData['fullName'] ?? '${patientData['firstName'] ?? ''} ${patientData['lastName'] ?? ''}'.trim();
+    }
+    if (pName.isEmpty) pName = 'Patient';
+    
+    final patientPhoto = (patientData is Map) ? patientData['profilePicture']?.toString() ?? '' : '';
+    final age = (patientData is Map) ? patientData['age'] ?? '35' : '35';
+    final gender = (patientData is Map) ? patientData['gender'] ?? 'Male' : 'Male';
+    
+    final address = request['location']?['address'] ?? 'Not specified';
+    final statusRaw = request['status']?.toString().toLowerCase() ?? '';
+    final bookingId = request['_id']?.toString() ?? request['id']?.toString() ?? '';
+
+    Color statusColor;
+    String statusLabel;
+    bool isCompleted = false;
+
+    if (statusRaw == 'requested' || statusRaw == 'pending') {
+      statusColor = Colors.orange;
+      statusLabel = 'Pending';
+    } else if (statusRaw == 'completed') {
+      statusColor = Colors.green;
+      statusLabel = 'Completed';
+      isCompleted = true;
+    } else if (statusRaw == 'cancelled' || statusRaw == 'rejected') {
+      statusColor = Colors.red;
+      statusLabel = 'Cancelled';
+      isCompleted = true;
+    } else {
+      statusColor = const Color(0xFF1565C0);
+      statusLabel = 'In Progress';
+    }
+
+    String completedDateStr = '';
+    if (isCompleted && request['updatedAt'] != null) {
+      final dt = DateTime.tryParse(request['updatedAt'].toString());
+      if (dt != null) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        completedDateStr = '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () async {
+          // For ambulance, we use RideDetailsScreen for both pending and active
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => RideDetailsScreen(rideId: bookingId)),
           );
           if (result == true) {
-            _loadRides();
+            _loadBookings();
           }
         },
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isEmergency ? Colors.red.shade50 : Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
+              // Avatar
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.blue.shade50,
+                backgroundImage: patientPhoto.isNotEmpty 
+                    ? NetworkImage(patientPhoto) 
+                    : AssetImage(gender.toString().toLowerCase() == 'female' 
+                        ? 'assets/images/female_profile.png' 
+                        : 'assets/images/male_profile.png') as ImageProvider,
+              ),
+              const SizedBox(width: 12),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      pName,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF152238),
+                        height: 1.1,
+                      ),
                     ),
-                    child: Icon(
-                      isEmergency ? Icons.emergency : Icons.local_shipping,
-                      color: Colors.red,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 4),
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                _getPatientName(patient),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            if (isEmergency) ...[
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'EMERGENCY',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
+                        const Icon(Icons.person_outline, size: 12, color: Colors.grey),
+                        const SizedBox(width: 2),
                         Text(
-                          patient['phone'] ?? '',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          '$age Years',
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(gender.toString().toLowerCase() == 'female' ? Icons.female : Icons.male, size: 12, color: Colors.grey),
+                        const SizedBox(width: 2),
+                        Text(
+                          gender.toString(),
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      statusLabel.toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      ride['location']?['address'] ??
-                      ride['pickupLocation']?['address'] ??
-                      'Location not available',
-                      style: TextStyle(color: Colors.grey[600]),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${createdAt.hour}:${createdAt.minute.toString().padLeft(2, '0')}',
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  const Spacer(),
-                  if (ride['price'] != null || ride['totalAmount'] != null)
-                    Text(
-                      '₹${ride['price'] ?? ride['totalAmount'] ?? 0}',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                ],
-              ),
-              // Show tap to view hint for pending requests
-              if (status == 'requested') ...[
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red.shade200),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.touch_app, size: 16, color: Colors.red),
-                      SizedBox(width: 6),
-                      Text(
-                        'Tap to Accept or Reject',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
+                    if (address.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 12, color: Colors.grey),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              address,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
+                  ],
                 ),
-              ],
+              ),
+              const SizedBox(width: 8),
+              // Right Side (Status + Chevron)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusLabel,
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 10,
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      if (isCompleted && completedDateStr.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Completed on\n$completedDateStr',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right, color: Colors.black54, size: 18),
+                ],
+              ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomButton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: () {
+              _tabController.animateTo(0);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE8F0FE),
+              foregroundColor: const Color(0xFF1565C0),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'View All Bookings',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
           ),
         ),
       ),

@@ -1,7 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:intl/intl.dart';
 import '../bookings/booking_details_screen.dart';
+import '../booking/order_request_screen.dart';
+import '../booking/order_detail_file.dart';
+import '../booking/user_unified_tracking_screen.dart';
+import '../booking/coming_soon_screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -12,77 +17,179 @@ class MyBookingsScreen extends StatefulWidget {
 
 class _MyBookingsScreenState extends State<MyBookingsScreen> {
   final PatientService _patientService = PatientService();
-  
+
   List<Map<String, dynamic>> _myBookings = [];
   List<Map<String, dynamic>> _medicineOrders = [];
   bool _isLoading = false;
   int _selectedTabIndex = 0; // 0: Medicine Orders, 1: Bookings
+  int _page = 1;
+  final int _limit = 10;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+  final ScrollController _scrollController = ScrollController();
+
+  StreamSubscription? _statusSubscription;
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _loadData(refresh: true);
+    _scrollController.addListener(_onScroll);
+    _setupSockets();
+  }
+
+  void _setupSockets() {
+    _statusSubscription = SocketService().statusUpdates.listen((_) {
+      if (mounted) _loadData(refresh: true);
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _statusSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoading && !_isLoadingMore && _hasMore) {
+        _loadMoreData();
+      }
+    }
   }
 
   int _getStatusRank(String status) {
     status = status.toLowerCase();
     if (['requested', 'pending', 'waiting for pharmacist'].contains(status)) return 1;
-    if (['accepted', 'in_progress', 'processing'].contains(status)) return 2;
-    if (['on_the_way', 'shipped'].contains(status)) return 3;
-    if (['completed', 'delivered', 'confirmed'].contains(status)) return 4;
+    if (['accepted', 'confirmed'].contains(status)) return 2;
+    if (['in_progress', 'processing', 'on_the_way', 'shipped'].contains(status)) return 3;
+    if (['completed', 'delivered'].contains(status)) return 4;
     return 5; // cancelled, expired, etc.
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({bool refresh = false}) async {
     if (!mounted) return;
-    setState(() => _isLoading = true);
+    if (refresh) {
+      _page = 1;
+      _hasMore = true;
+      setState(() => _isLoading = true);
+    } else {
+      setState(() => _isLoading = true);
+    }
 
     try {
-      final bookingsData = await _patientService.getBookings(page: 1, limit: 100);
-      final medicinesData = await _patientService.getMedicineOrders(page: 1, limit: 100);
-      
+      final bookingsData =
+          await _patientService.getBookings(page: _page, limit: _limit);
+      final medicinesData =
+          await _patientService.getMedicineOrders(page: _page, limit: _limit);
+
       var filteredBookings = bookingsData.where((b) {
         final type = b['serviceType']?.toString().toLowerCase() ?? '';
-        return type != 'pharmacist' && type != 'medicine';
+        final status = b['status']?.toString().toLowerCase() ?? '';
+
+        if (type == 'pharmacist' || type == 'medicine' || status == 'expired' || status == 'cancelled') return false;
+        return true;
       }).toList();
 
-      var medicines = medicinesData;
+      var medicines = medicinesData.where((m) {
+        final status = m['status']?.toString().toLowerCase() ?? '';
+        if (status == 'expired' || status == 'cancelled') return false;
+        return true;
+      }).toList();
 
-      // Sort Bookings: Status first (active -> completed), then Most recent Date
       filteredBookings.sort((a, b) {
         final rankA = _getStatusRank(a['status']?.toString() ?? '');
         final rankB = _getStatusRank(b['status']?.toString() ?? '');
         if (rankA != rankB) return rankA.compareTo(rankB);
-        
         final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
         final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
-        return dateB.compareTo(dateA); // descending
+        return dateB.compareTo(dateA);
       });
 
-      // Sort Medicines: Same logic
       medicines.sort((a, b) {
         final rankA = _getStatusRank(a['status']?.toString() ?? '');
         final rankB = _getStatusRank(b['status']?.toString() ?? '');
         if (rankA != rankB) return rankA.compareTo(rankB);
-        
         final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
         final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
-        return dateB.compareTo(dateA); // descending
+        return dateB.compareTo(dateA);
       });
 
       if (mounted) {
         setState(() {
-          _myBookings = filteredBookings;
-          _medicineOrders = medicines;
+          if (refresh) {
+            _myBookings = filteredBookings;
+            _medicineOrders = medicines;
+          } else {
+            _myBookings.addAll(filteredBookings);
+            _medicineOrders.addAll(medicines);
+          }
+          _hasMore = bookingsData.length == _limit || medicinesData.length == _limit;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading data: $e'), backgroundColor: Colors.red),
-        );
+      }
+    }
+  }
+
+  Future<void> _loadMoreData() async {
+    if (!mounted) return;
+    setState(() => _isLoadingMore = true);
+    _page++;
+
+    try {
+      final bookingsData = await _patientService.getBookings(page: _page, limit: _limit);
+      final medicinesData = await _patientService.getMedicineOrders(page: _page, limit: _limit);
+
+      var filteredBookings = bookingsData.where((b) {
+        final type = b['serviceType']?.toString().toLowerCase() ?? '';
+        final status = b['status']?.toString().toLowerCase() ?? '';
+        if (type == 'pharmacist' || type == 'medicine' || status == 'expired' || status == 'cancelled') return false;
+        return true;
+      }).toList();
+
+      var medicines = medicinesData.where((m) {
+        final status = m['status']?.toString().toLowerCase() ?? '';
+        if (status == 'expired' || status == 'cancelled') return false;
+        return true;
+      }).toList();
+
+      filteredBookings.sort((a, b) {
+        final rankA = _getStatusRank(a['status']?.toString() ?? '');
+        final rankB = _getStatusRank(b['status']?.toString() ?? '');
+        if (rankA != rankB) return rankA.compareTo(rankB);
+        final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
+        final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
+        return dateB.compareTo(dateA);
+      });
+
+      medicines.sort((a, b) {
+        final rankA = _getStatusRank(a['status']?.toString() ?? '');
+        final rankB = _getStatusRank(b['status']?.toString() ?? '');
+        if (rankA != rankB) return rankA.compareTo(rankB);
+        final dateA = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime.now();
+        final dateB = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime.now();
+        return dateB.compareTo(dateA);
+      });
+
+      if (mounted) {
+        setState(() {
+          _myBookings.addAll(filteredBookings);
+          _medicineOrders.addAll(medicines);
+          _hasMore = bookingsData.length == _limit || medicinesData.length == _limit;
+          _isLoadingMore = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingMore = false;
+          _page--;
+        });
       }
     }
   }
@@ -112,30 +219,29 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             height: 50,
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200, width: 1)),
+              border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade200, width: 1)),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: _buildTab(
                     title: 'Medicine Orders',
-                    icon: Icons.medical_services_outlined,
                     index: 0,
                   ),
                 ),
                 Expanded(
                   child: _buildTab(
                     title: 'Bookings',
-                    icon: Icons.calendar_today_outlined,
                     index: 1,
                   ),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Section Title
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -164,15 +270,15 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // List
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : RefreshIndicator(
-                    onRefresh: _loadData,
+                    onRefresh: () => _loadData(refresh: true),
                     child: _selectedTabIndex == 0
                         ? _buildMedicineList()
                         : _buildBookingsList(),
@@ -183,35 +289,28 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     );
   }
 
-  Widget _buildTab({required String title, required IconData icon, required int index}) {
+  Widget _buildTab(
+      {required String title, required int index}) {
     bool isSelected = _selectedTabIndex == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedTabIndex = index),
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue.withOpacity(0.05) : Colors.transparent,
-          border: isSelected 
+          color: Colors.white,
+          border: isSelected
               ? const Border(bottom: BorderSide(color: Colors.blue, width: 2))
-              : const Border(bottom: BorderSide(color: Colors.transparent, width: 2)),
+              : const Border(
+                  bottom: BorderSide(color: Colors.transparent, width: 2)),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 16,
+        child: Center(
+          child: Text(
+            title,
+            style: TextStyle(
               color: isSelected ? Colors.blue : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 14,
             ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: isSelected ? Colors.blue : Colors.black87,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                fontSize: 13,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -219,39 +318,22 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Widget _buildMedicineList() {
     if (_medicineOrders.isEmpty) {
-      return Center(child: Text('No medicine orders found', style: TextStyle(color: Colors.grey.shade600)));
+      return Center(
+          child: Text('No medicine orders found',
+              style: TextStyle(color: Colors.grey.shade600)));
     }
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _medicineOrders.length + 1,
+      itemCount: _medicineOrders.length + (_hasMore ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == _medicineOrders.length) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF0F5FF),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'View All Medicine Orders',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+            child: Center(child: CircularProgressIndicator()),
           );
         }
-        
+
         final order = _medicineOrders[index];
         return _buildMedicineCard(order);
       },
@@ -260,64 +342,119 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   Widget _buildBookingsList() {
     if (_myBookings.isEmpty) {
-      return Center(child: Text('No bookings found', style: TextStyle(color: Colors.grey.shade600)));
+      return Center(
+          child: Text('No bookings found',
+              style: TextStyle(color: Colors.grey.shade600)));
     }
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _myBookings.length + 1,
-      itemBuilder: (context, index) {
-        if (index == _myBookings.length) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFF0F5FF),
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'View All Bookings',
-                  style: TextStyle(
-                    color: Colors.blue,
+
+    final Map<String, List<Map<String, dynamic>>> groupedBookings = {
+      'Requested': [],
+      'Confirmed': [],
+      'In Progress': [],
+      'Completed': [],
+    };
+
+    for (var booking in _myBookings) {
+      final status = booking['status']?.toString().toLowerCase() ?? 'pending';
+      if (['requested', 'pending', 'waiting for pharmacist'].contains(status)) {
+        groupedBookings['Requested']!.add(booking);
+      } else if (['accepted', 'confirmed'].contains(status)) {
+        groupedBookings['Confirmed']!.add(booking);
+      } else if (['in_progress', 'processing', 'on_the_way', 'shipped'].contains(status)) {
+        groupedBookings['In Progress']!.add(booking);
+      } else if (['completed', 'delivered'].contains(status)) {
+        groupedBookings['Completed']!.add(booking);
+      } else {
+        groupedBookings['Completed']!.add(booking);
+      }
+    }
+
+    List<Widget> listItems = [];
+    
+    for (var groupName in ['Requested', 'Confirmed', 'In Progress', 'Completed']) {
+      final groupList = groupedBookings[groupName]!;
+      if (groupList.isNotEmpty) {
+        listItems.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0, bottom: 8.0, left: 4.0),
+            child: Row(
+              children: [
+                Text(
+                  groupName,
+                  style: const TextStyle(
+                    fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
-              ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${groupList.length}',
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          );
-        }
+          ),
+        );
         
-        final booking = _myBookings[index];
-        return _buildBookingCard(booking);
+        for (var booking in groupList) {
+          listItems.add(_buildBookingCard(booking));
+        }
+      }
+    }
+
+    if (_hasMore) {
+      listItems.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      itemCount: listItems.length,
+      itemBuilder: (context, index) {
+        return listItems[index];
       },
     );
   }
 
   Widget _buildMedicineCard(Map<String, dynamic> order) {
-    final orderId = order['_id']?.toString().substring(0, 6).toUpperCase() ?? '12456';
+    final orderId =
+        order['_id']?.toString().substring(0, 6).toUpperCase() ?? '12456';
     final items = order['medicines'] as List? ?? [];
     final amount = order['price'] ?? order['totalAmount'] ?? 0;
     final status = order['status']?.toString().toLowerCase() ?? 'pending';
     final createdAtStr = order['createdAt']?.toString() ?? '';
-    
+
     DateTime date = DateTime.now();
     if (createdAtStr.isNotEmpty) {
       date = DateTime.tryParse(createdAtStr) ?? DateTime.now();
     }
     final formattedDate = DateFormat('dd MMM yyyy').format(date);
     final itemsCount = items.length;
-    
+
     String imageUrl = '';
     if (items.isNotEmpty && items[0] is Map) {
       final med = items[0]['medicineId'] ?? items[0]['medicine'];
       if (med != null && med is Map) {
-        if (med['images'] != null && med['images'] is List && med['images'].isNotEmpty) {
+        if (med['images'] != null &&
+            med['images'] is List &&
+            med['images'].isNotEmpty) {
           imageUrl = med['images'][0].toString();
         } else if (med['imageUrl'] != null) {
           imageUrl = med['imageUrl'].toString();
@@ -368,8 +505,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: imageUrl.isNotEmpty
-                    ? Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.medication, color: Colors.blue))
-                    : const Icon(Icons.medication, color: Colors.blue, size: 24),
+                    ? Image.network(imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.medication, color: Colors.blue))
+                    : const Icon(Icons.medication,
+                        color: Colors.blue, size: 24),
               ),
             ),
             const SizedBox(width: 12),
@@ -380,7 +521,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                 children: [
                   Text(
                     'Order #MED$orderId',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.black87),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -390,7 +534,10 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '₹$amount',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Colors.black87),
                   ),
                 ],
               ),
@@ -399,14 +546,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: statusBgColor,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     displayStatus,
-                    style: TextStyle(color: statusTextColor, fontSize: 10, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        color: statusTextColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -422,15 +573,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   Widget _buildBookingCard(Map<String, dynamic> booking) {
     final serviceType = booking['serviceType']?.toString().toLowerCase() ?? '';
     final status = booking['status']?.toString().toLowerCase() ?? 'pending';
-    final scheduledTimeStr = booking['scheduledTime']?.toString() ?? booking['createdAt']?.toString() ?? '';
-    
+    final scheduledTimeStr = booking['scheduledTime']?.toString() ??
+        booking['createdAt']?.toString() ??
+        '';
+
     DateTime date = DateTime.now();
     if (scheduledTimeStr.isNotEmpty) {
       date = DateTime.tryParse(scheduledTimeStr) ?? DateTime.now();
     }
     final formattedDate = DateFormat('dd MMM yyyy').format(date);
     final formattedTime = DateFormat('hh:mm a').format(date);
-    
+
     String locationText = 'Shivaji Nagar, Jhansi'; // fallback
     if (booking['location'] != null && booking['location'] is Map) {
       if (booking['location']['address'] != null) {
@@ -440,19 +593,61 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
     String title;
     Widget iconWidget;
-    
+
+    final provider = booking['acceptedProvider'] ?? booking['provider'];
+    String? providerImage;
+    if (provider != null && provider is Map && provider['profilePicture'] != null && provider['profilePicture'].toString().isNotEmpty) {
+      providerImage = provider['profilePicture'].toString();
+    }
+
+    Widget getIconWidget(Widget fallback) {
+      if (providerImage != null) {
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.network(
+            providerImage,
+            width: 64,
+            height: 64,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => fallback,
+          ),
+        );
+      }
+      return fallback;
+    }
+
     if (serviceType == 'ambulance') {
       title = 'Ambulance';
-      iconWidget = Image.asset('assets/images/ambulance.png', width: 32, height: 32, errorBuilder: (_,__,___) => const Icon(Icons.local_shipping, color: Colors.red));
+      iconWidget = getIconWidget(Image.asset('assets/images/ambulance.png',
+          width: 32,
+          height: 32,
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.local_shipping, color: Colors.red)));
     } else if (serviceType == 'nurse') {
       title = 'Nursing Care';
-      iconWidget = Image.asset('assets/images/nurse.png', width: 32, height: 32, errorBuilder: (_,__,___) => const Icon(Icons.local_hospital, color: Colors.blue));
-    } else if (serviceType == 'elderly_care' || serviceType == 'elderly care' || serviceType == 'elderly') {
+      iconWidget = getIconWidget(Image.asset('assets/images/nurse.png',
+          width: 32,
+          height: 32,
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.local_hospital, color: Colors.blue)));
+    } else if (serviceType == 'elderly_care' ||
+        serviceType == 'elderly care' ||
+        serviceType == 'elderly') {
       title = 'Elderly Care';
-      iconWidget = const Icon(Icons.elderly, color: Colors.orange, size: 32);
+      iconWidget = getIconWidget(const Icon(Icons.elderly, color: Colors.orange, size: 32));
     } else {
-      title = serviceType.isNotEmpty ? serviceType[0].toUpperCase() + serviceType.substring(1) : 'Service';
-      iconWidget = const Icon(Icons.medical_services, color: Colors.blue, size: 32);
+      title = serviceType.isNotEmpty
+          ? serviceType[0].toUpperCase() + serviceType.substring(1)
+          : 'Service';
+      if (serviceType == 'doctor') {
+        iconWidget = getIconWidget(Image.asset('assets/images/doctor_icon.png', width: 40, height: 40, errorBuilder: (_, __, ___) => const Icon(Icons.medical_services, color: Colors.blue, size: 40)));
+      } else if (serviceType == 'pathology' || serviceType == 'lab_test' || serviceType == 'lab test' || serviceType == 'labtest') {
+        iconWidget = getIconWidget(Image.asset('assets/images/lab_test.png', width: 40, height: 40, errorBuilder: (_, __, ___) => const Icon(Icons.science, color: Colors.blue, size: 40)));
+      } else if (serviceType == 'bloodbank' || serviceType == 'blood bank') {
+        iconWidget = getIconWidget(Image.asset('assets/images/bloodbank.png', width: 40, height: 40, errorBuilder: (_, __, ___) => const Icon(Icons.bloodtype, color: Colors.red, size: 40)));
+      } else {
+        iconWidget = getIconWidget(const Icon(Icons.medical_services, color: Colors.blue, size: 40));
+      }
     }
 
     Color statusBgColor;
@@ -463,24 +658,68 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       statusBgColor = Colors.green.shade50;
       statusTextColor = Colors.green;
       displayStatus = 'Completed';
-    } else if (['confirmed', 'accepted'].contains(status)) {
+    } else if (status == 'accepted' || status == 'confirmed') {
       statusBgColor = Colors.blue.shade50;
       statusTextColor = Colors.blue;
       displayStatus = 'Confirmed';
-    } else {
+    } else if (status == 'requested' || status == 'pending') {
       statusBgColor = Colors.orange.shade50;
       statusTextColor = Colors.orange;
-      displayStatus = 'Upcoming';
+      displayStatus = 'Requested';
+    } else {
+      statusBgColor = Colors.blue.shade50;
+      statusTextColor = Colors.blue;
+      displayStatus = 'In Progress';
     }
 
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookingDetailsScreen(bookingId: booking['_id'] ?? booking['id'] ?? ''),
-          ),
-        );
+        if (status == 'requested' || status == 'pending') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderRequestScreen(
+                bookingId: booking['_id'] ?? booking['id'] ?? '',
+                bookingData: booking,
+                serviceType: serviceType,
+              ),
+            ),
+          );
+          return;
+        }
+
+        if (serviceType == 'nurse' ||
+            serviceType == 'ambulance' ||
+            serviceType == 'pathology' ||
+            serviceType == 'lab_test' ||
+            serviceType == 'lab test' ||
+            serviceType == 'labtest') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserUnifiedTrackingScreen(
+                  bookingId: booking['_id'] ?? booking['id'] ?? '',
+                  serviceType: serviceType),
+            ),
+          );
+        } else if (serviceType == 'bloodbank' || serviceType == 'blood bank') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserUnifiedTrackingScreen(
+                bookingId: booking['_id'] ?? booking['id'] ?? '',
+                serviceType: 'bloodbank',
+              ),
+            ),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ComingSoonScreen(),
+            ),
+          );
+        }
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 8),
@@ -497,8 +736,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
             children: [
               // Icon box
               Container(
-                width: 56,
-                height: 56,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(12),
@@ -514,22 +753,28 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                          color: Colors.black87),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       '$formattedDate • $formattedTime',
-                      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                      style:
+                          TextStyle(fontSize: 11, color: Colors.grey.shade600),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 12, color: Colors.grey.shade500),
+                        Icon(Icons.location_on_outlined,
+                            size: 12, color: Colors.grey.shade500),
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
                             locationText,
-                            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey.shade500),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -543,14 +788,18 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: statusBgColor,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Text(
                       displayStatus,
-                      style: TextStyle(color: statusTextColor, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: statusTextColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(width: 4),

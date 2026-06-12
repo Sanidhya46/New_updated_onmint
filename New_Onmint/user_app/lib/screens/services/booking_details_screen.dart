@@ -17,7 +17,7 @@ class BookingDetailsScreen extends StatefulWidget {
 
 class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   late final PatientService _patientService;
-  
+
   Map<String, dynamic>? _booking;
   bool _isLoading = false;
   String? _error;
@@ -47,7 +47,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
     try {
       final response = await _patientService.getBookingById(widget.bookingId);
-      
+
       if (mounted) {
         setState(() {
           _booking = response;
@@ -79,7 +79,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
       final success = await _patientService.rateService(
         bookingId: widget.bookingId,
         rating: _selectedRating,
-        review: _reviewController.text.trim().isEmpty ? null : _reviewController.text.trim(),
+        review: _reviewController.text.trim().isEmpty
+            ? null
+            : _reviewController.text.trim(),
       );
 
       if (mounted) {
@@ -141,7 +143,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     children: [
                       const Icon(Icons.error, size: 48, color: AppColors.error),
                       const SizedBox(height: 16),
-                      Text(_error!, style: const TextStyle(color: AppColors.error)),
+                      Text(_error!,
+                          style: const TextStyle(color: AppColors.error)),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _loadBookingDetails,
@@ -179,7 +182,9 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                         radius: 30,
                                         backgroundColor: AppColors.primary,
                                         child: Text(
-                                          (_booking!['provider']?['firstName'] ?? 'S')
+                                          (_booking!['provider']
+                                                      ?['firstName'] ??
+                                                  'S')
                                               .toString()
                                               .substring(0, 1)
                                               .toUpperCase(),
@@ -193,18 +198,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                       const SizedBox(width: 12),
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               _booking!['doctorName'] ??
-                                                  '${_booking!['provider']?['firstName'] ?? ''} ${_booking!['provider']?['lastName'] ?? ''}'.trim(),
+                                                  '${_booking!['provider']?['firstName'] ?? ''} ${_booking!['provider']?['lastName'] ?? ''}'
+                                                      .trim(),
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),
                                             Text(
-                                              _booking!['provider']?['phone'] ?? 'N/A',
+                                              _booking!['provider']?['phone'] ??
+                                                  'N/A',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 color: AppColors.textSecondary,
@@ -240,17 +248,26 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                   const SizedBox(height: 12),
                                   _buildDetailRow(
                                     'Service Type',
-                                    _booking!['serviceType']?.toString().toUpperCase() ?? 'N/A',
+                                    _booking!['serviceType']
+                                            ?.toString()
+                                            .toUpperCase() ??
+                                        'N/A',
                                   ),
                                   _buildDetailRow(
                                     'Status',
-                                    _booking!['status']?.toString().toUpperCase() ?? 'N/A',
-                                    valueColor: _getStatusColor(_booking!['status']?.toString() ?? ''),
+                                    _booking!['status']
+                                            ?.toString()
+                                            .toUpperCase() ??
+                                        'N/A',
+                                    valueColor: _getStatusColor(
+                                        _booking!['status']?.toString() ?? ''),
                                   ),
                                   _buildDetailRow(
                                     'Scheduled Time',
                                     _booking!['scheduledTime'] != null
-                                        ? DateTime.parse(_booking!['scheduledTime'].toString())
+                                        ? DateTime.parse(
+                                                _booking!['scheduledTime']
+                                                    .toString())
                                             .toString()
                                             .split('.')
                                             .first
@@ -262,7 +279,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                   ),
                                   _buildDetailRow(
                                     'Payment Status',
-                                    _booking!['paymentStatus']?.toString().toUpperCase() ?? 'N/A',
+                                    _booking!['paymentStatus']
+                                            ?.toString()
+                                            .toUpperCase() ??
+                                        'N/A',
                                   ),
                                 ],
                               ),
@@ -290,12 +310,15 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                     const SizedBox(height: 12),
                                     Row(
                                       children: [
-                                        const Icon(Icons.location_on, color: AppColors.primary),
+                                        const Icon(Icons.location_on,
+                                            color: AppColors.primary),
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Text(
-                                            _booking!['location']['address'] ?? 'N/A',
-                                            style: const TextStyle(fontSize: 14),
+                                            _booking!['location']['address'] ??
+                                                'N/A',
+                                            style:
+                                                const TextStyle(fontSize: 14),
                                           ),
                                         ),
                                       ],
@@ -308,7 +331,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                           ],
 
                           // Notes
-                          if (_booking!['notes'] != null && (_booking!['notes'] as String).isNotEmpty) ...[
+                          if (_booking!['notes'] != null &&
+                              (_booking!['notes'] as String).isNotEmpty) ...[
                             Card(
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
@@ -336,8 +360,14 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                           ],
 
                           // Video Consultation Button
-                          if (_booking!['consultationType']?.toString().toLowerCase() == 'video-call' &&
-                              ['accepted', 'in_progress'].contains(_booking!['status']?.toString().toLowerCase()))
+                          if (_booking!['consultationType']
+                                      ?.toString()
+                                      .toLowerCase() ==
+                                  'video-call' &&
+                              ['accepted', 'in_progress'].contains(
+                                  _booking!['status']
+                                      ?.toString()
+                                      .toLowerCase()))
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
@@ -345,7 +375,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => VideoConsultationScreen(
+                                      builder: (context) =>
+                                          VideoConsultationScreen(
                                         bookingId: widget.bookingId,
                                       ),
                                     ),
@@ -356,17 +387,25 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF667eea),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                 ),
                               ),
                             ),
 
-                          if (_booking!['consultationType']?.toString().toLowerCase() == 'video-call' &&
-                              ['accepted', 'in_progress'].contains(_booking!['status']?.toString().toLowerCase()))
+                          if (_booking!['consultationType']
+                                      ?.toString()
+                                      .toLowerCase() ==
+                                  'video-call' &&
+                              ['accepted', 'in_progress'].contains(
+                                  _booking!['status']
+                                      ?.toString()
+                                      .toLowerCase()))
                             const SizedBox(height: 16),
 
                           // Rating Button
-                          if (_booking!['status']?.toString().toLowerCase() == 'completed')
+                          if (_booking!['status']?.toString().toLowerCase() ==
+                              'completed')
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
@@ -378,7 +417,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                 ),
                               ),
                             ),
@@ -397,7 +437,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -420,7 +461,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                         ),
                       ),
                       IconButton(
-                        onPressed: () => setState(() => _showRatingDialog = false),
+                        onPressed: () =>
+                            setState(() => _showRatingDialog = false),
                         icon: const Icon(Icons.close),
                       ),
                     ],
@@ -430,7 +472,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedRating = index + 1),
+                        onTap: () =>
+                            setState(() => _selectedRating = index + 1),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
                           child: Icon(
@@ -458,7 +501,8 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () => setState(() => _showRatingDialog = false),
+                          onPressed: () =>
+                              setState(() => _showRatingDialog = false),
                           child: const Text('Cancel'),
                         ),
                       ),

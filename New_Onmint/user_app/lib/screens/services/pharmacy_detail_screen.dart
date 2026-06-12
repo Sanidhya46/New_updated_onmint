@@ -18,7 +18,7 @@ class PharmacyDetailScreen extends StatefulWidget {
 class _PharmacyDetailScreenState extends State<PharmacyDetailScreen> {
   final _apiClient = OnMintApiClient();
   final _searchController = TextEditingController();
-  
+
   Map<String, dynamic>? _pharmacy;
   List<dynamic> _medicines = [];
   bool _isLoading = true;
@@ -43,7 +43,8 @@ class _PharmacyDetailScreenState extends State<PharmacyDetailScreen> {
     });
 
     try {
-      final response = await _apiClient.patient.getPharmacyDetails(widget.pharmacyId);
+      final response =
+          await _apiClient.patient.getPharmacyDetails(widget.pharmacyId);
 
       setState(() {
         _pharmacy = response;
@@ -108,7 +109,7 @@ class _PharmacyDetailScreenState extends State<PharmacyDetailScreen> {
     final rating = _pharmacy!['rating']?.toDouble() ?? 0.0;
     final reviewCount = _pharmacy!['reviewCount'] ?? 0;
     final isOpen = _pharmacy!['isOpen'] ?? false;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -226,7 +227,7 @@ class _PharmacyDetailScreenState extends State<PharmacyDetailScreen> {
     final price = medicine['price']?.toDouble() ?? 0.0;
     final stock = medicine['stock'] ?? 0;
     final inStock = stock > 0;
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -283,7 +284,9 @@ class _PharmacyDetailScreenState extends State<PharmacyDetailScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: inStock ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                          color: inStock
+                              ? Colors.green.withOpacity(0.1)
+                              : Colors.red.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(

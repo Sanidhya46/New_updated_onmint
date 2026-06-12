@@ -11,11 +11,11 @@ class BloodbankScreen extends StatefulWidget {
 
 class _BloodbankScreenState extends State<BloodbankScreen> {
   late final PatientService _patientService;
-  
+
   List<Map<String, dynamic>> _bloodBanks = [];
   String _selectedBloodGroup = '';
   bool _isLoading = true;
-  
+
   final List<Map<String, dynamic>> _bloodGroups = [
     {'id': '', 'name': 'All Groups', 'color': Colors.grey},
     {'id': 'A+', 'name': 'A+', 'color': Colors.red},
@@ -38,30 +38,30 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
   Future<void> _loadBloodBanks() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    
+
     try {
       debugPrint('Loading blood banks with filter: $_selectedBloodGroup');
-      
+
       // Search for blood banks with optional blood group filter
       final response = await _patientService.searchBloodBanks(
         bloodGroup: _selectedBloodGroup.isEmpty ? null : _selectedBloodGroup,
         limit: 50,
       );
-      
+
       debugPrint('Blood banks response: $response');
-      
+
       // FIX: The API returns data as an array directly, not data.bloodBanks
       final data = response['data'];
       List<Map<String, dynamic>> bloodBanks = [];
-      
+
       if (data is List) {
         bloodBanks = List<Map<String, dynamic>>.from(data);
       } else if (data is Map && data['bloodBanks'] != null) {
         bloodBanks = List<Map<String, dynamic>>.from(data['bloodBanks']);
       }
-      
+
       debugPrint('Found ${bloodBanks.length} blood banks');
-      
+
       if (mounted) {
         setState(() {
           _bloodBanks = bloodBanks;
@@ -131,7 +131,10 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
               children: [
                 Text(
                   'Emergency Blood Request',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -176,7 +179,7 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
             itemBuilder: (context, index) {
               final group = _bloodGroups[index];
               final isSelected = _selectedBloodGroup == group['id'];
-              
+
               return GestureDetector(
                 onTap: () {
                   setState(() => _selectedBloodGroup = group['id']);
@@ -190,7 +193,7 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                     decoration: BoxDecoration(
                       color: isSelected ? group['color'] : Colors.grey[100],
                       borderRadius: BorderRadius.circular(22),
-                      border: isSelected 
+                      border: isSelected
                           ? Border.all(color: group['color'], width: 2)
                           : null,
                     ),
@@ -217,7 +220,8 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
 
   Widget _buildBloodBanksList() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Color(0xFFFF416C)));
+      return const Center(
+          child: CircularProgressIndicator(color: Color(0xFFFF416C)));
     }
 
     if (_bloodBanks.isEmpty) {
@@ -232,7 +236,7 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            _selectedBloodGroup.isEmpty 
+            _selectedBloodGroup.isEmpty
                 ? 'Nearby Blood Banks (${_bloodBanks.length})'
                 : 'Blood Banks with $_selectedBloodGroup (${_bloodBanks.length})',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -276,14 +280,18 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                                 children: [
                                   Text(
                                     bloodBank['bankName'] ?? 'Blood Bank',
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                    style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    bloodBank['address'] ?? 'Blood Bank Address',
-                                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                    bloodBank['address'] ??
+                                        'Blood Bank Address',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey[600]),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -291,14 +299,18 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 3),
                               decoration: BoxDecoration(
                                 color: Colors.green.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
                                 '24/7',
-                                style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                    fontSize: 10,
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w600),
                               ),
                             ),
                           ],
@@ -308,17 +320,20 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                           Wrap(
                             spacing: 6,
                             runSpacing: 6,
-                            children: (bloodBank['bloodStock'] as List).take(8).map((stock) {
+                            children: (bloodBank['bloodStock'] as List)
+                                .take(8)
+                                .map((stock) {
                               final group = stock['bloodGroup'] ?? '';
-                              
+
                               // Handle both int and string for units
                               int units = 0;
                               if (stock['unitsAvailable'] is int) {
                                 units = stock['unitsAvailable'];
                               } else if (stock['unitsAvailable'] is String) {
-                                units = int.tryParse(stock['unitsAvailable']) ?? 0;
+                                units =
+                                    int.tryParse(stock['unitsAvailable']) ?? 0;
                               }
-                              
+
                               // Handle both int and string for price
                               dynamic priceValue = stock['pricePerUnit'] ?? 500;
                               int price = 500;
@@ -329,16 +344,20 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                               } else if (priceValue is double) {
                                 price = priceValue.toInt();
                               }
-                              
+
                               final isAvailable = units > 0;
-                              
+
                               return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: isAvailable ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                                  color: isAvailable
+                                      ? Colors.green.withOpacity(0.1)
+                                      : Colors.red.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                   border: Border.all(
-                                    color: isAvailable ? Colors.green : Colors.red,
+                                    color:
+                                        isAvailable ? Colors.green : Colors.red,
                                     width: 1,
                                   ),
                                 ),
@@ -349,7 +368,9 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                                       group,
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: isAvailable ? Colors.green[700] : Colors.red[700],
+                                        color: isAvailable
+                                            ? Colors.green[700]
+                                            : Colors.red[700],
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -358,7 +379,9 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                                       '₹$price',
                                       style: TextStyle(
                                         fontSize: 10,
-                                        color: isAvailable ? Colors.green[600] : Colors.red[600],
+                                        color: isAvailable
+                                            ? Colors.green[600]
+                                            : Colors.red[600],
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -376,9 +399,12 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
                                 onPressed: () => _requestBlood(bloodBank),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFFF416C),
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
                                 ),
-                                child: const Text('Request Blood', style: TextStyle(color: Colors.white, fontSize: 14)),
+                                child: const Text('Request Blood',
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 14)),
                               ),
                             ),
                           ],
@@ -399,7 +425,8 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const InstantBookingScreen(serviceType: 'bloodbank'),
+        builder: (context) =>
+            const InstantBookingScreen(serviceType: 'bloodbank'),
       ),
     );
   }
@@ -433,7 +460,7 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
         availableGroups: _bloodGroups.where((g) => g['id'].isNotEmpty).toList(),
       ),
     );
-    
+
     if (result != null && mounted) {
       try {
         // Create booking for blood bank with price
@@ -443,11 +470,12 @@ class _BloodbankScreenState extends State<BloodbankScreen> {
           'bloodGroup': result['bloodGroup'],
           'unitsRequired': result['units'],
           'price': result['totalAmount'], // REQUIRED by backend
-          'notes': result['notes'] ?? 'Blood request for ${result['bloodGroup']} (${result['units']} units)',
+          'notes': result['notes'] ??
+              'Blood request for ${result['bloodGroup']} (${result['units']} units)',
         };
-        
+
         await _patientService.createBooking(bookingData);
-        
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -498,13 +526,13 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
 
   int _getPriceForBloodGroup(String bloodGroup) {
     if (widget.bloodBank['bloodStock'] == null) return 500;
-    
+
     final bloodStock = widget.bloodBank['bloodStock'] as List;
     final stock = bloodStock.firstWhere(
       (s) => s['bloodGroup'] == bloodGroup,
       orElse: () => {'pricePerUnit': 500},
     );
-    
+
     final priceValue = stock['pricePerUnit'] ?? 500;
     if (priceValue is int) return priceValue;
     if (priceValue is String) return int.tryParse(priceValue) ?? 500;
@@ -515,7 +543,7 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
   @override
   Widget build(BuildContext context) {
     final totalAmount = _pricePerUnit * _units;
-    
+
     return AlertDialog(
       title: Text('Request Blood from ${widget.bloodBank['bankName']}'),
       content: SingleChildScrollView(
@@ -523,7 +551,8 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Select Blood Group:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Select Blood Group:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -538,17 +567,21 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
                     });
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected ? group['color'] : Colors.grey[200],
                       borderRadius: BorderRadius.circular(20),
-                      border: isSelected ? Border.all(color: group['color'], width: 2) : null,
+                      border: isSelected
+                          ? Border.all(color: group['color'], width: 2)
+                          : null,
                     ),
                     child: Text(
                       group['name'],
                       style: TextStyle(
                         color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -556,7 +589,8 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
               }).toList(),
             ),
             const SizedBox(height: 16),
-            const Text('Units Required:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Units Required:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Row(
               children: [
@@ -568,14 +602,16 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
                   color: const Color(0xFFFF416C),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey[300]!),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '$_units',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 IconButton(
@@ -587,7 +623,7 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
                 ),
               ],
             ),
-            
+
             // PRICE CALCULATION BOX - MATCHING SCREENSHOT
             if (_selectedBloodGroup != null) ...[
               const SizedBox(height: 16),
@@ -603,8 +639,11 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Price per Unit:', style: TextStyle(fontSize: 14)),
-                        Text('₹$_pricePerUnit', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        const Text('Price per Unit:',
+                            style: TextStyle(fontSize: 14)),
+                        Text('₹$_pricePerUnit',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -612,14 +651,18 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Units:', style: TextStyle(fontSize: 14)),
-                        Text('$_units', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text('$_units',
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                     const Divider(height: 16),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Amount:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        const Text('Total Amount:',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
                         Text(
                           '₹$totalAmount',
                           style: const TextStyle(
@@ -634,7 +677,7 @@ class _BloodRequestDialogState extends State<_BloodRequestDialog> {
                 ),
               ),
             ],
-            
+
             const SizedBox(height: 16),
             TextField(
               controller: _notesController,

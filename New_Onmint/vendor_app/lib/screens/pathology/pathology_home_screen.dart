@@ -76,7 +76,7 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
             return timeB.compareTo(timeA); // newest first
           });
 
-          _pendingBookings = allBookings; // This will show in the list
+          _pendingBookings = allBookings.where((b) => getPriority(b['status']?.toString() ?? '') == 0).toList(); // Only show requested
           _activeBookings = allBookings.where((b) => getPriority(b['status']?.toString() ?? '') == 1).toList();
           _isLoading = false;
         });
@@ -112,13 +112,18 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
       backgroundColor: const Color(0xFFF4F6FB),
       body: Stack(
         children: [
-          RefreshIndicator(
-            onRefresh: _loadDashboard,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+          Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _loadDashboard,
+                  child: CustomScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
               // ─── BLUE HEADER + STATS CARD ──────────────────────────────
               SizedBox(
                 height: 250,
@@ -319,100 +324,116 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
 
               const SizedBox(height: 16),
 
-              // ─── MANAGE BANNER ─────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE8EEF9),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 72,
-                        height: 72,
-                        child: Stack(
+                          ],
+                        ),
+                      ),
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              child: Icon(Icons.assignment_outlined,
-                                  size: 52, color: const Color(0xFF0D47A1)),
+                            // ─── MANAGE BANNER ─────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8EEF9),
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 72,
+                    height: 72,
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          child: Icon(Icons.assignment_outlined,
+                              size: 52, color: const Color(0xFF0D47A1)),
+                        ),
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF0D47A1),
+                              shape: BoxShape.circle,
                             ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 30,
-                                height: 30,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFF0D47A1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.add,
-                                    size: 18, color: Colors.white),
+                            child: const Icon(Icons.add,
+                                size: 18, color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Manage Your\nConsultations Easily',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF152238),
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Check your requests, track consultations, and manage your progress all in one place.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF0D47A1),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                shape: BoxShape.circle,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Manage Your\nConsultations Easily',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF152238),
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Check your requests, track consultations, and manage your progress all in one place.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                                height: 1.4,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF0D47A1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 5),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              ],
-                            ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),
@@ -420,51 +441,47 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 30),
             ],
           ),
-        ),
-      ),
           // Active Service Widget
           if (_activeBookings.isNotEmpty || _pendingBookings.isNotEmpty)
             Positioned(
               bottom: 24,
               right: 24,
-              child: ActiveBookingFloatingWidget(
-                serviceType: 'lab_test',
-                bookingDetails: const {
-                  'serviceType': 'lab_test',
-                  'status': 'sample_collected',
-                  'provider': {'name': 'Health Lab', 'rating': 4.8},
-                },
-                onTap: () {
-                  if (_activeBookings.length > 1) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PathologyBookingsScreen(),
-                      ),
-                    );
-                    return;
-                  }
-                  
-                  final targetBookingData = _activeBookings.isNotEmpty 
-                      ? _activeBookings.first 
+              child: Builder(
+                builder: (context) {
+                  final targetBookingData = _activeBookings.isNotEmpty
+                      ? _activeBookings.first
                       : _pendingBookings.first;
-                      
-                  final targetBookingId = targetBookingData['_id'].toString();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => LabTestBookingScreen(
-                        bookingId: targetBookingId,
-                        bookingData: targetBookingData,
-                      ),
-                    ),
+                  return ActiveBookingFloatingWidget(
+                    serviceType: 'lab_test',
+                    bookingDetails: targetBookingData,
+                    onTap: () {
+                      if (_activeBookings.length > 1) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PathologyBookingsScreen(),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final targetBookingId = targetBookingData['_id'].toString();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LabTestBookingScreen(
+                            bookingId: targetBookingId,
+                            bookingData: targetBookingData,
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -539,30 +556,30 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
     final fees = (booking['fees'] ?? booking['price'] ?? 300);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
+            blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   color: Colors.grey[200],
                   image: DecorationImage(
                     image: (patientImage != null && patientImage.isNotEmpty)
@@ -574,7 +591,7 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -586,7 +603,7 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
                           child: Text(
                             patientName,
                             style: const TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF152238),
                             ),
@@ -595,48 +612,55 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
                         ),
                         Row(
                           children: [
-                            const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                            const Icon(Icons.access_time, size: 13, color: Colors.grey),
                             const SizedBox(width: 4),
                             Text(
                               timeStr,
-                              style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                              style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       testName,
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: Color(0xFF152238),
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          patientAgeGender,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500),
+                        Expanded(
+                          child: Text(
+                            patientAgeGender,
+                            style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w500),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                        const SizedBox(width: 4),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
                               '₹$fees',
                               style: const TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF0D47A1),
                               ),
                             ),
                             const Text(
                               'Consultation Fee',
-                              style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.w500),
+                              style: TextStyle(fontSize: 9, color: Colors.grey, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
@@ -645,20 +669,20 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               // Status Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: (booking['status']?.toString().toLowerCase() == 'requested' || booking['status']?.toString().toLowerCase() == 'pending') 
                       ? Colors.orange.withOpacity(0.1) 
                       : (booking['status']?.toString().toLowerCase() == 'completed' ? Colors.green.withOpacity(0.1) : const Color(0xFF1565C0).withOpacity(0.1)),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Text(
                   booking['status']?.toString().toUpperCase() ?? 'PENDING',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9,
                     color: (booking['status']?.toString().toLowerCase() == 'requested' || booking['status']?.toString().toLowerCase() == 'pending')
                         ? Colors.orange
                         : (booking['status']?.toString().toLowerCase() == 'completed' ? Colors.green : const Color(0xFF1565C0)),
@@ -668,11 +692,11 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           // View Details button
           SizedBox(
             width: double.infinity,
-            height: 44,
+            height: 38,
             child: ElevatedButton(
               onPressed: () {
                 final bookingId = booking['_id'] ?? booking['id'] ?? 'dummy_id';
@@ -698,13 +722,13 @@ class _PathologyHomeScreenState extends State<PathologyHomeScreen> {
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
               child: const Text(
                 'View Details',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.3,
                 ),

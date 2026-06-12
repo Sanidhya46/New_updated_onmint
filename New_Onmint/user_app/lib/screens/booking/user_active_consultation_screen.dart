@@ -13,10 +13,12 @@ class UserActiveConsultationScreen extends StatefulWidget {
   });
 
   @override
-  State<UserActiveConsultationScreen> createState() => _UserActiveConsultationScreenState();
+  State<UserActiveConsultationScreen> createState() =>
+      _UserActiveConsultationScreenState();
 }
 
-class _UserActiveConsultationScreenState extends State<UserActiveConsultationScreen> {
+class _UserActiveConsultationScreenState
+    extends State<UserActiveConsultationScreen> {
   final _apiClient = OnMintApiClient();
   Map<String, dynamic>? _booking;
   bool _isLoading = true;
@@ -56,9 +58,11 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
   }
 
   Future<void> _joinVideoCall() async {
-    final provider = _booking!['acceptedProvider'] ?? _booking!['provider'] ?? {};
-    final fullName = provider['fullName'] ?? '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
-    
+    final provider =
+        _booking!['acceptedProvider'] ?? _booking!['provider'] ?? {};
+    final fullName = provider['fullName'] ??
+        '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -69,7 +73,7 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
         ),
       ),
     );
-    
+
     // Reload booking after returning
     _loadBooking();
   }
@@ -87,12 +91,14 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
       return Scaffold(
         backgroundColor: const Color(0xFF1565C0),
         appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
-        body: const Center(child: Text('Consultation not found', style: TextStyle(color: Colors.white))),
+        body: const Center(
+            child: Text('Consultation not found',
+                style: TextStyle(color: Colors.white))),
       );
     }
 
     final status = _booking!['status'] ?? 'accepted';
-    
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F7FF),
       body: RefreshIndicator(
@@ -116,12 +122,17 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
   }
 
   Widget _buildTopSection(String status) {
-    final provider = _booking!['acceptedProvider'] ?? _booking!['provider'] ?? {};
-    final fullName = provider['fullName'] ?? '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
+    final provider =
+        _booking!['acceptedProvider'] ?? _booking!['provider'] ?? {};
+    final fullName = provider['fullName'] ??
+        '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
     final specialization = provider['specialization'] ?? 'Doctor';
-    
-    final price = _booking!['price'] ?? _booking!['totalAmount'] ?? _booking!['fees'] ?? 300;
-    
+
+    final price = _booking!['price'] ??
+        _booking!['totalAmount'] ??
+        _booking!['fees'] ??
+        300;
+
     String formattedDate = 'Unknown';
     String formattedTime = 'Unknown';
     if (_booking!['createdAt'] != null) {
@@ -136,7 +147,7 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
     String headerTitle;
     String subTitle;
     IconData headerIcon;
-    
+
     switch (status) {
       case 'in_progress':
         headerTitle = 'Consultation Live';
@@ -157,7 +168,8 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
       case 'accepted':
       default:
         headerTitle = 'Request Accepted';
-        subTitle = '${fullName.isEmpty ? "The doctor" : fullName} has accepted your request.';
+        subTitle =
+            '${fullName.isEmpty ? "The doctor" : fullName} has accepted your request.';
         headerIcon = Icons.check_circle;
         break;
     }
@@ -180,7 +192,8 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8.0, vertical: 8.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -231,126 +244,133 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
             ),
           ),
         ),
-        
+
         // Doctor Details Overlapping Card
         if (status != 'requested' && status != 'pending')
-        Positioned(
-          bottom: -90,
-          left: 16,
-          right: 16,
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        shape: BoxShape.circle,
-                        image: provider['profilePicture'] != null 
-                          ? DecorationImage(
-                              image: NetworkImage(provider['profilePicture']),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
+          Positioned(
+            bottom: -90,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          shape: BoxShape.circle,
+                          image: provider['profilePicture'] != null
+                              ? DecorationImage(
+                                  image:
+                                      NetworkImage(provider['profilePicture']),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: provider['profilePicture'] == null
+                            ? const Icon(Icons.person,
+                                color: Color(0xFF0D47A1), size: 32)
+                            : null,
                       ),
-                      child: provider['profilePicture'] == null
-                          ? const Icon(Icons.person, color: Color(0xFF0D47A1), size: 32)
-                          : null,
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              fullName.isEmpty ? 'Doctor' : fullName,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF152238),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              specialization,
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Divider(color: Colors.grey.shade200),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            fullName.isEmpty ? 'Doctor' : fullName,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF152238),
-                            ),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_month_outlined,
+                                  size: 16, color: Color(0xFF1565C0)),
+                              const SizedBox(width: 6),
+                              Text(
+                                formattedDate,
+                                style: const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w600),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 4),
-                          Text(
-                            specialization,
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                          Padding(
+                            padding: const EdgeInsets.only(left: 22.0),
+                            child: Text(
+                              formattedTime,
+                              style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w500),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Divider(color: Colors.grey.shade200),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.calendar_month_outlined, size: 16, color: Color(0xFF1565C0)),
-                            const SizedBox(width: 6),
-                            Text(
-                              formattedDate,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '₹$price',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 22.0),
-                          child: Text(
-                            formattedTime,
-                            style: const TextStyle(fontSize: 14, color: Colors.black87, fontWeight: FontWeight.w500),
                           ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '₹$price',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                          const Text(
+                            'Paid Securely',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
                           ),
-                        ),
-                        const Text(
-                          'Paid Securely',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -364,7 +384,9 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
             children: [
               CircularProgressIndicator(color: Color(0xFF1565C0)),
               SizedBox(height: 16),
-              Text('Waiting for Doctor to accept...', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
+              Text('Waiting for Doctor to accept...',
+                  style: TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.w600)),
             ],
           ),
         ),
@@ -397,9 +419,16 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
             children: [
               _buildProgressStep('Accepted', Icons.check, true, 'Done'),
               _buildProgressLine(isLive || isCompleted),
-              _buildProgressStep('In Consultation', Icons.videocam, isCompleted || isLive, isLive ? 'Live Now' : (isCompleted ? 'Done' : 'Upcoming'), isActive: isLive),
+              _buildProgressStep(
+                  'In Consultation',
+                  Icons.videocam,
+                  isCompleted || isLive,
+                  isLive ? 'Live Now' : (isCompleted ? 'Done' : 'Upcoming'),
+                  isActive: isLive),
               _buildProgressLine(isCompleted),
-              _buildProgressStep('Completed', Icons.flag, isCompleted, isCompleted ? 'Done' : 'Upcoming', isGrey: !isCompleted),
+              _buildProgressStep('Completed', Icons.flag, isCompleted,
+                  isCompleted ? 'Done' : 'Upcoming',
+                  isGrey: !isCompleted),
             ],
           ),
         ],
@@ -407,7 +436,9 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
     );
   }
 
-  Widget _buildProgressStep(String label, IconData icon, bool isCompleted, String subLabel, {bool isActive = false, bool isGrey = false}) {
+  Widget _buildProgressStep(
+      String label, IconData icon, bool isCompleted, String subLabel,
+      {bool isActive = false, bool isGrey = false}) {
     Color mainColor;
     if (isActive) {
       mainColor = Colors.blue;
@@ -425,15 +456,23 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
           decoration: BoxDecoration(
             color: isCompleted || isActive ? mainColor : Colors.white,
             shape: BoxShape.circle,
-            border: isCompleted || isActive ? null : Border.all(color: Colors.grey.shade300, width: 2),
-            boxShadow: isActive ? [
-              BoxShadow(color: Colors.blue.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))
-            ] : null,
+            border: isCompleted || isActive
+                ? null
+                : Border.all(color: Colors.grey.shade300, width: 2),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                        color: Colors.blue.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3))
+                  ]
+                : null,
           ),
           child: Icon(
             icon,
             size: 18,
-            color: isCompleted || isActive ? Colors.white : Colors.grey.shade500,
+            color:
+                isCompleted || isActive ? Colors.white : Colors.grey.shade500,
           ),
         ),
         const SizedBox(height: 8),
@@ -442,7 +481,9 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: mainColor == Colors.grey.shade300 ? Colors.grey.shade600 : mainColor,
+            color: mainColor == Colors.grey.shade300
+                ? Colors.grey.shade600
+                : mainColor,
           ),
         ),
         const SizedBox(height: 4),
@@ -483,7 +524,8 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text('Please join the consultation room.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+          const Text('Please join the consultation room.',
+              style: TextStyle(color: Colors.grey, fontSize: 13)),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
@@ -491,11 +533,13 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
             child: ElevatedButton.icon(
               onPressed: _joinVideoCall,
               icon: const Icon(Icons.videocam),
-              label: const Text('Join Consultation', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              label: const Text('Join Consultation',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF43A047),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
@@ -506,11 +550,12 @@ class _UserActiveConsultationScreenState extends State<UserActiveConsultationScr
 
   Widget _buildActionButtonsRow() {
     final status = _booking!['status'];
-    if (status == 'requested' || status == 'completed') return const SizedBox.shrink();
+    if (status == 'requested' || status == 'completed')
+      return const SizedBox.shrink();
 
     final provider = _booking!['acceptedProvider'] ?? _booking!['provider'];
     final providerPhone = provider != null ? provider['phone'] : null;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 16.0),
       child: Row(

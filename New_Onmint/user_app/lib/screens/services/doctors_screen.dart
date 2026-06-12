@@ -37,17 +37,18 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
 
   Future<void> _loadDoctors() async {
     setState(() => _isLoading = true);
-    
+
     try {
       await _apiClient.initialize();
       final result = await _apiClient.patient.searchDoctors(
-        specialization: _selectedSpecialization == 'All' ? null : _selectedSpecialization,
+        specialization:
+            _selectedSpecialization == 'All' ? null : _selectedSpecialization,
       );
-      
+
       setState(() {
-        _doctors = (result['data'] as List?)
-            ?.map((e) => User.fromJson(e))
-            .toList() ?? [];
+        _doctors =
+            (result['data'] as List?)?.map((e) => User.fromJson(e)).toList() ??
+                [];
         _isLoading = false;
       });
     } catch (e) {
@@ -76,9 +77,9 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
               itemCount: _specializations.length,
               itemBuilder: (context, index) {
                 final spec = _specializations[index];
-                final isSelected = _selectedSpecialization == spec || 
+                final isSelected = _selectedSpecialization == spec ||
                     (_selectedSpecialization == null && spec == 'All');
-                
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
@@ -92,15 +93,18 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                     },
                     selectedColor: AppColors.doctor.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: isSelected ? AppColors.doctor : AppColors.textSecondary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? AppColors.doctor
+                          : AppColors.textSecondary,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 );
               },
             ),
           ),
-          
+
           // Doctors List
           Expanded(
             child: RefreshIndicator(
@@ -186,7 +190,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                         Row(
                           children: [
                             if (doctor.experience != null) ...[
-                              const Icon(Icons.work, size: 14, color: AppColors.textSecondary),
+                              const Icon(Icons.work,
+                                  size: 14, color: AppColors.textSecondary),
                               const SizedBox(width: 4),
                               Text(
                                 '${doctor.experience} yrs',
@@ -198,7 +203,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                               const SizedBox(width: 12),
                             ],
                             if (doctor.rating != null) ...[
-                              const Icon(Icons.star, size: 14, color: Colors.amber),
+                              const Icon(Icons.star,
+                                  size: 14, color: Colors.amber),
                               const SizedBox(width: 4),
                               Text(
                                 doctor.rating!.toStringAsFixed(1),
@@ -224,7 +230,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textSecondary),
+                  const Icon(Icons.arrow_forward_ios,
+                      size: 16, color: AppColors.textSecondary),
                 ],
               ),
             ),
@@ -234,7 +241,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                 top: 8,
                 right: 8,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: AppColors.doctor,
                     borderRadius: BorderRadius.circular(12),
@@ -242,7 +250,8 @@ class _DoctorsScreenState extends State<DoctorsScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.location_on, size: 12, color: Colors.white),
+                      const Icon(Icons.location_on,
+                          size: 12, color: Colors.white),
                       const SizedBox(width: 4),
                       Text(
                         '${doctor.distance!.toStringAsFixed(1)} km',

@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
         "ambulance",
         "bloodbank",
         "pathology",
+        "labtest",
       ],
       required: true,
     },
@@ -40,6 +41,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    age: {
+      type: Number,
+    },
+    gender: {
+      type: String,
+      enum: ["Male", "Female", "Other"],
+    },
+    address: {
+      type: String,
     },
     phone: {
       type: String,

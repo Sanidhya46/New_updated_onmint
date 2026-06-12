@@ -5,8 +5,11 @@ class AuthService {
   final OnMintApiClient _apiClient = OnMintApiClient();
 
   /// Register new user
-  Future<Map<String, dynamic>> register(Map<String, dynamic> registrationData) async {
+  Future<Map<String, dynamic>> register(Map<String, dynamic> registrationData, {Map<String, String>? files, List<dynamic>? xFiles, Map<String, dynamic>? namedXFiles}) async {
     try {
+      if ((files != null && files.isNotEmpty) || (xFiles != null && xFiles.isNotEmpty) || (namedXFiles != null && namedXFiles.isNotEmpty)) {
+        return await _apiClient.auth.registerWithFiles(registrationData, files: files, xFiles: xFiles, namedXFiles: namedXFiles);
+      }
       return await _apiClient.auth.register(registrationData);
     } catch (e) {
       throw Exception('Registration failed: $e');

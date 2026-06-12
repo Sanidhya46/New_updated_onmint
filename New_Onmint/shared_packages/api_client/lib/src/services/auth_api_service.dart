@@ -13,8 +13,9 @@ class AuthApiService {
   }
 
   // Register with files (profile picture and documents)
-  Future<Map<String, dynamic>> registerWithFiles(Map<String, dynamic> data, Map<String, String> files) async {
-    final response = await _client.uploadMultipartData('/auth/register', data, namedFiles: files);
+  Future<Map<String, dynamic>> registerWithFiles(Map<String, dynamic> data, {Map<String, String>? files, List<dynamic>? xFiles, Map<String, dynamic>? namedXFiles}) async {
+    // We use dynamic for xFiles to avoid tight coupling if not needed, but we pass it down
+    final response = await _client.uploadMultipartData('/auth/register', data, namedFiles: files, xFiles: xFiles?.cast(), namedXFiles: namedXFiles?.cast());
     return response.data;
   }
 
