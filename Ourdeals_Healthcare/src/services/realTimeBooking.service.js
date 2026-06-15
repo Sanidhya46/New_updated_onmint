@@ -21,40 +21,44 @@ const createRealTimeBooking = async (bookingData) => {
     await booking.save();
     await booking.populate("patient");
 
-    // Find nearby available providers
-    const providers = await findAvailableProviders(
-      booking.serviceType,
-      booking.location.coordinates,
-      booking.isEmergency,
-      booking.category
-    );
+    if (booking.status !== "in_cart") {
+      // Find nearby available providers
+      const providers = await findAvailableProviders(
+        booking.serviceType,
+        booking.location.coordinates,
+        booking.isEmergency,
+        booking.category
+      );
 
-    if (providers.length === 0) {
-      logger.warn(`No providers found for booking ${booking._id}`);
-      // Still create the booking, but notify patient
+      if (providers.length === 0) {
+        logger.warn(`No providers found for booking ${booking._id}`);
+        // Still create the booking, but notify patient
+        await notificationService.send({
+          recipient: booking.patient._id,
+          type: "booking_confirmation",
+          title: "Booking Created",
+          message: "We're searching for available providers. You'll be notified once someone accepts.",
+          data: { bookingId: booking._id },
+          sendPush: true,
+        });
+        return booking;
+      }
+
+      // Notify all providers via multiple channels
+      await notifyAllProviders(booking, providers);
+
+      // Send confirmation to patient
       await notificationService.send({
         recipient: booking.patient._id,
         type: "booking_confirmation",
         title: "Booking Created",
-        message: "We're searching for available providers. You'll be notified once someone accepts.",
+        message: "Your booking has been created and sent to nearby providers.",
         data: { bookingId: booking._id },
         sendPush: true,
       });
-      return booking;
     }
 
-    // Notify all providers via multiple channels
-    await notifyAllProviders(booking, providers);
-
-    // Send confirmation to patient
-    await notificationService.send({
-      recipient: booking.patient._id,
-      type: "booking_confirmation",
-      title: "Booking Request Sent",
-      message: `Your ${booking.serviceType} booking request has been sent to ${providers.length} nearby providers.`,
-      data: { bookingId: booking._id, providerCount: providers.length },
-      sendPush: true,
-    });
+    return booking;
 
     logger.info(`Real-time booking created: ${booking._id}, notified ${providers.length} providers`);
     return booking;
@@ -335,12 +339,14 @@ const updateBookingStatus = async (bookingId, providerId, newStatus) => {
 
     // Validate status transitions
     const validTransitions = {
-      accepted: ["preparing", "ready", "on_the_way", "in_progress", "sample_collected", "completed", "cancelled"],
+      accepted: ["preparing", "ready", "on_the_way", "in_progress", "packing_medicines", "out_for_delivery", "sample_collected", "completed", "cancelled"],
       preparing: ["ready", "on_the_way", "in_progress", "completed", "cancelled"],
+      packing_medicines: ["out_for_delivery", "on_the_way", "completed", "cancelled"],
       ready: ["on_the_way", "in_progress", "completed", "cancelled"],
       on_the_way: ["reached", "in_progress", "sample_collected", "completed", "cancelled"],
+      out_for_delivery: ["completed", "cancelled"],
       reached: ["in_progress", "sample_collected", "completed", "cancelled"],
-      in_progress: ["sample_collected", "completed", "cancelled"],
+      in_progress: ["on_the_way", "out_for_delivery", "sample_collected", "completed", "cancelled"],
       sample_collected: ["report_uploaded", "completed", "cancelled"],
       report_uploaded: ["completed", "cancelled"],
     };
@@ -475,6 +481,7 @@ const getBookingById = async (bookingId, userId) => {
     const booking = await RealTimeBooking.findById(bookingId)
       .populate("patient", "firstName lastName phone email")
       .populate("acceptedProvider", "firstName lastName phone email specialization")
+      .populate("offers.vendorId", "firstName lastName pharmacyName profilePic location averageRating totalRatings")
       .lean();
 
     if (!booking) {
@@ -572,6 +579,12 @@ const getProviderBookings = async (providerId, filters = {}) => {
       RealTimeBooking.countDocuments(query),
     ]);
 
+    bookings.forEach(b => {
+      if (b.offers && b.offers.some(o => o.vendorId && o.vendorId.toString() === providerId.toString())) {
+        b.hasOffered = true;
+      }
+    });
+
     return {
       bookings,
       total,
@@ -608,7 +621,7 @@ const expireOldBookings = async () => {
   try {
     const result = await RealTimeBooking.updateMany(
       {
-        status: "pending",
+        status: { $in: ["pending", "requested"] },
         expiresAt: { $lt: new Date() },
       },
       {
@@ -624,6 +637,67 @@ const expireOldBookings = async () => {
   }
 };
 
+const syncCart = async (patientId, serviceType, cartData) => {
+  let booking = await RealTimeBooking.findOne({
+    patient: patientId,
+    serviceType,
+    status: "in_cart",
+  });
+
+  if (booking) {
+    booking.medicines = cartData.medicines || booking.medicines;
+    booking.tests = cartData.tests || booking.tests;
+    booking.price = cartData.price || booking.price;
+    await booking.save();
+  } else {
+    booking = new RealTimeBooking({
+      patient: patientId,
+      serviceType,
+      status: "in_cart",
+      medicines: cartData.medicines,
+      tests: cartData.tests,
+      price: cartData.price,
+      title: "Shopping Cart",
+    });
+    await booking.save();
+  }
+  return booking.populate("patient");
+};
+
+const getCart = async (patientId, serviceType) => {
+  return await RealTimeBooking.findOne({
+    patient: patientId,
+    serviceType,
+    status: "in_cart",
+  }).populate("patient");
+};
+
+const checkoutCart = async (bookingId, checkoutData) => {
+  const booking = await RealTimeBooking.findById(bookingId).populate("patient");
+  if (!booking || booking.status !== "in_cart") {
+    throw { status: 400, message: "Cart not found or already checked out" };
+  }
+
+  // Update booking with checkout data (address, payment, etc)
+  Object.assign(booking, checkoutData);
+  booking.status = "requested";
+  await booking.save();
+
+  // Find nearby available providers
+  const providers = await findAvailableProviders(
+    booking.serviceType,
+    booking.location?.coordinates || [0, 0],
+    booking.isEmergency,
+    booking.category
+  );
+
+  if (providers.length > 0) {
+    await notifyAllProviders(booking, providers);
+  }
+
+  return booking;
+};
+
 export const realTimeBookingService = {
   createRealTimeBooking,
   acceptBooking,
@@ -634,4 +708,7 @@ export const realTimeBookingService = {
   getProviderBookings,
   markBookingAsViewed,
   expireOldBookings,
+  syncCart,
+  getCart,
+  checkoutCart,
 };

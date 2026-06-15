@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:user_app/screens/booking/user_video_call_screen.dart';
+import 'package:user_app/screens/booking/user_consultation_ended_screen.dart';
 
 class UserActiveConsultationScreen extends StatefulWidget {
   final String bookingId;
@@ -20,13 +22,54 @@ class UserActiveConsultationScreen extends StatefulWidget {
 class _UserActiveConsultationScreenState
     extends State<UserActiveConsultationScreen> {
   final _apiClient = OnMintApiClient();
+  final _socketService = SocketService();
   Map<String, dynamic>? _booking;
   bool _isLoading = true;
+  bool _isDoctorOnCall = false;
+  StreamSubscription? _consultationEndedSub;
+  StreamSubscription? _doctorJoinedSub;
 
   @override
   void initState() {
     super.initState();
     _loadBooking();
+    _setupSocketListeners();
+  }
+
+  @override
+  void dispose() {
+    _consultationEndedSub?.cancel();
+    _doctorJoinedSub?.cancel();
+    _socketService.leaveBooking(widget.bookingId);
+    super.dispose();
+  }
+
+  void _setupSocketListeners() {
+    _socketService.joinBooking(widget.bookingId);
+
+    _doctorJoinedSub = _socketService.doctorJoined.listen((data) {
+      if (data['bookingId'] == widget.bookingId && mounted) {
+        setState(() => _isDoctorOnCall = true);
+      }
+    });
+
+    _consultationEndedSub = _socketService.consultationEnded.listen((data) {
+      if (data['bookingId'] == widget.bookingId && mounted) {
+        final provider = _booking?['acceptedProvider'] ?? _booking?['provider'] ?? {};
+        final fullName = provider['fullName'] ??
+            '${provider['firstName'] ?? ''} ${provider['lastName'] ?? ''}'.trim();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserConsultationEndedScreen(
+              bookingId: widget.bookingId,
+              doctorName: fullName.isEmpty ? 'Doctor' : fullName,
+              duration: data['duration'] is int ? data['duration'] : 0,
+            ),
+          ),
+        );
+      }
+    });
   }
 
   Future<void> _loadBooking() async {
@@ -35,7 +78,7 @@ class _UserActiveConsultationScreenState
       final data = await _apiClient.patient.getBookingDetails(widget.bookingId);
       if (mounted) {
         setState(() {
-          _booking = data;
+          _booking = data.toJson();
           _isLoading = false;
         });
       }

@@ -7,6 +7,7 @@ import '../booking/order_request_screen.dart';
 import '../booking/order_detail_file.dart';
 import '../booking/user_unified_tracking_screen.dart';
 import '../booking/coming_soon_screen.dart';
+import '../bookings/pharmacist_order_tracking_screen.dart';
 
 class MyBookingsScreen extends StatefulWidget {
   const MyBookingsScreen({super.key});
@@ -322,20 +323,89 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           child: Text('No medicine orders found',
               style: TextStyle(color: Colors.grey.shade600)));
     }
+
+    final Map<String, List<Map<String, dynamic>>> groupedOrders = {
+      'Requested': [],
+      'Confirmed': [],
+      'In Progress': [],
+      'Completed': [],
+    };
+
+    for (var order in _medicineOrders) {
+      final status = order['status']?.toString().toLowerCase() ?? 'pending';
+      if (['requested', 'pending', 'waiting for pharmacist'].contains(status)) {
+        groupedOrders['Requested']!.add(order);
+      } else if (['accepted', 'confirmed'].contains(status)) {
+        groupedOrders['Confirmed']!.add(order);
+      } else if (['in_progress', 'processing', 'on_the_way', 'shipped'].contains(status)) {
+        groupedOrders['In Progress']!.add(order);
+      } else if (['completed', 'delivered'].contains(status)) {
+        groupedOrders['Completed']!.add(order);
+      } else {
+        groupedOrders['Completed']!.add(order);
+      }
+    }
+
+    List<Widget> listItems = [];
+    
+    for (var groupName in ['Requested', 'Confirmed', 'In Progress', 'Completed']) {
+      final groupList = groupedOrders[groupName]!;
+      if (groupList.isNotEmpty) {
+        listItems.add(
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0, bottom: 8.0, left: 4.0),
+            child: Row(
+              children: [
+                Text(
+                  groupName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${groupList.length}',
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+        
+        for (var order in groupList) {
+          listItems.add(_buildMedicineCard(order));
+        }
+      }
+    }
+
+    if (_hasMore) {
+      listItems.add(
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: _medicineOrders.length + (_hasMore ? 1 : 0),
+      itemCount: listItems.length,
       itemBuilder: (context, index) {
-        if (index == _medicineOrders.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        final order = _medicineOrders[index];
-        return _buildMedicineCard(order);
+        return listItems[index];
       },
     );
   }
@@ -480,14 +550,24 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       displayStatus = 'Processing';
     }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 0,
-      color: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade100),
-      ),
+    return GestureDetector(
+      onTap: () {
+        final bookingId = order['_id']?.toString() ?? order['id']?.toString() ?? '';
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PharmacistOrderTrackingScreen(bookingId: bookingId),
+          ),
+        ).then((_) => _loadData(refresh: true));
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 8),
+        elevation: 0,
+        color: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.grey.shade100),
+        ),
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child: Row(
@@ -567,8 +647,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildBookingCard(Map<String, dynamic> booking) {
     final serviceType = booking['serviceType']?.toString().toLowerCase() ?? '';
@@ -709,6 +790,15 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
               builder: (context) => UserUnifiedTrackingScreen(
                 bookingId: booking['_id'] ?? booking['id'] ?? '',
                 serviceType: 'bloodbank',
+              ),
+            ),
+          );
+        } else if (serviceType == 'doctor' || serviceType == 'consultation') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingDetailsScreen(
+                bookingId: booking['_id'] ?? booking['id'] ?? '',
               ),
             ),
           );

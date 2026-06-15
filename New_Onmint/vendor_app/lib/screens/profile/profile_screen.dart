@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:auth_service/auth_service.dart';
 import '../../config/app_config.dart';
+import 'personal_info_screen.dart';
+import 'professional_info_screen.dart';
+import 'change_password_screen.dart';
+import 'contact_support_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -133,14 +138,14 @@ class ProfileScreen extends StatelessWidget {
                                   color: Colors.blue.shade50,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.workspace_premium, color: Colors.blue, size: 14),
-                                    SizedBox(width: 4),
+                                    const Icon(Icons.workspace_premium, color: Colors.blue, size: 14),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      'Exp. 12 Years',
-                                      style: TextStyle(
+                                      'Exp. ${user?.experience ?? 0} Years',
+                                      style: const TextStyle(
                                         color: Colors.blue,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -155,14 +160,14 @@ class ProfileScreen extends StatelessWidget {
                                   color: Colors.orange.shade50,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.star, color: Colors.orange, size: 14),
-                                    SizedBox(width: 4),
+                                    const Icon(Icons.star, color: Colors.orange, size: 14),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      '4.5 (120)',
-                                      style: TextStyle(
+                                      '${user?.rating?.toStringAsFixed(1) ?? "4.5"} (${user?.totalRatings ?? 0})',
+                                      style: const TextStyle(
                                         color: Colors.orange,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -182,11 +187,41 @@ class ProfileScreen extends StatelessWidget {
             ),
 
             // Menu Items
-            _buildMenuItem(Icons.person_outline, 'Edit Profile', 'Update your personal and professional details'),
-            _buildMenuItem(Icons.account_balance_wallet_outlined, 'My Earnings', 'View your total earnings and balance'),
-            _buildMenuItem(Icons.star_outline, 'My Reviews', 'See your patient reviews and ratings'),
-            _buildMenuItem(Icons.access_time, 'Working Hours', 'Manage your availability and working hours'),
-            _buildMenuItem(Icons.settings_outlined, 'Settings', 'App preferences & settings'),
+            _buildMenuItem(
+              context,
+              Icons.person_outline,
+              'Personal Information',
+              'Update your personal details',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PersonalInfoScreen())),
+            ),
+            _buildMenuItem(
+              context,
+              Icons.work_outline,
+              'Professional Information',
+              'Update your professional details',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfessionalInfoScreen())),
+            ),
+            _buildMenuItem(
+              context,
+              Icons.lock_outline,
+              'Change Password',
+              'Update your account password',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChangePasswordScreen())),
+            ),
+            _buildMenuItem(
+              context,
+              Icons.headset_mic_outlined,
+              'Contact Support',
+              'Get help from our support team',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ContactSupportScreen())),
+            ),
+            _buildMenuItem(
+              context,
+              Icons.privacy_tip_outlined,
+              'Privacy Policy',
+              'Read our privacy policy',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+            ),
 
             const SizedBox(height: 24),
 
@@ -224,7 +259,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, String subtitle) {
+  Widget _buildMenuItem(BuildContext context, IconData icon, String title, String subtitle, {required VoidCallback onTap}) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -264,7 +299,7 @@ class ProfileScreen extends StatelessWidget {
           style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
-        onTap: () {},
+        onTap: onTap,
       ),
     );
   }

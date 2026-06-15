@@ -397,19 +397,7 @@ class _MedicineDetailsScreenState extends State<MedicineDetailsScreen> {
                                 medicine['images']?[0],
                               );
                             }
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                    '$_quantity x ${medicine['name']} added to cart'),
-                                duration: const Duration(seconds: 2),
-                                action: SnackBarAction(
-                                  label: 'View Cart',
-                                  onPressed: () {
-                                    Navigator.pushNamed(context, '/cart');
-                                  },
-                                ),
-                              ),
-                            );
+                            // Removed SnackBar notification
                             setState(() => _quantity = 1);
                           }
                         : null,

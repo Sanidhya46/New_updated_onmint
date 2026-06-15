@@ -14,6 +14,8 @@ import '../booking/ambulance_booking_screen.dart';
 import '../booking/lab_test_booking_screen.dart';
 import '../services/pathology_screen.dart';
 import '../services/doctor_detail_screen.dart';
+import 'package:provider/provider.dart';
+import '../../services/cart_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -69,6 +71,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _getCurrentLocation();
     _loadData();
+    
+    // Fetch cart data to persist floating cart bar
+    Future.microtask(() {
+      if (mounted) {
+        Provider.of<CartService>(context, listen: false).fetchBackendCart();
+      }
+    });
   }
 
   Future<void> _getCurrentLocation() async {
@@ -1640,27 +1649,84 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 32,
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        side: const BorderSide(color: Color(0xFFE53935)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      child: const Text(
-                        'ADD',
-                        style: TextStyle(
-                          color: Color(0xFFE53935),
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
+                  Consumer<CartService>(
+                    builder: (context, cart, child) {
+                      final medicineId = medicine['_id'] ?? medicine['id'];
+                      final cartItem = cart.items[medicineId];
+                      final quantity = cartItem?.quantity ?? 0;
+
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 32,
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  print('Medicine ADD button clicked: $name (ID: $medicineId)');
+                                  cart.addItem(
+                                    medicineId,
+                                    name,
+                                    price,
+                                    imageUrl,
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  side: const BorderSide(color: Color(0xFFE53935)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'ADD',
+                                  style: TextStyle(
+                                    color: Color(0xFFE53935),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (quantity > 0) ...[
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => Navigator.pushNamed(context, '/cart'),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    color: Colors.grey[700],
+                                    size: 24,
+                                  ),
+                                  Positioned(
+                                    right: -4,
+                                    top: -4,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.green,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Text(
+                                        '$quantity',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

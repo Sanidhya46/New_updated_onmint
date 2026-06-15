@@ -59,12 +59,10 @@ class _AddressesScreenState extends State<AddressesScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       final data = {
-        'address': {
-          'street': _streetController.text,
-          'city': _cityController.text,
-          'state': _stateController.text,
-          'zipCode': _zipCodeController.text,
-        },
+        'address': _streetController.text,
+        'city': _cityController.text,
+        'state': _stateController.text,
+        'pincode': _zipCodeController.text,
       };
 
       await _apiClient.patient.updateProfile(data);

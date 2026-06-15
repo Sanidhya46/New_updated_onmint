@@ -15,11 +15,17 @@ class SocketService {
   final _locationUpdateController = StreamController<Map<String, dynamic>>.broadcast();
   final _statusUpdateController = StreamController<Map<String, dynamic>>.broadcast();
   final _notificationController = StreamController<Map<String, dynamic>>.broadcast();
+  final _doctorJoinedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _patientJoinedController = StreamController<Map<String, dynamic>>.broadcast();
+  final _consultationEndedController = StreamController<Map<String, dynamic>>.broadcast();
 
   // Getters for streams
   Stream<Map<String, dynamic>> get locationUpdates => _locationUpdateController.stream;
   Stream<Map<String, dynamic>> get statusUpdates => _statusUpdateController.stream;
   Stream<Map<String, dynamic>> get notifications => _notificationController.stream;
+  Stream<Map<String, dynamic>> get doctorJoined => _doctorJoinedController.stream;
+  Stream<Map<String, dynamic>> get patientJoined => _patientJoinedController.stream;
+  Stream<Map<String, dynamic>> get consultationEnded => _consultationEndedController.stream;
 
   bool get isConnected => _isConnected;
 
@@ -54,20 +60,42 @@ class SocketService {
 
     // Listen for location updates
     _socket!.on('location:updated', (data) {
-      print('📍 Location update received: $data');
-      _locationUpdateController.add(data as Map<String, dynamic>);
+      if (data is Map<String, dynamic>) {
+        _locationUpdateController.add(data);
+      }
     });
 
     // Listen for status updates
     _socket!.on('booking:status:updated', (data) {
-      print('📊 Status update received: $data');
-      _statusUpdateController.add(data as Map<String, dynamic>);
+      if (data is Map<String, dynamic>) {
+        _statusUpdateController.add(data);
+      }
     });
 
     // Listen for notifications
     _socket!.on('notification', (data) {
-      print('🔔 Notification received: $data');
-      _notificationController.add(data as Map<String, dynamic>);
+      if (data is Map<String, dynamic>) {
+        _notificationController.add(data);
+      }
+    });
+
+    // Video call tracking events
+    _socket!.on('call:doctor_joined', (data) {
+      if (data is Map<String, dynamic>) {
+        _doctorJoinedController.add(data);
+      }
+    });
+
+    _socket!.on('call:patient_joined', (data) {
+      if (data is Map<String, dynamic>) {
+        _patientJoinedController.add(data);
+      }
+    });
+
+    _socket!.on('call:consultation_ended', (data) {
+      if (data is Map<String, dynamic>) {
+        _consultationEndedController.add(data);
+      }
     });
   }
 
@@ -76,24 +104,20 @@ class SocketService {
     _socket?.disconnect();
     _socket = null;
     _isConnected = false;
-    print('Socket disconnected manually');
   }
 
   /// Join a booking room for real-time updates
   void joinBooking(String bookingId) {
     if (!_isConnected) {
-      print('⚠️ Cannot join booking: Socket not connected');
       return;
     }
     _socket?.emit('join:booking', bookingId);
-    print('🚪 Joined booking room: $bookingId');
   }
 
   /// Leave a booking room
   void leaveBooking(String bookingId) {
     if (!_isConnected) return;
     _socket?.emit('leave:booking', bookingId);
-    print('🚪 Left booking room: $bookingId');
   }
 
   /// Update location (for providers: ambulance, doctor, nurse)

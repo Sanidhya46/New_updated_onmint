@@ -80,9 +80,9 @@ class _DoctorHomeScreenState extends State<DoctorHomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildStatCard(
-                            'Pending',
-                            '${_stats?.pendingRequests ?? 0}',
-                            Icons.pending,
+                            'Active',
+                            '${_stats?.acceptedAppointments ?? _stats?.pendingRequests ?? 0}',
+                            Icons.schedule,
                             Colors.orange,
                           ),
                         ),

@@ -369,12 +369,12 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen>
                   bookingId: bookingId, serviceType: serviceType),
             ),
           ).then((_) => _loadActiveBookings());
-        } else if (serviceType.toLowerCase() == 'doctor') {
+        } else if (serviceType.toLowerCase() == 'doctor' || serviceType.toLowerCase() == 'consultation') {
           Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
-                  UserActiveConsultationScreen(bookingId: bookingId),
+                  BookingDetailsScreen(bookingId: bookingId),
             ),
           ).then((_) => _loadActiveBookings());
         } else if (serviceType.toLowerCase() == 'bloodbank' ||

@@ -43,6 +43,13 @@ class DoctorApiService {
     await _client.post('/doctor/appointments/$appointmentId/accept');
   }
 
+  Future<void> scheduleAppointment(String appointmentId, String date, String time) async {
+    await _client.post('/doctor/appointments/$appointmentId/schedule', data: {
+      'scheduledDate': date,
+      'scheduledTime': time,
+    });
+  }
+
   // Prescription Management
   Future<Prescription> createPrescription(Map<String, dynamic> data) async {
     final response = await _client.post('/doctor/prescriptions', data: data);
@@ -116,6 +123,28 @@ class DoctorApiService {
   /// Get video service status (Zoom)
   Future<Map<String, dynamic>> getVideoServiceStatus() async {
     final response = await _client.get('/video/service-status');
+    return response.data['data'];
+  }
+
+  /// Start video consultation (sets doctor_on_call = true)
+  Future<Map<String, dynamic>> startConsultation(String bookingId) async {
+    final response = await _client.post('/video/start-consultation', data: {
+      'bookingId': bookingId,
+    });
+    return response.data['data'];
+  }
+
+  /// Complete video consultation (ends the call)
+  Future<Map<String, dynamic>> completeConsultation(String bookingId) async {
+    final response = await _client.post('/video/complete-consultation', data: {
+      'bookingId': bookingId,
+    });
+    return response.data['data'];
+  }
+
+  /// Get real-time call status
+  Future<Map<String, dynamic>> getCallStatus(String bookingId) async {
+    final response = await _client.get('/video/call-status/$bookingId');
     return response.data['data'];
   }
 }

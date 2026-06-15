@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:api_client/api_client.dart';
 import '../../services/cart_service.dart';
 import '../../utils/app_colors.dart';
+import 'widgets/cart_floating_bar.dart';
 
 class MedicinesListScreen extends StatefulWidget {
   const MedicinesListScreen({super.key});
@@ -29,6 +30,11 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
         ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
     _category = args?['category'];
     _loadMedicines();
+    
+    // Fetch backend cart once
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<CartService>(context, listen: false).fetchBackendCart();
+    });
   }
 
   Future<void> _loadMedicines() async {
@@ -177,18 +183,7 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
       medicine['images']?[0],
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${medicine['name']} added to cart'),
-        duration: const Duration(seconds: 2),
-        action: SnackBarAction(
-          label: 'View Cart',
-          onPressed: () {
-            Navigator.pushNamed(context, '/cart');
-          },
-        ),
-      ),
-    );
+    // Removed SnackBar notification
   }
 
   @override
@@ -307,6 +302,14 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
                           return _buildMedicineCard(medicine);
                         },
                       ),
+          ),
+          
+          // Sticky Bottom Cart Bar
+          const Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: CartFloatingBar(),
           ),
         ],
       ),
@@ -430,21 +433,73 @@ class _MedicinesListScreenState extends State<MedicinesListScreen> {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => _addToCart(medicine),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.pharmacy,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text('Add to Cart',
-                            style: TextStyle(fontSize: 12)),
-                      ),
+                    Consumer<CartService>(
+                      builder: (context, cart, child) {
+                        final medicineId = medicine['_id'] ?? medicine['id'];
+                        final cartItem = cart.items[medicineId];
+                        final quantity = cartItem?.quantity ?? 0;
+
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () => _addToCart(medicine),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red[400],
+                                  side: BorderSide(color: Colors.red[400]!),
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'ADD',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (quantity > 0) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => Navigator.pushNamed(context, '/cart'),
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Icon(
+                                      Icons.shopping_cart_outlined,
+                                      color: Colors.grey[700],
+                                      size: 24,
+                                    ),
+                                    Positioned(
+                                      right: -4,
+                                      top: -4,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Text(
+                                          '$quantity',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                   ],
                 ),

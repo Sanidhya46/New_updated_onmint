@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import 'package:user_app/screens/booking/user_unified_tracking_screen.dart';
+import 'package:user_app/screens/booking/user_video_call_screen.dart';
+import 'package:user_app/screens/booking/user_active_consultation_screen.dart';
 
 class OrderDetailFile extends StatefulWidget {
   final String bookingId;
@@ -21,9 +24,12 @@ class OrderDetailFile extends StatefulWidget {
 class _OrderDetailFileState extends State<OrderDetailFile>
     with SingleTickerProviderStateMixin {
   final _apiClient = OnMintApiClient();
+  final _socketService = SocketService();
   bool _isLoading = true;
   Map<String, dynamic>? _booking;
   late AnimationController _animationController;
+  bool _isDoctorOnCall = false;
+  StreamSubscription? _doctorJoinedSub;
 
   @override
   void initState() {
@@ -33,12 +39,24 @@ class _OrderDetailFileState extends State<OrderDetailFile>
       duration: const Duration(seconds: 2),
     )..repeat();
     _loadBookingDetails();
+    _setupSocketListener();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _doctorJoinedSub?.cancel();
+    _socketService.leaveBooking(widget.bookingId);
     super.dispose();
+  }
+
+  void _setupSocketListener() {
+    _socketService.joinBooking(widget.bookingId);
+    _doctorJoinedSub = _socketService.doctorJoined.listen((data) {
+      if (data['bookingId'] == widget.bookingId && mounted) {
+        setState(() => _isDoctorOnCall = true);
+      }
+    });
   }
 
   Future<void> _loadBookingDetails() async {
@@ -635,7 +653,96 @@ class _OrderDetailFileState extends State<OrderDetailFile>
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+
+            // Doctor On Call - Join Call Banner
+            if (booking['serviceType']?.toString().toLowerCase() == 'doctor' &&
+                (_isDoctorOnCall || booking['doctor_on_call'] == true) &&
+                booking['consultation_ended'] != true)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF107C41), Color(0xFF0D6634)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: Colors.greenAccent,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.greenAccent.withOpacity(0.6),
+                                blurRadius: 6,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Doctor is Ready — Join Call Now!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          final provD = booking['provider'] ?? booking['acceptedProvider'] ?? {};
+                          final drName = provD['fullName'] ??
+                              '${provD['firstName'] ?? ''} ${provD['lastName'] ?? ''}'.trim();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => UserVideoCallScreen(
+                                bookingId: widget.bookingId,
+                                doctorName: drName.isEmpty ? 'Doctor' : drName,
+                                doctorImage: provD['profilePicture'],
+                              ),
+                            ),
+                          ).then((_) => _loadBookingDetails());
+                        },
+                        icon: const Icon(Icons.videocam, size: 20),
+                        label: const Text('Join Video Call',
+                            style: TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF107C41),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Live Status
             const Text(

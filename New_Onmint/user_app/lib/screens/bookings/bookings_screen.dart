@@ -3,6 +3,7 @@ import 'package:ui_components/ui_components.dart';
 import 'package:api_client/api_client.dart';
 import '../../config/app_colors.dart';
 import '../booking/user_unified_tracking_screen.dart';
+import 'pharmacist_order_tracking_screen.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -13,24 +14,20 @@ class BookingsScreen extends StatefulWidget {
 
 class _BookingsScreenState extends State<BookingsScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
   final _apiClient = OnMintApiClient();
+  late TabController _tabController;
 
-  List<Map<String, dynamic>> _activeBookings = [];
   List<Map<String, dynamic>> _allBookings = [];
-  bool _isLoadingActive = false;
-  bool _isLoadingAll = false;
-  String? _activeError;
-  String? _allError;
-  int _currentPage = 1;
-  bool _hasMoreBookings = false;
+  List<Map<String, dynamic>> _pendingBookings = [];
+  List<Map<String, dynamic>> _inProgressBookings = [];
+  List<Map<String, dynamic>> _completedBookings = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _loadActiveBookings();
-    _loadAllBookings(refresh: true);
+    _tabController = TabController(length: 3, vsync: this);
+    _loadBookings();
   }
 
   @override
@@ -39,656 +36,414 @@ class _BookingsScreenState extends State<BookingsScreen>
     super.dispose();
   }
 
-  Future<void> _loadActiveBookings() async {
-    setState(() {
-      _isLoadingActive = true;
-      _activeError = null;
-    });
-
+  Future<void> _loadBookings() async {
+    if (_allBookings.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     try {
       await _apiClient.initialize();
-      final response = await _apiClient.patient.getActiveBookings();
-      setState(() {
-        _activeBookings = response.map((booking) => booking.toJson()).toList();
-      });
-    } catch (e) {
-      setState(() {
-        _activeError = 'Error loading active bookings: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoadingActive = false;
-      });
-    }
-  }
+      // Fetch all bookings
+      final response = await _apiClient.patient.getBookings(page: 1, limit: 100);
 
-  Future<void> _loadAllBookings({bool refresh = false}) async {
-    if (refresh) {
-      _currentPage = 1;
-    }
+      if (mounted) {
+        setState(() {
+          List<Map<String, dynamic>> newBookings = [];
+          if (response['success'] == true && response['data'] is List) {
+            newBookings = (response['data'] as List).cast<Map<String, dynamic>>();
+          } else if (response is List) {
+            newBookings = response.cast<Map<String, dynamic>>();
+          }
 
-    setState(() {
-      _isLoadingAll = true;
-      _allError = null;
-    });
-
-    try {
-      await _apiClient.initialize();
-      final response = await _apiClient.patient.getBookings(
-        page: _currentPage,
-        limit: 10,
-      );
-
-      // Handle the actual API response format: {success: true, data: [...], pagination: {...}}
-      List<Map<String, dynamic>> newBookings = [];
-      Map<String, dynamic> pagination = {};
-
-      if (response['success'] == true) {
-        if (response['data'] is List) {
-          final allData =
-              (response['data'] as List).cast<Map<String, dynamic>>();
-          newBookings = allData.where((b) {
-            final status = b['status']?.toString().toLowerCase() ?? '';
-            return status != 'expired' && status != 'cancelled';
-          }).toList();
-        }
-        if (response['pagination'] is Map) {
-          pagination = response['pagination'] as Map<String, dynamic>;
-        }
-      }
-
-      setState(() {
-        if (refresh) {
           _allBookings = newBookings;
-        } else {
-          _allBookings.addAll(newBookings);
-        }
+          
+          // Sort newest first
+          _allBookings.sort((a, b) {
+            final timeA = DateTime.tryParse(a['createdAt']?.toString() ?? a['scheduledTime']?.toString() ?? '') ?? DateTime(0);
+            final timeB = DateTime.tryParse(b['createdAt']?.toString() ?? b['scheduledTime']?.toString() ?? '') ?? DateTime(0);
+            return timeB.compareTo(timeA);
+          });
 
-        int getStatusRank(String status) {
-          switch (status.toLowerCase()) {
-            case 'pending':
-            case 'requested':
-            case 'accepted':
-            case 'confirmed':
-              return 1; // Upcoming
-            case 'on_the_way':
-            case 'in_progress':
-              return 2; // In Progress
-            case 'completed':
-            case 'cancelled':
-              return 3; // Completed
-            default:
-              return 4;
-          }
-        }
+          _pendingBookings = [];
+          _inProgressBookings = [];
+          _completedBookings = [];
 
-        _allBookings.sort((a, b) {
-          int rankA = getStatusRank(a['status'] ?? '');
-          int rankB = getStatusRank(b['status'] ?? '');
-          if (rankA != rankB) {
-            return rankA.compareTo(rankB);
+          for (var b in _allBookings) {
+            final status = b['status']?.toString().toLowerCase() ?? '';
+            if (status == 'requested' || status == 'pending' || status == 'accepted') {
+              _pendingBookings.add(b);
+            } else if (status == 'completed' || status == 'cancelled' || status == 'rejected' || status == 'expired') {
+              _completedBookings.add(b);
+            } else {
+              _inProgressBookings.add(b);
+            }
           }
-          String dateA = a['createdAt'] ?? a['scheduledTime'] ?? '';
-          String dateB = b['createdAt'] ?? b['scheduledTime'] ?? '';
-          return dateB.compareTo(dateA);
+          _isLoading = false;
         });
-
-        _hasMoreBookings = pagination['hasNext'] ?? false;
-        _currentPage = pagination['page'] ?? 1;
-      });
+      }
     } catch (e) {
-      setState(() {
-        _allError = 'Error loading bookings: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoadingAll = false;
-      });
-    }
-  }
-
-  Future<void> _loadMoreBookings() async {
-    if (_hasMoreBookings && !_isLoadingAll) {
-      _currentPage++;
-      await _loadAllBookings();
-    }
-  }
-
-  Future<void> _cancelBooking(String bookingId) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancel Booking'),
-        content: const Text('Are you sure you want to cancel this booking?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text('Yes, Cancel'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await _apiClient.initialize();
-        await _apiClient.patient
-            .cancelBooking(bookingId, reason: 'User requested cancellation');
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Booking cancelled successfully'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // Refresh both lists
-        _loadActiveBookings();
-        _loadAllBookings(refresh: true);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error cancelling booking: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ToastUtils.showError('Failed to load bookings');
       }
     }
   }
 
-  Future<void> _rateBooking(String bookingId) async {
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) => _RateBookingDialog(),
-    );
+  void _viewBookingDetails(Map<String, dynamic> request) {
+    final serviceType = request['serviceType'] ?? 'Unknown';
+    final bookingId = request['_id']?.toString() ?? request['id']?.toString() ?? '';
+    
+    bool isPharmacy = serviceType.toLowerCase() == 'pharmacist' || 
+                      serviceType.toLowerCase() == 'pharmacy' || 
+                      request['medicines'] != null;
 
-    if (result != null) {
-      try {
-        await _apiClient.initialize();
-        await _apiClient.patient.rateBooking(
-          bookingId,
-          rating: result['rating'],
-          review: result['review'],
-        );
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Rating submitted successfully'),
-            backgroundColor: Colors.green,
+    if (isPharmacy) {
+      Navigator.pushNamed(
+        context,
+        '/pharmacist-tracking?id=$bookingId'
+      ).then((_) => _loadBookings());
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => UserUnifiedTrackingScreen(
+            bookingId: bookingId,
+            serviceType: serviceType,
           ),
-        );
-        // Refresh both lists
-        _loadActiveBookings();
-        _loadAllBookings(refresh: true);
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error submitting rating: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  void _viewBookingDetails(String bookingId, String serviceType) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => UserUnifiedTrackingScreen(
-          bookingId: bookingId,
-          serviceType: serviceType,
         ),
-      ),
-    );
+      ).then((_) => _loadBookings());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('My Bookings'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF152238),
+        centerTitle: true,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: const Text(
+          'My Booking',
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w700, fontSize: 18),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.headset_mic_outlined),
+            onPressed: () {},
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.white,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
+          indicatorColor: const Color(0xFF1565C0),
+          indicatorWeight: 3,
+          labelColor: const Color(0xFF1565C0),
+          unselectedLabelColor: Colors.grey.shade500,
+          labelStyle: const TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.w600, fontSize: 13),
           tabs: const [
-            Tab(text: 'Active'),
-            Tab(text: 'All Bookings'),
+            Tab(text: 'All'),
+            Tab(text: 'In Progress'),
+            Tab(text: 'Completed'),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadBookings,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildAllTab(),
+                        _buildList(_inProgressBookings, 'In Progress'),
+                        _buildList(_completedBookings, 'Completed'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildAllTab() {
+    if (_allBookings.isEmpty) {
+      return const Center(child: Text('No bookings found.', style: TextStyle(color: Colors.grey)));
+    }
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      children: [
+        if (_pendingBookings.isNotEmpty) _buildSectionHeader('Pending', _pendingBookings.length, Colors.orange),
+        ..._pendingBookings.map((b) => _buildBookingCard(b)),
+        if (_inProgressBookings.isNotEmpty) _buildSectionHeader('In Progress', _inProgressBookings.length, const Color(0xFF1565C0)),
+        ..._inProgressBookings.map((b) => _buildBookingCard(b)),
+        if (_completedBookings.isNotEmpty) _buildSectionHeader('Completed', _completedBookings.length, Colors.green),
+        ..._completedBookings.map((b) => _buildBookingCard(b)),
+      ],
+    );
+  }
+
+  Widget _buildList(List<Map<String, dynamic>> list, String type) {
+    if (list.isEmpty) {
+      return Center(child: Text('No $type bookings.', style: const TextStyle(color: Colors.grey)));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: list.length,
+      itemBuilder: (context, index) => _buildBookingCard(list[index]),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, int count, Color badgeColor) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 8),
+      child: Row(
         children: [
-          _buildActiveBookingsTab(),
-          _buildAllBookingsTab(),
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF152238),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: badgeColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              count.toString(),
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: badgeColor,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildActiveBookingsTab() {
-    if (_isLoadingActive) {
-      return const Center(child: CircularProgressIndicator());
+  Widget _buildBookingCard(Map<String, dynamic> request) {
+    final providerData = request['provider'] ?? request['acceptedProvider'] ?? {};
+    String pName = 'Provider';
+    if (providerData is Map) {
+      pName = providerData['fullName'] ?? '${providerData['firstName'] ?? ''} ${providerData['lastName'] ?? ''}'.trim();
+      if (pName.isEmpty) pName = providerData['businessName'] ?? 'Provider';
+    }
+    
+    final providerPhoto = (providerData is Map) ? providerData['profilePicture']?.toString() ?? providerData['logo']?.toString() ?? '' : '';
+    
+    final serviceType = request['serviceType'] ?? 'Unknown';
+    final statusRaw = request['status']?.toString().toLowerCase() ?? '';
+    final bookingId = request['_id']?.toString() ?? request['id']?.toString() ?? '';
+    final dateStr = request['scheduledTime'] ?? request['createdAt'];
+
+    Color statusColor;
+    String statusLabel;
+    bool isCompleted = false;
+
+    if (statusRaw == 'requested' || statusRaw == 'pending') {
+      statusColor = Colors.orange;
+      statusLabel = 'Pending';
+    } else if (statusRaw == 'accepted') {
+      statusColor = Colors.orange;
+      statusLabel = 'Accepted';
+    } else if (statusRaw == 'completed') {
+      statusColor = Colors.green;
+      statusLabel = 'Completed';
+      isCompleted = true;
+    } else if (statusRaw == 'cancelled' || statusRaw == 'rejected' || statusRaw == 'expired') {
+      statusColor = Colors.red;
+      statusLabel = 'Cancelled';
+      isCompleted = true;
+    } else {
+      statusColor = const Color(0xFF1565C0);
+      statusLabel = 'In Progress';
     }
 
-    if (_activeError != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error, size: 48, color: AppColors.error),
-            const SizedBox(height: 16),
-            Text(_activeError!, style: const TextStyle(color: AppColors.error)),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadActiveBookings,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
+    String completedDateStr = '';
+    if (isCompleted && request['updatedAt'] != null) {
+      final dt = DateTime.tryParse(request['updatedAt'].toString());
+      if (dt != null) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        completedDateStr = '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+      }
+    } else if (dateStr != null) {
+      final dt = DateTime.tryParse(dateStr.toString());
+      if (dt != null) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        completedDateStr = '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+      }
     }
 
-    if (_activeBookings.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.calendar_today, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No active bookings',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Your active appointments will appear here',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: _loadActiveBookings,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _activeBookings.length,
-        itemBuilder: (context, index) {
-          final booking = _activeBookings[index];
-          return _buildBookingCard(booking);
-        },
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.zero,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildAllBookingsTab() {
-    if (_isLoadingAll && _allBookings.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_allError != null && _allBookings.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error, size: 48, color: AppColors.error),
-            const SizedBox(height: 16),
-            Text(_allError!, style: const TextStyle(color: AppColors.error)),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _loadAllBookings(refresh: true),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_allBookings.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.history, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No bookings yet',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Your booking history will appear here',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () => _loadAllBookings(refresh: true),
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _allBookings.length + (_hasMoreBookings ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index == _allBookings.length) {
-            // Load more indicator
-            return Container(
-              padding: const EdgeInsets.all(16),
-              child: _isLoadingAll
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _loadMoreBookings,
-                      child: const Text('Load More'),
-                    ),
-            );
-          }
-
-          final booking = _allBookings[index];
-          return _buildBookingCard(booking);
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          _viewBookingDetails(request);
         },
-      ),
-    );
-  }
-
-  Widget _buildBookingCard(Map<String, dynamic> booking) {
-    final bookingId = booking['_id'] ?? '';
-    final serviceType = booking['serviceType'] ?? 'Unknown';
-    final status = booking['status'] ?? 'pending';
-    final scheduledTime = booking['scheduledTime'];
-    final providerName = booking['provider']?['firstName'] ?? 'Provider';
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: _getServiceColor(serviceType).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    _getServiceIcon(serviceType),
-                    color: _getServiceColor(serviceType),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        serviceType.toUpperCase(),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Avatar
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.blue.shade50,
+                backgroundImage: providerPhoto.isNotEmpty 
+                    ? NetworkImage(providerPhoto) 
+                    : null,
+                child: providerPhoto.isEmpty 
+                    ? Icon(_getServiceIcon(serviceType), color: _getServiceColor(serviceType), size: 24)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              // Details
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      pName,
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF152238),
+                        height: 1.1,
                       ),
-                      if (scheduledTime != null)
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(_getServiceIcon(serviceType), size: 12, color: Colors.grey),
+                        const SizedBox(width: 4),
                         Text(
-                          '$serviceType • ${DateFormatter.formatForCard(scheduledTime)}',
+                          serviceType.toUpperCase(),
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                    if (completedDateStr.isNotEmpty && !isCompleted) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 12, color: Colors.grey),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              completedDateStr,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: Colors.grey.shade600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Right Side (Status + Chevron)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          statusLabel,
                           style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
+                            fontFamily: 'Poppins',
+                            fontSize: 10,
+                            color: statusColor,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
+                      ),
+                      if (isCompleted && completedDateStr.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Completed on\n$completedDateStr',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
+                        ),
+                      ],
                     ],
                   ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _getStatusColor(status).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    status.toUpperCase(),
-                    style: TextStyle(
-                      color: _getStatusColor(status),
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Provider: $providerName',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () =>
-                        _viewBookingDetails(bookingId, serviceType),
-                    icon: const Icon(Icons.visibility_outlined, size: 16),
-                    label: const Text('View Details'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (status == 'confirmed' || status == 'pending')
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _cancelBooking(bookingId),
-                      icon: const Icon(Icons.cancel_outlined, size: 16),
-                      label: const Text('Cancel'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
-                      ),
-                    ),
-                  ),
-                if (status == 'completed')
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _rateBooking(bookingId),
-                      icon: const Icon(Icons.star_outline, size: 16),
-                      label: const Text('Rate'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.warning,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ],
+                  const SizedBox(width: 4),
+                  const Icon(Icons.chevron_right, color: Colors.black54, size: 18),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'confirmed':
-        return AppColors.success;
-      case 'pending':
-        return AppColors.warning;
-      case 'cancelled':
-        return AppColors.info;
-      case 'completed':
-        return AppColors.error;
-      default:
-        return AppColors.info;
-    }
   }
 
   Color _getServiceColor(String serviceType) {
     switch (serviceType.toLowerCase()) {
-      case 'doctor':
-        return AppColors.doctor;
-      case 'nurse':
-        return AppColors.nurse;
-      case 'pathology':
-        return AppColors.pathology;
-      case 'ambulance':
-        return AppColors.ambulance;
-      case 'bloodbank':
-        return AppColors.bloodbank;
-      case 'pharmacist':
-        return AppColors.pharmacist;
-      default:
-        return AppColors.primary;
+      case 'doctor': return AppColors.doctor;
+      case 'nurse': return AppColors.nurse;
+      case 'pathology': return AppColors.pathology;
+      case 'ambulance': return AppColors.ambulance;
+      case 'bloodbank': return AppColors.bloodbank;
+      case 'pharmacist': return AppColors.pharmacist;
+      default: return AppColors.primary;
     }
   }
 
   IconData _getServiceIcon(String serviceType) {
     switch (serviceType.toLowerCase()) {
-      case 'doctor':
-        return Icons.local_hospital;
-      case 'nurse':
-        return Icons.healing;
-      case 'pathology':
-        return Icons.science;
-      case 'ambulance':
-        return Icons.local_shipping;
-      case 'bloodbank':
-        return Icons.bloodtype;
-      case 'pharmacist':
-        return Icons.local_pharmacy;
-      default:
-        return Icons.medical_services;
+      case 'doctor': return Icons.local_hospital;
+      case 'nurse': return Icons.healing;
+      case 'pathology': return Icons.science;
+      case 'ambulance': return Icons.local_shipping;
+      case 'bloodbank': return Icons.bloodtype;
+      case 'pharmacist': return Icons.local_pharmacy;
+      default: return Icons.medical_services;
     }
-  }
-}
-
-class _RateBookingDialog extends StatefulWidget {
-  @override
-  State<_RateBookingDialog> createState() => _RateBookingDialogState();
-}
-
-class _RateBookingDialogState extends State<_RateBookingDialog> {
-  int _rating = 5;
-  final TextEditingController _reviewController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Rate Service'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('How was your experience?'),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) {
-              return IconButton(
-                onPressed: () => setState(() => _rating = index + 1),
-                icon: Icon(
-                  index < _rating ? Icons.star : Icons.star_border,
-                  color: AppColors.warning,
-                  size: 32,
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _reviewController,
-            decoration: const InputDecoration(
-              labelText: 'Review (Optional)',
-              border: OutlineInputBorder(),
-            ),
-            maxLines: 3,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, {
-            'rating': _rating,
-            'review': _reviewController.text.trim(),
-          }),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-          ),
-          child: const Text('Submit'),
-        ),
-      ],
-    );
-  }
-}
-
-class _BookingDetailsDialog extends StatelessWidget {
-  final Map<String, dynamic> booking;
-
-  const _BookingDetailsDialog({required this.booking});
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Booking Details'),
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDetailRow('Service', booking['serviceType'] ?? 'Unknown'),
-            _buildDetailRow('Status', booking['status'] ?? 'Unknown'),
-            _buildDetailRow(
-                'Provider', booking['provider']?['firstName'] ?? 'Unknown'),
-            if (booking['scheduledTime'] != null)
-              _buildDetailRow(
-                  'Scheduled Time',
-                  DateFormatter.formatToHumanReadable(
-                      booking['scheduledTime'])),
-            if (booking['notes'] != null)
-              _buildDetailRow('Notes', booking['notes']),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
   }
 }

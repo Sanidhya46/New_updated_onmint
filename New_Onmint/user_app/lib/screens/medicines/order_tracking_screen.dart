@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:ui_components/ui_components.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
   final String orderId;
@@ -16,6 +18,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Timer? _timer;
   Map<String, dynamic>? _order;
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -37,567 +40,482 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Future<void> _loadOrder() async {
     try {
       await _apiClient.initialize();
-      final booking =
-          await _apiClient.patient.getBookingDetails(widget.orderId);
+      final response = await _apiClient.get('/realTimeBooking/${widget.orderId}');
 
       if (mounted) {
         setState(() {
-          _order = booking.toJson();
+          _order = response.data['data'];
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
       }
+    }
+  }
+
+  Future<void> _callStore(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      ToastUtils.showError('Phone number not available');
+      return;
+    }
+    final Uri url = Uri.parse('tel:$phone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      ToastUtils.showError('Could not launch phone dialer');
+    }
+  }
+
+  Future<void> _rejectOrder() async {
+    try {
+      await _apiClient.patch(
+        '/realTimeBooking/${widget.orderId}/status',
+        data: {'status': 'cancelled'},
+      );
+      ToastUtils.showSuccess('Order cancelled successfully');
+      _loadOrder();
+    } catch (e) {
+      ToastUtils.showError('Failed to cancel order: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(elevation: 0, backgroundColor: Colors.white),
+        body: const Center(child: CircularProgressIndicator(color: Color(0xFF0F2147))),
+      );
+    }
+    
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Error')),
+        body: Center(child: Text('Error: $_error')),
+      );
+    }
+
+    if (_order == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Order Not Found')),
+        body: const Center(child: Text('Order not found')),
+      );
+    }
+
+    final status = _order!['status'];
+    final isSearching = status == 'requested';
+
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Order Tracking'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadOrder,
+        title: const Text('Request Sent', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F2147),
+        elevation: 0,
+        centerTitle: true,
+      ),
+      body: RefreshIndicator(
+        onRefresh: _loadOrder,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (isSearching) _buildSearchingHeader() else _buildOrderHeader(),
+              const SizedBox(height: 16),
+              if (isSearching) _buildOrderedMedicinesList() else _buildStatusTracker(),
+              const SizedBox(height: 16),
+              if (!isSearching) _buildActionButtons(),
+              if (!isSearching) const SizedBox(height: 16),
+              _buildDeliveryAddress(),
+              const SizedBox(height: 24),
+              if (isSearching) _buildCancelButton(),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchingHeader() {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      child: Column(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.blue[50],
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.hourglass_top, color: Color(0xFF0F2147), size: 40),
+          ),
+          const SizedBox(height: 20),
+          const Text(
+            'Finding a Pharmacy Partner...',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Color(0xFF0F2147)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Please wait while we assign the best pharmacy to fulfill your order.',
+            style: TextStyle(fontSize: 14, color: Colors.black54),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _order == null
-              ? const Center(child: Text('Order not found'))
-              : RefreshIndicator(
-                  onRefresh: _loadOrder,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Order Status Card
-                        _buildStatusCard(),
-
-                        const SizedBox(height: 24),
-
-                        // Status Timeline
-                        _buildStatusTimeline(),
-
-                        const SizedBox(height: 24),
-
-                        // Pharmacist Info (if assigned)
-                        if (_order!['provider'] != null) _buildPharmacistCard(),
-
-                        const SizedBox(height: 24),
-
-                        // Order Items
-                        _buildOrderItems(),
-
-                        const SizedBox(height: 24),
-
-                        // Delivery Address
-                        _buildDeliveryAddress(),
-
-                        const SizedBox(height: 24),
-
-                        // Order Details
-                        _buildOrderDetails(),
-                      ],
-                    ),
-                  ),
-                ),
     );
   }
 
-  Widget _buildStatusCard() {
-    final status = _order!['status'] ?? 'requested';
+  Widget _buildOrderedMedicinesList() {
+    final medicines = _order!['medicines'] as List?;
+    if (medicines == null || medicines.isEmpty) return const SizedBox.shrink();
 
-    return Card(
-      elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Icon(
-              _getStatusIcon(status),
-              size: 64,
-              color: _getStatusColor(status),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _getStatusText(status),
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Ordered Medicines', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F2147))),
+          const SizedBox(height: 16),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: medicines.length,
+            separatorBuilder: (context, index) => const Divider(height: 24),
+            itemBuilder: (context, index) {
+              final med = medicines[index];
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      med['medicineId']?['name'] ?? med['name'] ?? 'Medicine',
+                      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text('x${med['quantity']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCancelButton() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: _rejectOrder,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.red,
+          side: const BorderSide(color: Colors.red),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: const Text('Cancel Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      ),
+    );
+  }
+
+  Widget _buildOrderHeader() {
+    bool isDirect = _order!['medicines'] != null;
+    int itemsCount = (_order!['medicines'] as List?)?.length ?? 0;
+    double price = _order!['price']?.toDouble() ?? 0.0;
+    final provider = _order!['provider'];
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.local_pharmacy, color: Color(0xFF0F2147)),
               ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _getStatusDescription(status),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
-            ),
-            if (status == 'requested') ...[
-              const SizedBox(height: 16),
-              const LinearProgressIndicator(),
-              const SizedBox(height: 8),
-              Text(
-                'Looking for nearby pharmacists...',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      provider != null ? (provider['pharmacyName'] ?? '${provider['firstName']} ${provider['lastName']}') : 'Assigned Pharmacy',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F2147)),
+                    ),
+                    const Text('Order Details', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
                 ),
               ),
             ],
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total Items: $itemsCount', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14)),
+              Text('Total amount: ₹${price.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F2147))),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusTimeline() {
-    final status = _order!['status'] ?? 'requested';
-    final statuses = [
-      'requested',
-      'accepted',
-      'preparing',
-      'ready',
-      'on_the_way',
-      'completed'
-    ];
-    final currentIndex = statuses.indexOf(status);
+  Widget _buildActionButtons() {
+    final provider = _order!['provider'];
+    final phone = provider?['phone'];
+    final status = _order!['status'];
+    bool canReject = status == 'requested' || status == 'accepted';
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Order Progress',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: provider != null ? () => _callStore(phone) : null,
+              icon: const Icon(Icons.call, size: 18),
+              label: const Text('Call Store', style: TextStyle(fontWeight: FontWeight.bold)),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF0F2147),
+                side: const BorderSide(color: Color(0xFF0F2147)),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-            ),
-            const SizedBox(height: 16),
-            ...statuses.asMap().entries.map((entry) {
-              final index = entry.key;
-              final statusName = entry.value;
-              final isCompleted = index <= currentIndex;
-              final isCurrent = index == currentIndex;
-
-              return _buildTimelineItem(
-                statusName,
-                isCompleted,
-                isCurrent,
-                index < statuses.length - 1,
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTimelineItem(
-      String status, bool isCompleted, bool isCurrent, bool showLine) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: isCompleted ? Colors.green : Colors.grey[300],
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                isCompleted ? Icons.check : Icons.circle,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-            if (showLine)
-              Container(
-                width: 2,
-                height: 40,
-                color: isCompleted ? Colors.green : Colors.grey[300],
-              ),
-          ],
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 4, bottom: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getStatusText(status),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                    color: isCompleted ? Colors.black : Colors.grey,
-                  ),
-                ),
-                if (isCurrent)
-                  Text(
-                    'Current Status',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green[700],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-              ],
             ),
           ),
-        ),
-      ],
+          if (canReject) ...[
+            const SizedBox(width: 12),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: _rejectOrder,
+                icon: const Icon(Icons.close, size: 18),
+                label: const Text('Cancel Order', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.red,
+                  side: const BorderSide(color: Colors.red),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildPharmacistCard() {
-    final provider = _order!['provider'];
+  Widget _buildStatusTracker() {
+    final currentStatus = _order!['status'];
+    
+    final statuses = [
+      {'key': 'requested', 'label': 'Order Requested'},
+      {'key': 'accepted', 'label': 'Order Accepted'},
+      {'key': 'packing_medicines', 'label': 'Packing Medicines'},
+      {'key': 'out_for_delivery', 'label': 'Out for Delivery'},
+      {'key': 'completed', 'label': 'Delivered'},
+    ];
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.local_pharmacy, color: Colors.blue),
-                SizedBox(width: 8),
-                Text(
-                  'Pharmacist Details',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.blue[100],
-                  child: Text(
-                    provider['firstName']?[0]?.toUpperCase() ?? 'P',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+    int currentIndex = 0;
+    if (currentStatus == 'cancelled') {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16.0),
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red[200]!),
+        ),
+        child: const Text('Order Cancelled', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16)),
+      );
+    }
+    
+    // Map legacy or intermediate statuses
+    String mappedStatus = currentStatus;
+    if (currentStatus == 'in_progress') mappedStatus = 'packing_medicines';
+    if (currentStatus == 'on_the_way') mappedStatus = 'out_for_delivery';
+
+    for (int i = 0; i < statuses.length; i++) {
+      if (statuses[i]['key'] == mappedStatus) {
+        currentIndex = i;
+        break;
+      }
+    }
+
+    String timeStr = '';
+    String dateStr = '';
+    if (_order!['createdAt'] != null) {
+      final dt = DateTime.parse(_order!['createdAt']).toLocal();
+      timeStr = '${dt.hour > 12 ? dt.hour - 12 : dt.hour}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}';
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      dateStr = '${dt.day} ${months[dt.month - 1]}';
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(statuses.length, (index) {
+          final status = statuses[index];
+          final isCompleted = index <= currentIndex;
+          final isCurrent = index == currentIndex;
+          final isLast = index == statuses.length - 1;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: isCompleted ? const Color(0xFF0F2147) : Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isCompleted ? const Color(0xFF0F2147) : Colors.grey[300]!,
+                        width: 2,
+                      ),
                     ),
+                    child: isCompleted
+                        ? const Icon(Icons.check, size: 14, color: Colors.white)
+                        : null,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  if (!isLast)
+                    Container(
+                      width: 2,
+                      height: 40,
+                      color: isCompleted ? const Color(0xFF0F2147) : Colors.grey[200],
+                    ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 2.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        provider['pharmacyName'] ??
-                            '${provider['firstName']} ${provider['lastName']}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                        status['label']!,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+                          color: isCompleted ? const Color(0xFF0F2147) : Colors.grey,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      if (provider['phone'] != null)
+                      if (isCompleted && index == 0) // Only show timestamp for first step
                         Text(
-                          provider['phone'],
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
+                          '$dateStr, $timeStr',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                         ),
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.phone, color: Colors.green),
-                  onPressed: () {
-                    // Add call functionality
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildOrderItems() {
-    final items = _order!['items'] as List? ?? [];
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Order Items',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
               ),
-            ),
-            const Divider(height: 24),
-            ...items.map((item) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Text(
-                      '${item['quantity']}x',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        item['medicine']?['name'] ?? 'Medicine',
-                        style: const TextStyle(fontSize: 15),
-                      ),
-                    ),
-                    Text(
-                      '₹${(item['price'] * item['quantity']).toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Total Amount:',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '₹${_order!['price']?.toStringAsFixed(2) ?? '0.00'}',
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          );
+        }),
       ),
     );
   }
 
   Widget _buildDeliveryAddress() {
-    final location = _order!['location'];
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(Icons.location_on, color: Colors.red),
-                SizedBox(width: 8),
-                Text(
-                  'Delivery Address',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            Text(
-              location?['address'] ?? 'No address provided',
-              style: const TextStyle(fontSize: 15),
-            ),
-          ],
-        ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildOrderDetails() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Order Details',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Divider(height: 24),
-            _buildDetailRow(
-                'Order ID', _order!['_id']?.substring(0, 12) ?? 'N/A'),
-            _buildDetailRow(
-                'Payment Method', _order!['paymentMethod'] ?? 'COD'),
-            _buildDetailRow('Order Date', _formatDate(_order!['createdAt'])),
-            if (_order!['notes'] != null &&
-                _order!['notes'].toString().isNotEmpty)
-              _buildDetailRow('Notes', _order!['notes']),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+          const Row(
+            children: [
+              Icon(Icons.location_on_outlined, color: Color(0xFF0F2147), size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Delivery Address',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF0F2147)),
               ),
-            ),
+            ],
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+          const SizedBox(height: 12),
+          Text(
+            _order!['address'] ?? _order!['location']?['address'] ?? 'No address provided',
+            style: const TextStyle(fontSize: 14, height: 1.4, color: Colors.black87),
           ),
         ],
       ),
     );
-  }
-
-  IconData _getStatusIcon(String status) {
-    switch (status) {
-      case 'requested':
-        return Icons.hourglass_empty;
-      case 'accepted':
-        return Icons.check_circle;
-      case 'preparing':
-        return Icons.medication;
-      case 'ready':
-        return Icons.inventory;
-      case 'on_the_way':
-        return Icons.local_shipping;
-      case 'completed':
-        return Icons.done_all;
-      case 'cancelled':
-        return Icons.cancel;
-      default:
-        return Icons.info;
-    }
-  }
-
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'requested':
-        return Colors.orange;
-      case 'accepted':
-      case 'preparing':
-      case 'ready':
-        return Colors.blue;
-      case 'on_the_way':
-        return Colors.purple;
-      case 'completed':
-        return Colors.green;
-      case 'cancelled':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  String _getStatusText(String status) {
-    switch (status) {
-      case 'requested':
-        return 'Waiting for Pharmacist';
-      case 'accepted':
-        return 'Order Accepted';
-      case 'preparing':
-        return 'Preparing Your Order';
-      case 'ready':
-        return 'Ready for Delivery';
-      case 'on_the_way':
-        return 'Out for Delivery';
-      case 'completed':
-        return 'Delivered';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return 'Unknown Status';
-    }
-  }
-
-  String _getStatusDescription(String status) {
-    switch (status) {
-      case 'requested':
-        return 'Looking for nearby pharmacists to accept your order...';
-      case 'accepted':
-        return 'A pharmacist has accepted your order';
-      case 'preparing':
-        return 'Your medicines are being prepared';
-      case 'ready':
-        return 'Your order is ready for delivery';
-      case 'on_the_way':
-        return 'Your order is on the way';
-      case 'completed':
-        return 'Your order has been delivered successfully';
-      case 'cancelled':
-        return 'This order was cancelled';
-      default:
-        return '';
-    }
-  }
-
-  String _formatDate(String? dateStr) {
-    if (dateStr == null) return 'N/A';
-    try {
-      final date = DateTime.parse(dateStr);
-      return '${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return dateStr;
-    }
   }
 }

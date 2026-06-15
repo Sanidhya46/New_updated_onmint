@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
 import 'config/api_config.dart';
 
 class ApiClient {
@@ -151,11 +152,15 @@ class ApiClient {
       if (xFiles != null && xFiles.isNotEmpty) {
         for (final xFile in xFiles) {
           final bytes = await xFile.readAsBytes();
+          final String fileName = xFile.name.isNotEmpty 
+              ? (xFile.name.contains('.') ? xFile.name : '${xFile.name}.jpg') 
+              : 'image.jpg';
           formData.files.add(MapEntry(
             fileFieldName,
             MultipartFile.fromBytes(
               bytes,
-              filename: xFile.name,
+              filename: fileName,
+              contentType: MediaType('image', 'jpeg'),
             ),
           ));
         }
@@ -193,9 +198,16 @@ class ApiClient {
       if (namedXFiles != null && namedXFiles.isNotEmpty) {
         for (final entry in namedXFiles.entries) {
           final bytes = await entry.value.readAsBytes();
+          final String fileName = entry.value.name.isNotEmpty 
+              ? (entry.value.name.contains('.') ? entry.value.name : '${entry.value.name}.jpg') 
+              : 'image.jpg';
           formData.files.add(MapEntry(
             entry.key,
-            MultipartFile.fromBytes(bytes, filename: entry.value.name),
+            MultipartFile.fromBytes(
+              bytes, 
+              filename: fileName,
+              contentType: MediaType('image', 'jpeg'),
+            ),
           ));
         }
       }
@@ -215,11 +227,15 @@ class ApiClient {
       if (xFiles != null && xFiles.isNotEmpty) {
         for (final xFile in xFiles) {
           final bytes = await xFile.readAsBytes();
+          final String fileName = xFile.name.isNotEmpty 
+              ? (xFile.name.contains('.') ? xFile.name : '${xFile.name}.jpg') 
+              : 'image.jpg';
           formData.files.add(MapEntry(
             fileFieldName,
             MultipartFile.fromBytes(
               bytes,
-              filename: xFile.name,
+              filename: fileName,
+              contentType: MediaType('image', 'jpeg'),
             ),
           ));
         }

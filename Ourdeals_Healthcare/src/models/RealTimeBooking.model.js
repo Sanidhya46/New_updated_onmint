@@ -11,8 +11,11 @@ const SERVICE_TYPES = [
 ];
 
 const STATUS = [
+  "in_cart",        // Added to cart but not yet requested
   "requested",      // Initial state - waiting for provider acceptance
   "accepted",       // One provider accepted
+  "packing_medicines", // Provider is packing medicines
+  "out_for_delivery",  // Provider is delivering
   "preparing",      // Provider is preparing the order (for pharmacist)
   "ready",          // Order is ready for pickup/delivery (for pharmacist)
   "on_the_way",     // Provider is traveling/delivering
@@ -116,11 +119,6 @@ const RealTimeBookingSchema = new mongoose.Schema(
         trim: true,
         maxlength: 1000,
       },
-      urgency: {
-        type: String,
-        enum: ["low", "medium", "high", "emergency"],
-        default: "medium",
-      },
       preferredTime: {
         type: Date,
       },
@@ -149,6 +147,39 @@ const RealTimeBookingSchema = new mongoose.Schema(
         type: Number,
         min: 0,
       },
+    }],
+    
+    // Prescription-based order fields
+    isPrescriptionBased: {
+      type: Boolean,
+      default: false,
+    },
+    prescriptionImages: [{
+      type: String,
+    }],
+    offers: [{
+      vendorId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+      },
+      amount: {
+        type: Number,
+        required: true,
+      },
+      deliveryTime: {
+        type: String, // e.g. "4 Hours"
+        required: true,
+      },
+      status: {
+        type: String,
+        enum: ["pending", "accepted", "rejected"],
+        default: "pending",
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now,
+      }
     }],
 
     // Lab test details (for labtest service type)
@@ -288,6 +319,87 @@ const RealTimeBookingSchema = new mongoose.Schema(
       type: String,
       trim: true,
       maxlength: 500,
+    },
+
+    // Consultation type (for doctor bookings)
+    consultationType: {
+      type: String,
+      enum: ["in-person", "video-call", "phone-call"],
+      default: "video-call",
+    },
+
+    scheduledTime: {
+      type: Date,
+    },
+
+    duration: {
+      type: Number,
+      min: 0,
+    },
+
+    // Video consultation fields
+    meetingLink: {
+      type: String,
+      trim: true,
+    },
+
+    meetingId: {
+      type: String,
+      trim: true,
+    },
+
+    meetingPassword: {
+      type: String,
+      trim: true,
+    },
+
+    hostLink: {
+      type: String,
+      trim: true,
+    },
+
+    meetingStartTime: {
+      type: Date,
+    },
+
+    meetingEndTime: {
+      type: Date,
+    },
+
+    videoCallCompleted: {
+      type: Boolean,
+      default: false,
+    },
+
+    videoCallEndedAt: {
+      type: Date,
+    },
+
+    // Zoom specific fields
+    zoomMeetingId: {
+      type: String,
+      trim: true,
+    },
+
+    zoomMeetingPassword: {
+      type: String,
+      trim: true,
+    },
+
+    zoomJoinUrl: {
+      type: String,
+      trim: true,
+    },
+
+    zoomHostStartUrl: {
+      type: String,
+      trim: true,
+    },
+
+    // Prescription reference
+    prescription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Prescription",
     },
   },
   { 

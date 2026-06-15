@@ -55,6 +55,7 @@ dependencies:
   
   # Push Notifications
   firebase_core: ^2.24.2
+  camera: ^0.12.0+1
   # flutter_local_notifications: REMOVED - causes Android build namespace errors
 
 dev_dependencies:
@@ -86,3 +87,5 @@ flutter:
     - assets/images/lab_test/
     - assets/images/bloodbank/
     - assets/images/request_order/
+    - assets/images/medicine/
+    - assets/images/register_login/

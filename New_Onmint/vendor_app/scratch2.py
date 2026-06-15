@@ -1,462 +1,502 @@
-import os
+import re
 
-file_path = r"c:\Users\a\Desktop\Updated_Onmint\New_Onmint\vendor_app\lib\screens\ambulance\ride_details_screen.dart"
+file_path = "c:\\Users\\a\\Desktop\\Updated_Onmint\\New_Onmint\\vendor_app\\lib\\screens\\doctor\\doctor_active_consultation_screen.dart"
+
 with open(file_path, "r", encoding="utf-8") as f:
-    lines = f.readlines()
+    content = f.read()
 
-new_build_method = """  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _isRequested ? const Color(0xFFFCF3F3) : const Color(0xFFF6F6F6),
-      appBar: AppBar(
-        backgroundColor: _isRequested ? const Color(0xFFF75555) : Colors.white,
-        foregroundColor: _isRequested ? Colors.white : Colors.black,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: _isRequested ? Colors.white : Colors.black),
-          onPressed: () => Navigator.pop(context, true),
-        ),
-        title: Text(
-          _isRequested ? 'Ambulance Request Details' : 'Ambulance Booking',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: _isRequested ? Colors.white : Colors.black,
-          ),
-        ),
-        actions: _isRequested ? [] : [
-          IconButton(
-            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFFE52329)))
-          : _ride == null
-              ? const Center(child: Text('Ride not found'))
-              : _buildBody(),
-    );
-  }
-"""
+# Let's replace the whole class _DoctorActiveConsultationScreenState
+new_class = """class _DoctorActiveConsultationScreenState extends State<DoctorActiveConsultationScreen> {
+  final _apiClient = OnMintApiClient();
+  Map<String, dynamic>? _appointment;
+  bool _isLoading = true;
+  
+  Timer? _timer;
+  int _secondsElapsed = 0;
+  
+  bool _isStartNowSelected = true;
+  List<DateTime> _scheduleDates = [];
+  DateTime? _selectedScheduleDate;
+  String _selectedScheduleTime = '10:00 AM';
 
-new_build_body = """  Widget _buildBody() {
-    if (_isRequested) {
-      return Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Request Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 12),
-                  _buildRequestSummaryCard(),
-                  const SizedBox(height: 20),
-                  const Text('Patient Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 12),
-                  _buildRequestPatientDetailsCard(),
-                  const SizedBox(height: 20),
-                  const Text('Service Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 12),
-                  _buildRequestServiceDetailsCard(),
-                ],
-              ),
-            ),
-          ),
-          _buildAcceptRejectButtons(),
-        ],
-      );
+  @override
+  void initState() {
+    super.initState();
+    _loadAppointment();
+    
+    DateTime now = DateTime.now();
+    for (int i=0; i<7; i++) {
+      _scheduleDates.add(now.add(Duration(days: i)));
     }
-
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_isCompleted) ...[
-                  _buildCompletedBanner(),
-                  const SizedBox(height: 12),
-                ],
-                _buildPatientCard(),
-                const SizedBox(height: 12),
-                _buildRouteCard(),
-                const SizedBox(height: 12),
-                _buildStatusStepperHorizontal(),
-                const SizedBox(height: 12),
-                if (!_isCompleted) ...[
-                  _buildActionShortcuts(),
-                  const SizedBox(height: 12),
-                ],
-                if (_isCompleted) ...[
-                  _buildActionShortcuts(),
-                  const SizedBox(height: 12),
-                  _buildThankYouCard(),
-                  const SizedBox(height: 12),
-                ],
-              ],
-            ),
-          ),
-        ),
-        _buildBottomButton(),
-      ],
-    );
+    _selectedScheduleDate = _scheduleDates[0];
   }
-"""
 
-new_request_info = """  // ── Request Summary Card ──────────────────────────────────────────
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
-  Widget _buildRequestSummaryCard() {
-    final patient = _ride!['patient'] ?? {};
-    final fullName = patient['fullName'] ?? patient['firstName'] != null
-        ? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim()
-        : 'Unknown Patient';
-    final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Male';
-    final age = _ride!['patientAge'] ?? patient['age'] ?? '--';
-
-    String formattedDate = '--';
-    if (_ride!['createdAt'] != null) {
-      final dt = DateTime.tryParse(_ride!['createdAt'].toString());
-      if (dt != null) {
-        formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(dt.toLocal());
+  Future<void> _loadAppointment() async {
+    setState(() => _isLoading = true);
+    try {
+      final data = await _apiClient.doctor.getAppointmentDetails(widget.appointmentId);
+      if (mounted) {
+        setState(() {
+          _appointment = data;
+          _isLoading = false;
+          if (_appointment!['status'] == 'in_progress') {
+            _startTimer();
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading appointment: $e')),
+        );
       }
     }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 60, height: 60,
-            decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFEDF2F7)),
-            child: ClipOval(
-              child: patient['profilePicture'] != null
-                  ? Image.network(patient['profilePicture'], fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.grey, size: 32))
-                  : const Icon(Icons.person, color: Colors.grey, size: 32),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 4),
-                Text('$gender  •  $age Years', style: TextStyle(color: Colors.grey[700], fontSize: 13)),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: const Color(0xFFFCF3F3), borderRadius: BorderRadius.circular(6)),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.location_on_outlined, color: Colors.red, size: 12),
-                      const SizedBox(width: 4),
-                      Text('3.2 km away', style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text('Requested On', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
-              const SizedBox(height: 4),
-              Text(formattedDate, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
-  // ── Request Patient Details Card ────────────────────────────────
-
-  Widget _buildRequestPatientDetailsCard() {
-    final patient = _ride!['patient'] ?? {};
-    final fullName = patient['fullName'] ?? patient['firstName'] != null
-        ? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim()
-        : 'Unknown Patient';
-    final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Male';
-    final age = _ride!['patientAge'] ?? patient['age'] ?? '--';
-    final pickup = _ride!['location']?['address'] ?? _ride!['pickupLocation']?['address'] ?? 'Pickup not specified';
-    final drop = _ride!['dropLocation']?['address'] ?? _ride!['dropOffLocation']?['address'] ?? 'Drop not specified';
-    final phone = patient['phone'] ?? 'N/A';
-    final details = _ride!['notes'] ?? _ride!['requirements']?['description'] ?? 'Patient having chest pain and difficulty in breathing.';
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          _buildDetailItem(Icons.person_outline, 'Name', fullName, color: Colors.red),
-          const Divider(),
-          _buildDetailItem(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender', color: Colors.red),
-          const Divider(),
-          _buildDetailItem(Icons.location_on_outlined, 'Pickup Location', pickup, color: Colors.red),
-          const Divider(),
-          _buildDetailItem(Icons.my_location_outlined, 'Drop-off Location (Optional)', drop, color: Colors.red),
-          const Divider(),
-          _buildDetailItem(Icons.phone_outlined, 'Phone Number', phone, color: Colors.red),
-          const Divider(),
-          _buildDetailItem(Icons.description_outlined, 'Additional Details', details, color: Colors.red),
-        ],
-      ),
-    );
+  void _startTimer() {
+    if (_timer != null && _timer!.isActive) return;
+    if (_appointment?['startTime'] != null) {
+      final startTime = DateTime.tryParse(_appointment!['startTime']);
+      if (startTime != null) {
+        _secondsElapsed = DateTime.now().difference(startTime).inSeconds;
+      }
+    }
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) setState(() => _secondsElapsed++);
+    });
   }
 
-  // ── Request Service Details Card ────────────────────────────────
-
-  Widget _buildRequestServiceDetailsCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          _buildDetailItem(Icons.local_hospital_outlined, 'Service Type', 'Ambulance', color: Colors.red),
-          const Divider(),
-          _buildDetailItem(Icons.health_and_safety_outlined, 'Purpose', 'Medical Emergency', color: Colors.red),
-        ],
-      ),
-    );
+  String _formatDuration(int totalSeconds) {
+    int minutes = totalSeconds ~/ 60;
+    int seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
-  Widget _buildDetailItem(IconData icon, String label, String value, {Color color = Colors.grey}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: Text(label, style: TextStyle(color: Colors.grey[800], fontSize: 13)),
-          ),
-          Expanded(
-            flex: 3,
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13), textAlign: TextAlign.right),
-          ),
-        ],
-      ),
-    );
-  }
-"""
-
-new_status_stepper = """  // ── Status Stepper ────────────────────────────────────────────────
-
-  Widget _buildStatusStepperHorizontal() {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHorizontalStep(
-            title: 'Accepted',
-            time: _acceptedAt != null ? _fmt(_acceptedAt) : 'Just Now',
-            isActive: _currentStep >= 0,
-            isFirst: true,
-            isLast: false,
-            isNextActive: _currentStep >= 1,
-          ),
-          _buildHorizontalStep(
-            title: 'On The Way',
-            time: _currentStep >= 1 ? (_onTheWayAt != null ? _fmt(_onTheWayAt) : _fmt(DateTime.now())) : '--:--',
-            isActive: _currentStep >= 1,
-            isFirst: false,
-            isLast: false,
-            isNextActive: _currentStep >= 2,
-          ),
-          _buildHorizontalStep(
-            title: 'At Pickup Point',
-            time: _currentStep >= 2 ? (_atPickupAt != null ? _fmt(_atPickupAt) : _fmt(DateTime.now())) : '--:--',
-            isActive: _currentStep >= 2,
-            isFirst: false,
-            isLast: false,
-            isNextActive: _currentStep >= 3,
-          ),
-          _buildHorizontalStep(
-            title: 'At Drop Point',
-            time: _currentStep >= 3 ? (_atDropAt != null ? _fmt(_atDropAt) : _fmt(DateTime.now())) : '--:--',
-            isActive: _currentStep >= 3,
-            isFirst: false,
-            isLast: true,
-            isNextActive: false,
-          ),
-        ],
-      ),
-    );
+  Future<void> _startConsultation() async {
+    try {
+      showDialog(context: context, barrierDismissible: false, builder: (c) => const Center(child: CircularProgressIndicator()));
+      await _apiClient.post('/video/start-consultation', data: {'bookingId': widget.appointmentId});
+      if (mounted) {
+        Navigator.pop(context);
+        await Navigator.push(context, MaterialPageRoute(builder: (context) => VideoCallScreen(
+          bookingId: widget.appointmentId,
+          isDoctor: true,
+          patientName: '${_appointment?['patient']?['firstName'] ?? ''} ${_appointment?['patient']?['lastName'] ?? ''}',
+          patientImage: _appointment?['patient']?['profilePicture'],
+        )));
+        _loadAppointment();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to start consultation: $e')));
+      }
+    }
   }
 
-  Widget _buildHorizontalStep({
-    required String title,
-    required String time,
-    required bool isActive,
-    required bool isFirst,
-    required bool isLast,
-    required bool isNextActive,
-  }) {
-    return Expanded(
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  height: 2,
-                  color: isFirst ? Colors.transparent : (isActive ? Colors.green : Colors.grey.shade300),
-                ),
-              ),
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive ? Colors.green : Colors.white,
-                  border: Border.all(
-                    color: isActive ? Colors.transparent : Colors.grey.shade400,
-                    width: 2,
-                  ),
-                ),
-                child: isActive
-                    ? const Icon(Icons.check, color: Colors.white, size: 14)
-                    : null,
-              ),
-              Expanded(
-                child: Container(
-                  height: 2,
-                  color: isLast ? Colors.transparent : (isNextActive ? Colors.green : Colors.grey.shade300),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive ? Colors.green : Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            time,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 10,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        ],
-      ),
-    );
+  Future<void> _reconsult() async {
+    await Navigator.push(context, MaterialPageRoute(builder: (context) => VideoCallScreen(
+      bookingId: widget.appointmentId,
+      isDoctor: true,
+      patientName: '${_appointment?['patient']?['firstName'] ?? ''} ${_appointment?['patient']?['lastName'] ?? ''}',
+      patientImage: _appointment?['patient']?['profilePicture'],
+    )));
   }
-"""
 
-new_accept_reject = """  Widget _buildAcceptRejectButtons() {
-    return Container(
-      color: const Color(0xFFFCF3F3),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Future<void> _endConsultation() async {
+    try {
+      showDialog(context: context, barrierDismissible: false, builder: (c) => const Center(child: CircularProgressIndicator()));
+      await _apiClient.post('/video/complete-consultation', data: {'bookingId': widget.appointmentId});
+      if (mounted) {
+        Navigator.pop(context);
+        _timer?.cancel();
+        _loadAppointment();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to end consultation: $e')));
+      }
+    }
+  }
+
+  Future<void> _confirmSchedule() async {
+    try {
+      showDialog(context: context, barrierDismissible: false, builder: (c) => const Center(child: CircularProgressIndicator()));
+      
+      // Pass ISO string instead of "Today"
+      String isoDate = DateFormat('yyyy-MM-dd').format(_selectedScheduleDate!);
+      
+      await _apiClient.doctor.scheduleAppointment(widget.appointmentId, isoDate, _selectedScheduleTime);
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Schedule confirmed successfully!')));
+        _loadAppointment();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to schedule: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(backgroundColor: Color(0xFFF4F7FF), body: Center(child: CircularProgressIndicator(color: Color(0xFF1565C0))));
+    }
+
+    if (_appointment == null) {
+      return Scaffold(appBar: AppBar(), body: const Center(child: Text('Consultation not found')));
+    }
+
+    final status = _appointment!['status'] ?? 'accepted';
+
+    if (status == 'completed') {
+      return UploadPrescriptionScreen(appointmentId: widget.appointmentId, appointment: _appointment);
+    }
+    
+    // Fallback UI for in_progress status, keeping it minimal to allow finishing the call
+    if (status == 'in_progress') {
+       return Scaffold(
+         appBar: AppBar(title: const Text('In Consultation')),
+         body: Center(
+           child: Column(
+             mainAxisAlignment: MainAxisAlignment.center,
+             children: [
+               Text('In Consultation', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.green)),
+               SizedBox(height: 16),
+               ElevatedButton(onPressed: _reconsult, child: Text('Rejoin Call')),
+               SizedBox(height: 16),
+               ElevatedButton(onPressed: _endConsultation, style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white), child: Text('End Consultation')),
+             ],
+           )
+         )
+       );
+    }
+
+    // This is the accepted status UI (Image 2)
+    final patient = _appointment!['patient'] ?? {};
+    final fullName = '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim();
+    final gender = patient['gender'] ?? 'Male';
+    final age = patient['age'] ?? '35 Years';
+    final problem = _appointment!['requirements']?['description'] ?? _appointment!['notes'] ?? 'Fever (Constipation, Bloating)';
+    final consultationType = _appointment!['consultationType'] ?? 'Online Consultation';
+    
+    String formattedDate = '12 May 2025, 11:20 AM';
+    if (_appointment!['createdAt'] != null) {
+      final d = DateTime.tryParse(_appointment!['createdAt']);
+      if (d != null) formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(d.toLocal());
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Color(0xFF1E3A8A)), onPressed: () => Navigator.pop(context)),
+        title: const Column(
           children: [
+            Text('Consultation Options', style: TextStyle(color: Color(0xFF1E3A8A), fontWeight: FontWeight.bold, fontSize: 18)),
+            Text('Choose how you want to consult with the patient', style: TextStyle(color: Colors.grey, fontSize: 11)),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(icon: const Icon(Icons.security, color: Color(0xFF1E3A8A)), onPressed: () {}),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Top Card
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))]),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CircleAvatar(radius: 28, backgroundColor: Colors.blue.shade50, backgroundImage: patient['profilePicture'] != null ? NetworkImage(patient['profilePicture']) : null, child: patient['profilePicture'] == null ? const Icon(Icons.person, color: Colors.blue, size: 32) : null),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(fullName.isEmpty ? 'Patient' : fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1E3A8A))),
+                            const SizedBox(height: 4),
+                            Text('${age.replaceAll(" Years", " Years")} • $gender', style: TextStyle(color: Colors.grey[700], fontSize: 13)),
+                            const SizedBox(height: 12),
+                            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [const Icon(Icons.medical_information_outlined, size: 14, color: Colors.grey), const SizedBox(width: 6), Expanded(child: Text('Reason: $problem', style: TextStyle(fontSize: 12, color: Colors.grey[800])))]),
+                            const SizedBox(height: 6),
+                            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [const Icon(Icons.video_camera_front_outlined, size: 14, color: Colors.blue), const SizedBox(width: 6), Expanded(child: Text('Consultation Type: $consultationType', style: TextStyle(fontSize: 12, color: Colors.grey[800])))]),
+                          ],
+                        )
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text('Requested On', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                          const SizedBox(height: 2),
+                          Text(formattedDate.split(', ')[0], style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          Text(formattedDate.split(', ').length > 1 ? formattedDate.split(', ')[1] : '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                        ],
+                      )
+                    ]
+                  )
+                ]
+              )
+            ),
+            const SizedBox(height: 24),
+            
+            // Quick Actions
+            const Text('Quick Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E3A8A))),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _isProcessing ? null : _rejectRide,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFFE52329), width: 1.5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      backgroundColor: Colors.white,
-                    ),
-                    icon: const Icon(Icons.close, color: Color(0xFFE52329), size: 18),
-                    label: const Text(
-                      'Reject Request',
-                      style: TextStyle(color: Color(0xFFE52329), fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isStartNowSelected = true),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _isStartNowSelected ? Colors.green.shade50 : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: _isStartNowSelected ? Colors.green : Colors.grey.shade200, width: 1.5),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.video_call, color: Colors.green, size: 28),
+                          const SizedBox(height: 8),
+                          const Text('Start Consultation Now', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13)),
+                          const SizedBox(height: 4),
+                          const Text('Connect with the patient right away', style: TextStyle(fontSize: 11, color: Colors.black87)),
+                          const SizedBox(height: 8),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.green.shade100, borderRadius: BorderRadius.circular(4)), child: const Text('For available doctors', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold))),
+                        ],
+                      )
+                    )
+                  )
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _isProcessing ? null : _acceptRide,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.green,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        side: const BorderSide(color: Colors.green, width: 1.5),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isStartNowSelected = false),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: !_isStartNowSelected ? Colors.blue.shade50 : Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: !_isStartNowSelected ? Colors.blue : Colors.grey.shade200, width: 1.5),
                       ),
-                    ),
-                    icon: _isProcessing
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.green, strokeWidth: 2))
-                        : const Icon(Icons.check, color: Colors.green, size: 18),
-                    label: Text(
-                      _isProcessing ? 'Wait...' : 'Accept Request',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green),
-                    ),
-                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.calendar_month, color: Colors.blue.shade700, size: 28),
+                          const SizedBox(height: 8),
+                          Text('Schedule Consultation', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade700, fontSize: 13)),
+                          const SizedBox(height: 4),
+                          const Text('Choose a date & time slot to consult with the patient.', style: TextStyle(fontSize: 11, color: Colors.black87)),
+                          const SizedBox(height: 8),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.blue.shade100, borderRadius: BorderRadius.circular(4)), child: Text('For busy doctors', style: TextStyle(fontSize: 10, color: Colors.blue.shade700, fontWeight: FontWeight.bold))),
+                        ],
+                      )
+                    )
+                  )
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'You can accept or reject this booking request.\\nOnce accepted, the patient will be notified.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
+            
+            if (!_isStartNowSelected) ...[
+              const SizedBox(height: 24),
+              const Row(
+                children: [
+                  Expanded(child: Divider()),
+                  Padding(padding: EdgeInsets.symmetric(horizontal: 8.0), child: Text('OR', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, fontSize: 12))),
+                  Expanded(child: Divider()),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const Text('Schedule Consultation', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF1E3A8A))),
+              const SizedBox(height: 16),
+              
+              // Date Selector
+              const Text('Select Date', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87)),
+              const SizedBox(height: 12),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _scheduleDates.asMap().entries.map((entry) {
+                    int idx = entry.key;
+                    DateTime date = entry.value;
+                    bool isSelected = _selectedScheduleDate == date;
+                    
+                    String topText = idx == 0 ? 'Today' : idx == 1 ? 'Tomorrow' : DateFormat('EEE').format(date);
+                    String numText = DateFormat('dd').format(date);
+                    String bottomText = DateFormat('MMM').format(date);
+                    if (idx == 0) bottomText = DateFormat('EEE').format(date); // Just mimicking the design
+                    
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedScheduleDate = date),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: isSelected ? Colors.green : Colors.grey.shade300, width: isSelected ? 1.5 : 1),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(topText, style: TextStyle(fontSize: 12, color: isSelected ? Colors.green : Colors.grey[600], fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                            const SizedBox(height: 4),
+                            Text(numText, style: TextStyle(fontSize: 18, color: Colors.black87, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 4),
+                            Text(bottomText, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+                          ]
+                        )
+                      )
+                    );
+                  }).toList()
+                )
+              ),
+              const SizedBox(height: 20),
+              
+              // Time Selector
+              const Text('Select Time Slot', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87)),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ['09:00 AM', '09:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM', '04:00 PM', '04:30 PM', '05:00 PM', '05:30 PM'].map((time) {
+                  bool isSelected = _selectedScheduleTime == time;
+                  return GestureDetector(
+                    onTap: () => setState(() => _selectedScheduleTime = time),
+                    child: Container(
+                      width: (MediaQuery.of(context).size.width - 56) / 3, // 3 columns
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Colors.green.shade50 : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isSelected ? Colors.green : Colors.grey.shade300, width: isSelected ? 1.5 : 1),
+                      ),
+                      alignment: Alignment.center,
+                      child: Column(
+                        children: [
+                          Text(time, style: TextStyle(color: isSelected ? Colors.green : Colors.black87, fontWeight: isSelected ? FontWeight.bold : FontWeight.w500)),
+                          if (time == '10:00 AM')
+                            Text('Recommended', style: TextStyle(fontSize: 8, color: Colors.green, fontWeight: FontWeight.bold)),
+                        ],
+                      )
+                    )
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              
+              // Add Custom Time
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.blue.shade100)),
+                child: Row(
+                  children: [
+                    Icon(Icons.add_circle_outline, color: Colors.blue.shade700),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Add Custom Time', style: TextStyle(color: Colors.blue.shade700, fontWeight: FontWeight.bold, fontSize: 13)),
+                        const Text('Pick a time outside the above slots', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                      ],
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.chevron_right, color: Colors.grey)
+                  ],
+                )
+              ),
+              const SizedBox(height: 24),
+              
+              // Green confirmation banner
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.green.shade200)),
+                child: Row(
+                  children: [
+                    Container(padding: const EdgeInsets.all(4), decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle), child: const Icon(Icons.check, color: Colors.white, size: 16)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Consultation will be scheduled on', style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+                          Text('${DateFormat('dd MMM yyyy').format(_selectedScheduleDate!)} • $_selectedScheduleTime', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87)),
+                          const Text('Patient will be notified about the scheduled time.', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                        ],
+                      )
+                    )
+                  ],
+                )
+              ),
+            ]
           ],
-        ),
+        )
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))]),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: _isStartNowSelected ? _startConsultation : _confirmSchedule,
+                  icon: Icon(_isStartNowSelected ? Icons.videocam : Icons.calendar_month),
+                  label: Text(
+                    _isStartNowSelected ? 'Start Consultation Now' : 'Confirm Schedule', 
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _isStartNowSelected ? const Color(0xFF107C41) : const Color(0xFF1E3A8A), // Green for start, Blue for schedule
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                )
+              ),
+              const SizedBox(height: 12),
+              const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.lock_outline, size: 14, color: Colors.grey),
+                  SizedBox(width: 4),
+                  Text('Your information is secure and encrypted', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                ],
+              )
+            ],
+          )
+        )
       ),
     );
   }
+}
 """
 
-def add_newline(s):
-    return s if s.endswith('\\n') else s + '\\n'
-
-out_lines = lines[:256] + [add_newline(new_build_method)] + [add_newline(new_build_body)] + [add_newline(new_request_info)] + lines[466:809] + [add_newline(new_status_stepper)] + lines[973:1249] + [add_newline(new_accept_reject)] + lines[1309:]
+content = re.sub(r'class _DoctorActiveConsultationScreenState extends State<DoctorActiveConsultationScreen> \{.*', new_class, content, flags=re.DOTALL)
 
 with open(file_path, "w", encoding="utf-8") as f:
-    f.writelines(out_lines)
-
-print("Done")
+    f.write(content)
+print("Done rewriting")

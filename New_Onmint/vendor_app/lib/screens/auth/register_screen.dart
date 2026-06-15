@@ -2138,6 +2138,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                key: const ValueKey('step3_scroll'),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
@@ -2303,6 +2304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                key: const ValueKey('step3_scroll'),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
@@ -2458,6 +2460,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
+        key: const ValueKey('step3_scroll'),
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3094,6 +3097,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
+              key: const ValueKey('step3_scroll'),
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -3639,6 +3643,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                key: const ValueKey('step3_scroll'),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
@@ -4294,6 +4299,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
+                key: const ValueKey('step3_scroll'),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [

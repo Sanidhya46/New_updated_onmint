@@ -175,6 +175,18 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
   void _viewPrescription() {
     if (_booking?.prescription == null) return;
 
+    final prescriptionData = _booking!.prescription;
+    final isUrl = prescriptionData.toString().startsWith('http') || prescriptionData.toString().endsWith('.pdf');
+
+    if (isUrl) {
+      final fullUrl = prescriptionData.toString().startsWith('http')
+          ? prescriptionData.toString()
+          : 'http://localhost:5000${prescriptionData.toString()}';
+      
+      _launchDownloadUrl(fullUrl);
+      return;
+    }
+
     // Navigate to prescription view screen or show in dialog
     showDialog(
       context: context,
@@ -200,7 +212,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(_booking!.prescription.toString()),
+              Text(prescriptionData.toString()),
             ],
           ),
         ),
@@ -211,14 +223,36 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           ),
           ElevatedButton(
             onPressed: () {
-              // TODO: Implement download/share prescription
               Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prescription details saved.')));
             },
             child: const Text('Download'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _launchDownloadUrl(String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Opening prescription for download...'), backgroundColor: Colors.cyan),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open prescription')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
   }
 
   Future<String?> _showCancelDialog() async {
@@ -255,21 +289,35 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Booking Details')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_booking == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Booking Details')),
+        body: const Center(child: Text('Booking not found')),
+      );
+    }
+
+    if (_booking!.serviceType.toLowerCase() == 'doctor') {
+      return _buildDoctorConsultationUI();
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Booking Details'),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _booking == null
-              ? const Center(child: Text('Booking not found'))
-              : SafeArea(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildStatusCard(),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildStatusCard(),
                         const SizedBox(height: 20),
                         // Add horizontal status tracking for doctor consultations
                         if (_booking!.serviceType.toLowerCase() == 'doctor')
@@ -1315,5 +1363,457 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
         );
       }
     }
+  }
+
+  Widget _buildDoctorConsultationUI() {
+    final status = _booking!.status.toLowerCase();
+    final isCompleted = status == 'completed';
+
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'My Booking',
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.verified_user_outlined, color: Colors.black),
+            onPressed: () {},
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (status == 'accepted') _buildDoctorAcceptedBanner(),
+              if (status == 'in_progress') _buildDoctorInProgressBanner(),
+              if (status == 'completed') _buildDoctorCompletedBanner(),
+              const SizedBox(height: 20),
+              
+              const Text('Online Consultation – Doctor', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              Text(
+                '${status == 'completed' ? 'Completed on' : 'Accepted on'} ${_formatDate(_booking!.updatedAt ?? DateTime.now())}, ${_formatTime(_booking!.updatedAt ?? DateTime.now())}', 
+                style: TextStyle(color: Colors.grey[600], fontSize: 12)
+              ),
+              const SizedBox(height: 12),
+              
+              _buildDoctorProfileCard(),
+              const SizedBox(height: 12),
+              
+              if (status == 'accepted') ...[
+                _buildConsultationConfirmedCard(),
+                const SizedBox(height: 12),
+                _buildWhatsNextSection(),
+              ],
+
+              if (status == 'completed') ...[
+                _buildConsultationSummaryTile(),
+                const SizedBox(height: 12),
+                if (_booking!.prescription != null) _buildPrescriptionReadyTile(),
+                const SizedBox(height: 24),
+                if (_booking!.prescription != null)
+                  ElevatedButton.icon(
+                    onPressed: () => _viewPrescription(),
+                    icon: const Icon(Icons.download, color: Colors.white),
+                    label: const Text('Download Prescription', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0D47A1),
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(Icons.star_outline, color: Color(0xFF0D47A1)),
+                  label: const Text('Rate Your Experience', style: TextStyle(color: Color(0xFF0D47A1), fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 54),
+                    side: const BorderSide(color: Color(0xFF0D47A1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildNeedHelpSection(),
+              ],
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: status == 'accepted' ? _buildDoctorBottomActions() : null,
+    );
+  }
+
+  Widget _buildDoctorAcceptedBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Accept Your Consultation', style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text("Your consultation request has been accepted. You're all set for your appointment.", style: TextStyle(color: Colors.green[800], fontSize: 13)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorInProgressBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.videocam, color: Color(0xFF1565C0), size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Consultation In Progress', style: TextStyle(color: Color(0xFF1565C0), fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text("Your consultation is currently active. Join the call if you haven't already.", style: TextStyle(color: Colors.blue[800], fontSize: 13)),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => _joinVideoCall(),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0)),
+            child: const Text('Join', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorCompletedBanner() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE8F5E9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.check_circle, color: Color(0xFF2E7D32), size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Consultation completed successfully.', style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 15)),
+                const SizedBox(height: 4),
+                Text("Thank you for consulting with us.", style: TextStyle(color: Colors.green[800], fontSize: 13)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDoctorProfileCard() {
+    final doctor = _booking!.providerDetails;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 3)),
+        ],
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundImage: doctor?.profilePicture != null ? NetworkImage(doctor!.profilePicture!) : null,
+                  child: doctor?.profilePicture == null ? const Icon(Icons.person, size: 28) : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(doctor?.fullName ?? 'Doctor', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      const SizedBox(height: 4),
+                      Text('MBBS - ${doctor?.specialization ?? 'General Physician'}', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.star, color: Colors.amber, size: 14),
+                          const SizedBox(width: 4),
+                          Text('${doctor?.rating ?? '4.9'}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          const SizedBox(width: 4),
+                          Text('(230+ Reviews)', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(color: const Color(0xFFE8EAF6), borderRadius: BorderRadius.circular(4)),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.verified, color: Color(0xFF3F51B5), size: 12),
+                            SizedBox(width: 4),
+                            Text('Verified Doctor', style: TextStyle(color: Color(0xFF3F51B5), fontSize: 10, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          _buildInfoRowDoc(Icons.work_outline, 'Experience', '${doctor?.experience ?? '8+'} Years'),
+          const Divider(height: 1),
+          _buildInfoRowDoc(Icons.medical_services_outlined, 'Specialization', doctor?.specialization ?? 'General Physician'),
+          const Divider(height: 1),
+          _buildInfoRowDoc(Icons.calendar_today_outlined, 'Consultation Time', _formatTime(_booking!.scheduledTime)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRowDoc(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF1565C0), size: 16),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+          const Spacer(),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConsultationConfirmedCard() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F8E9),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(3),
+                decoration: const BoxDecoration(color: Color(0xFF4CAF50), shape: BoxShape.circle),
+                child: const Icon(Icons.check, color: Colors.white, size: 12),
+              ),
+              const SizedBox(width: 8),
+              const Text('Consultation Confirmed', style: TextStyle(color: Color(0xFF2E7D32), fontWeight: FontWeight.bold, fontSize: 14)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.access_time, color: Colors.black54, size: 14),
+              const SizedBox(width: 6),
+              const Text('Consultation Time:', style: TextStyle(color: Colors.black54, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(_formatTime(_booking!.scheduledTime), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 8),
+          Text(
+            '${_booking!.providerDetails?.fullName ?? 'The doctor'} will connect with you at the scheduled time.',
+            style: const TextStyle(color: Colors.black87, fontSize: 11, height: 1.3),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWhatsNextSection() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text("What's Next?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(height: 6),
+              Text(
+                "We will notify you once the doctor is assigned.",
+                style: TextStyle(color: Colors.grey[700], fontSize: 12, height: 1.3),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8EAF6),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              const Icon(Icons.assignment, color: Color(0xFF9FA8DA), size: 24),
+              Positioned(
+                bottom: 4,
+                right: 4,
+                child: Container(
+                  padding: const EdgeInsets.all(1),
+                  decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                  child: const Icon(Icons.check, color: Colors.white, size: 10),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConsultationSummaryTile() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: const Color(0xFFE3F2FD), borderRadius: BorderRadius.circular(8)),
+          child: const Icon(Icons.assignment_outlined, color: Color(0xFF1565C0)),
+        ),
+        title: const Text('Consultation Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text('View notes and details of your consultation', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: () {}, // TODO: Show summary
+      ),
+    );
+  }
+
+  Widget _buildPrescriptionReadyTile() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(8)),
+          child: const Icon(Icons.receipt_long_outlined, color: Color(0xFF2E7D32)),
+        ),
+        title: const Text('Prescription Ready', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Text('Your prescription is ready to download.', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: () => _viewPrescription(),
+      ),
+    );
+  }
+
+  Widget _buildNeedHelpSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F7FF),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: const Icon(Icons.headset_mic_outlined, color: Color(0xFF1565C0)),
+        title: const Text('Need Help?', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Our support team is here to help you.', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+            const SizedBox(height: 4),
+            const Text('Contact Support', style: TextStyle(color: Color(0xFF1565C0), fontSize: 13, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+        onTap: () {},
+      ),
+    );
+  }
+
+  Widget _buildDoctorBottomActions() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildActionColumn(Icons.calendar_today, 'Reschedule', () {}),
+            ),
+            Container(width: 1, height: 40, color: Colors.grey[300]),
+            Expanded(
+              child: _buildActionColumn(Icons.close, 'Cancel\nAppointment', () => _cancelBooking(), color: Colors.red),
+            ),
+            Container(width: 1, height: 40, color: Colors.grey[300]),
+            Expanded(
+              child: _buildActionColumn(Icons.headset_mic_outlined, 'Contact\nSupport', () {}, color: const Color(0xFF1565C0)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionColumn(IconData icon, String label, VoidCallback onTap, {Color color = Colors.black87}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
   }
 }

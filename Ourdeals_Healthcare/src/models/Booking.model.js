@@ -235,6 +235,26 @@ const BookingSchema = new mongoose.Schema(
       trim: true,
     },
 
+    // Real-time call tracking fields
+    doctor_on_call: {
+      type: Boolean,
+      default: false,
+    },
+
+    patient_on_call: {
+      type: Boolean,
+      default: false,
+    },
+
+    consultation_ended: {
+      type: Boolean,
+      default: false,
+    },
+
+    consultation_ended_at: {
+      type: Date,
+    },
+
     reminderSent: {
       type: Boolean,
       default: false,

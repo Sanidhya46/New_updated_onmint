@@ -3,8 +3,12 @@ import 'dashboard_screen_simple.dart';
 import '../booking/blood_request_screen.dart';
 import '../profile/profile_screen.dart';
 import '../services/my_bookings_screen.dart';
-
 import '../booking/active_service_tracking_screen.dart';
+import 'package:provider/provider.dart';
+import '../../services/cart_service.dart';
+import '../../utils/app_colors.dart';
+import '../medicines/widgets/cart_floating_bar.dart';
+import '../medicines/prescription_camera_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -163,6 +167,14 @@ class _HomeScreenState extends State<HomeScreen>
                 ),
               ),
             ),
+            
+          // Sticky Bottom Cart Bar
+          const Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: CartFloatingBar(),
+          ),
         ],
       ),
       bottomNavigationBar: Container(
@@ -223,7 +235,9 @@ class _HomeScreenState extends State<HomeScreen>
       floatingActionButton: Transform.translate(
         offset: const Offset(0, 10), // Pushes it down so 65% is in the navbar
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            _showUploadBottomSheet(context);
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: Image.asset(
@@ -279,6 +293,122 @@ class _HomeScreenState extends State<HomeScreen>
                         : Colors.grey[600],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showUploadBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              const Text(
+                'Upload prescription',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0E2038)),
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                "Upload a clear image of your prescription and we'll take it from there.",
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              _buildUploadOption(
+                icon: Icons.camera_alt_outlined,
+                title: 'Take a photo',
+                subtitle: 'Use your camera to capture your prescription',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrescriptionCameraScreen(source: 'camera'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildUploadOption(
+                icon: Icons.photo_library_outlined,
+                title: 'Choose from gallery',
+                subtitle: 'Select an existing image from your device',
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrescriptionCameraScreen(source: 'gallery'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              _buildUploadOption(
+                icon: Icons.description_outlined,
+                title: 'Your prescriptions',
+                subtitle: 'View and upload from your saved prescriptions',
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Navigate to saved prescriptions
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+
+  Widget _buildUploadOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: Colors.blue[800], size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
           ],
         ),
       ),

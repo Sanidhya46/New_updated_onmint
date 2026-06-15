@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
 import '../../config/app_colors.dart';
+import 'pending_order_details_screen.dart';
 
-/// NEW SCREEN: Pending Orders (Medicine Order System Update)
-/// Shows all medicine orders that haven't been accepted by any pharmacist yet
-/// First-come-first-serve: Jo pehle accept karega, usko order milega
 class PendingOrdersScreen extends StatefulWidget {
   const PendingOrdersScreen({super.key});
 
@@ -32,15 +30,15 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
     });
 
     try {
-      final response = await _apiClient.pharmacist.getPendingOrders(
-        page: 1,
-        limit: 50,
-      );
+      await _apiClient.initialize();
+      final response = await _apiClient.get('/realTimeBooking/provider/bookings', queryParameters: {
+        'status': 'requested',
+        'limit': 50,
+      });
 
       if (mounted) {
         setState(() {
-          // Handle both 'data' and 'items' keys for backward compatibility
-          _pendingOrders = (response['data'] as List?) ?? (response['items'] as List?) ?? [];
+          _pendingOrders = response.data['data'] ?? [];
           _isLoading = false;
         });
       }
@@ -54,341 +52,21 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
     }
   }
 
-  Future<void> _acceptOrder(String orderId) async {
-    try {
-      await _apiClient.pharmacist.acceptOrder(orderId);
-      
-      if (mounted) {
-        ToastUtils.showSuccess('Order accepted successfully!');
-        _loadPendingOrders(); // Refresh list
-      }
-    } catch (e) {
-      if (mounted) {
-        // Check if error is "already accepted by another provider"
-        final errorMessage = e.toString();
-        if (errorMessage.contains('already accepted') || 
-            errorMessage.contains('another provider')) {
-          ToastUtils.showError('Order already accepted by another pharmacist');
-        } else {
-          ToastUtils.showError('Failed to accept order: $errorMessage');
-        }
-        _loadPendingOrders(); // Refresh to remove accepted orders
-      }
-    }
-  }
-
   void _showOrderDetails(dynamic order) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PendingOrderDetailsScreen(order: order),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Order Details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              // Order Info Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Order #${order['_id'].substring(0, 8)}',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.orange,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Text(
-                              'PENDING',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _formatDate(DateTime.parse(order['createdAt'])),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Customer Info
-              const Text(
-                'Customer Information',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildInfoRow(
-                        Icons.person,
-                        'Name',
-                        order['patient']?['firstName'] ?? 'N/A',
-                      ),
-                      const Divider(),
-                      _buildInfoRow(
-                        Icons.phone,
-                        'Phone',
-                        order['patient']?['phone'] ?? 'N/A',
-                      ),
-                      if (order['deliveryAddress'] != null) ...[
-                        const Divider(),
-                        _buildInfoRow(
-                          Icons.location_on,
-                          'Address',
-                          order['deliveryAddress'],
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Medicines List
-              const Text(
-                'Medicines',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              if (order['medicines'] != null && (order['medicines'] as List).isNotEmpty)
-                ...((order['medicines'] as List).map((medicine) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.medication,
-                        color: AppColors.primary,
-                      ),
-                      title: Text(medicine['name'] ?? 'Unknown Medicine'),
-                      subtitle: Text('Quantity: ${medicine['quantity'] ?? 0}'),
-                      trailing: Text(
-                        '₹${(medicine['price'] ?? 0).toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList())
-              else if (order['items'] != null && (order['items'] as List).isNotEmpty)
-                ...((order['items'] as List).map((item) {
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.medication,
-                        color: AppColors.primary,
-                      ),
-                      title: Text(item['medicine']?['name'] ?? 'Unknown'),
-                      subtitle: Text('Quantity: ${item['quantity']}'),
-                      trailing: Text(
-                        '₹${item['price'] ?? 0}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList())
-              else
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      order['requirements']?['description'] ?? 'No medicine details available',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              
-              // Total Amount
-              Card(
-                color: AppColors.primary.withOpacity(0.1),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Amount',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        order['medicines'] != null && (order['medicines'] as List).isNotEmpty
-                            ? '₹${((order['medicines'] as List).fold<double>(0, (sum, item) => sum + ((item['price'] ?? 0) * (item['quantity'] ?? 0)))).toStringAsFixed(2)}'
-                            : '₹${order['price'] ?? order['totalAmount'] ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Accept Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _acceptOrder(order['_id']);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: const Text(
-                    'Accept Order',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8),
-              
-              // Info Text
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.info_outline, color: Colors.blue, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'First-come-first-serve: Jo pehle accept karega, usko order milega',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.blue[800],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    ).then((_) => _loadPendingOrders());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Pending Orders'),
-        backgroundColor: AppColors.primary,
+        title: const Text('New Medicine Orders'),
+        backgroundColor: const Color(0xFF0033CC),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -399,18 +77,11 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
         ],
       ),
       body: _isLoading
-          ? const LoadingWidget()
+          ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? CustomErrorWidget(
-                  message: _error!,
-                  onRetry: _loadPendingOrders,
-                )
+              ? Center(child: Text('Error: $_error'))
               : _pendingOrders.isEmpty
-                  ? const EmptyStateWidget(
-                      title: 'No Pending Orders',
-                      message: 'All orders have been accepted by pharmacists',
-                      icon: Icons.shopping_bag_outlined,
-                    )
+                  ? const Center(child: Text('No new orders at the moment.', style: TextStyle(color: Colors.grey)))
                   : RefreshIndicator(
                       onRefresh: _loadPendingOrders,
                       child: ListView.builder(
@@ -426,175 +97,129 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
   }
 
   Widget _buildOrderCard(dynamic order) {
-    // Handle both old and new data structures
-    final patient = order['patient'];
-    final patientName = patient is Map 
-        ? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim()
-        : 'Unknown Customer';
+    bool isDirect = order['medicines'] != null;
+    String tag = isDirect ? 'Direct Order' : 'Prescription Order';
+    Color tagColor = isDirect ? Colors.green[50]! : Colors.blue[50]!;
+    Color tagTextColor = isDirect ? Colors.green[700]! : Colors.blue[700]!;
+
+    int itemsCount = (order['medicines'] as List?)?.length ?? 0;
     
-    final requirements = order['requirements'];
-    final description = requirements is Map 
-        ? (requirements['description'] ?? '')
-        : (order['description'] ?? '');
-    
-    // Count items from description or items array
-    int itemCount = 0;
-    if (order['items'] != null && order['items'] is List) {
-      itemCount = (order['items'] as List).length;
-    } else if (description.isNotEmpty) {
-      // Try to extract item count from description
-      final match = RegExp(r'Total items: (\d+)').firstMatch(description);
-      if (match != null) {
-        itemCount = int.tryParse(match.group(1) ?? '0') ?? 0;
-      }
+    String timeStr = '';
+    if (order['createdAt'] != null) {
+      final dt = DateTime.parse(order['createdAt']).toLocal();
+      timeStr = '${dt.hour > 12 ? dt.hour - 12 : dt.hour}:${dt.minute.toString().padLeft(2, '0')} ${dt.hour >= 12 ? 'PM' : 'AM'}';
     }
-    
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
       child: InkWell(
         onTap: () => _showOrderDetails(order),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: order['profilePic'] != null 
+                    ? NetworkImage(order['profilePic'])
+                    : null,
+                child: order['profilePic'] == null 
+                    ? const Icon(Icons.person, color: Colors.grey, size: 32)
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Order #${order['_id'].substring(0, 8)}',
+                          order['patientName'] ?? 'Unknown Patient',
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
                             fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF001F4D),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          patientName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[700],
-                          ),
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(
+                              timeStr,
+                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'NEW',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: tagColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        tag,
+                        style: TextStyle(
+                          color: tagTextColor,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              // Items Count or Description
-              Row(
-                children: [
-                  const Icon(Icons.medication, size: 16, color: AppColors.primary),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      itemCount > 0 ? '$itemCount item(s)' : description.split('.').first,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              
-              // Footer Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _formatDate(DateTime.parse(order['createdAt'])),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  if (order['price'] != null)
+                    const SizedBox(height: 8),
                     Text(
-                      '₹${order['price']}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    )
-                  else if (order['totalAmount'] != null)
-                    Text(
-                      '₹${order['totalAmount']}',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                      isDirect ? '$itemsCount Medicines Ordered' : 'Prescription Medicines',
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
                     ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              
-              // Accept Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => _acceptOrder(order['_id']),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: const Text('Accept Order'),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${order['patientAge'] ?? 0} Years / ${order['patientGender'] ?? "Unknown"}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
                 ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const SizedBox(height: 40),
+                  Text(
+                    '₹${order['price'] ?? order['totalAmount'] ?? 0}',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0033CC),
+                    ),
+                  ),
+                  const Text(
+                    'Order Amount',
+                    style: TextStyle(fontSize: 10, color: Colors.grey),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-    
-    if (diff.inMinutes < 1) {
-      return 'Just now';
-    } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} min ago';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours} hour(s) ago';
-    } else if (diff.inDays == 1) {
-      return 'Yesterday';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
   }
 }

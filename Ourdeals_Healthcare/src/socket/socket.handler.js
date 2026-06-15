@@ -1,4 +1,4 @@
-﻿import { Server } from "socket.io";
+import { Server } from "socket.io";
 import { tokenService } from "../services/token.service.js";
 import { Booking } from "../models/Booking.model.js";
 import { logger } from "../utils/logger.util.js";
@@ -105,6 +105,43 @@ class SocketHandler {
           status,
           timestamp: new Date(),
         });
+      });
+
+      // Video call tracking events
+      socket.on("call:doctor_join", async ({ bookingId }) => {
+        try {
+          const booking = await Booking.findById(bookingId);
+          if (booking) {
+            booking.doctor_on_call = true;
+            await booking.save();
+          }
+          this.io.to(`booking:${bookingId}`).emit("call:doctor_joined", {
+            bookingId,
+            doctor_on_call: true,
+            timestamp: new Date(),
+          });
+          logger.info(`Doctor joined call for booking: ${bookingId}`);
+        } catch (error) {
+          logger.error("Doctor join call failed", { error: error.message });
+        }
+      });
+
+      socket.on("call:patient_join", async ({ bookingId }) => {
+        try {
+          const booking = await Booking.findById(bookingId);
+          if (booking) {
+            booking.patient_on_call = true;
+            await booking.save();
+          }
+          this.io.to(`booking:${bookingId}`).emit("call:patient_joined", {
+            bookingId,
+            patient_on_call: true,
+            timestamp: new Date(),
+          });
+          logger.info(`Patient joined call for booking: ${bookingId}`);
+        } catch (error) {
+          logger.error("Patient join call failed", { error: error.message });
+        }
       });
 
       socket.on("disconnect", () => {

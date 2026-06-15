@@ -126,7 +126,12 @@ class User {
       lastName: json['lastName'],
       role: json['role'] ?? '',
       status: json['status'] ?? '',
-      address: json['address'] != null ? Address.fromJson(json['address']) : null,
+      address: Address(
+        street: json['address'] is String ? json['address'] : (json['address'] is Map ? json['address']['street'] : null),
+        city: json['city'] ?? (json['address'] is Map ? json['address']['city'] : null),
+        state: json['state'] ?? (json['address'] is Map ? json['address']['state'] : null),
+        pincode: json['pincode'] ?? json['zipCode'] ?? (json['address'] is Map ? (json['address']['pincode'] ?? json['address']['zipCode']) : null),
+      ),
       location: json['location'] != null ? Location.fromJson(json['location']) : null,
       deviceToken: json['deviceToken'],
       profilePicture: json['profilePicture'],

@@ -109,4 +109,8 @@ class OnMintApiClient {
   Future<dynamic> delete(String path, {Map<String, dynamic>? queryParameters}) async {
     return await _client.delete(path, queryParameters: queryParameters);
   }
+
+  Future<dynamic> uploadMultipartData(String path, Map<String, dynamic> data, {List<String>? filePaths, String fileFieldName = 'images', Map<String, String>? namedFiles, dynamic xFiles, dynamic namedXFiles}) async {
+    return await _client.uploadMultipartData(path, data, filePaths: filePaths, fileFieldName: fileFieldName, namedFiles: namedFiles, xFiles: xFiles, namedXFiles: namedXFiles);
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:intl/intl.dart';
 import '../services/booking_detail_screen.dart';
+import '../bookings/pharmacist_order_tracking_screen.dart';
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -193,9 +194,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookingDetailScreen(bookingId: order.id),
+            builder: (context) => PharmacistOrderTrackingScreen(bookingId: order.id),
           ),
-        );
+        ).then((_) => _loadOrders());
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
@@ -303,9 +304,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (context) =>
-                            BookingDetailScreen(bookingId: order.id),
+                            PharmacistOrderTrackingScreen(bookingId: order.id),
                       ),
-                    );
+                    ).then((_) => _loadOrders());
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF4CAF50),

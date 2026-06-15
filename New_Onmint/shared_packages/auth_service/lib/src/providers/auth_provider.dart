@@ -411,4 +411,23 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-}
+  /// Change password
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    _clearError();
+
+    try {
+      await _authService.changePassword(currentPassword, newPassword);
+      _setLoading(false);
+      return true;
+    } catch (e) {
+      _setError(e.toString().replaceAll('Exception: ', ''));
+      _setLoading(false);
+      return false;
+    }
+  }
+
+}

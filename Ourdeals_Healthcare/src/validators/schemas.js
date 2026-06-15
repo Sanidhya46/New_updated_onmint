@@ -21,8 +21,11 @@ const SERVICE_TYPES = [
 ];
 
 const BOOKING_STATUS = [
+  "in_cart",
   "requested",
   "accepted",
+  "packing_medicines",
+  "out_for_delivery",
   "on_the_way",
   "in_progress",
   "completed",

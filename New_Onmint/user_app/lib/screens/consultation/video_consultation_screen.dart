@@ -96,334 +96,177 @@ class _VideoConsultationScreenState extends State<VideoConsultationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        title: const Text('Video Consultation'),
-        backgroundColor: const Color(0xFF667eea),
-        elevation: 0,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: Colors.white))
+            : _buildVideoCallUI(),
       ),
-      body: _buildBody(),
     );
   }
 
-  Widget _buildBody() {
-    if (_isLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF667eea)),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Loading consultation...',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
+  Widget _buildVideoCallUI() {
+    return Stack(
+      children: [
+        // 1. Fullscreen Doctor View
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Colors.grey[900], // Mock background
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 64,
+              const Icon(Icons.person, size: 100, color: Colors.grey),
+              const SizedBox(height: 16),
+              const Text(
+                'Waiting for doctor video...',
+                style: TextStyle(color: Colors.white54, fontSize: 16),
               ),
-              const SizedBox(height: 20),
-              Text(
-                _errorMessage!,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
-                textAlign: TextAlign.center,
+              if (_meetingConfig != null && _meetingConfig!.containsKey('joinUrl'))
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final uri = Uri.parse(_meetingConfig!['joinUrl']);
+                      if (await canLaunchUrl(uri)) {
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                    child: const Text('Open Zoom Meeting', style: TextStyle(color: Colors.white)),
+                  ),
+                )
+            ],
+          ),
+        ),
+
+        // 2. Top Bar Overlay
+        Positioned(
+          top: 16,
+          left: 16,
+          right: 16,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Back & Info
+              Row(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Dr. Shubham Singh',
+                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black54, blurRadius: 4)]),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Row(
+                              children: List.generate(4, (index) => Container(
+                                margin: const EdgeInsets.only(right: 2),
+                                width: 3,
+                                height: 8 + (index * 2).toDouble(),
+                                color: Colors.greenAccent,
+                              )),
+                            ),
+                            const SizedBox(width: 6),
+                            const Text('Good Connection', style: TextStyle(color: Colors.white, fontSize: 10)),
+                            const SizedBox(width: 8),
+                            const Text('05:23', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: _loadMeetingDetails,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF667eea),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 30,
-                    vertical: 15,
+              // PiP View (Patient)
+              Container(
+                width: 100,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 1),
+                  image: const DecorationImage(
+                    image: NetworkImage('https://via.placeholder.com/100x140'), // Mock patient view
+                    fit: BoxFit.cover,
                   ),
                 ),
-                child: const Text('Retry'),
+                child: const Align(
+                  alignment: Alignment.bottomRight,
+                  child: Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: Icon(Icons.mic_off, color: Colors.red, size: 16),
+                  ),
+                ),
               ),
             ],
           ),
         ),
-      );
-    }
 
-    // Show simple video call UI
-    return _buildSimpleVideoCallUI();
+        // 3. Bottom Controls Overlay
+        Positioned(
+          bottom: 30,
+          left: 20,
+          right: 20,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.6),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 5))
+              ]
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildControlButton(Icons.chat_bubble_outline, Colors.white),
+                _buildControlButton(Icons.videocam_outlined, Colors.white),
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(color: Colors.red, shape: BoxShape.circle),
+                    child: const Icon(Icons.call_end, color: Colors.white, size: 30),
+                  ),
+                ),
+                _buildControlButton(Icons.mic_none, Colors.white),
+                _buildControlButton(Icons.cameraswitch_outlined, Colors.white),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildSimpleVideoCallUI() {
-    // Check if we have meeting config data
-    final hasVideoData = _meetingConfig != null && _meetingConfig!.isNotEmpty;
-    final joinUrl = _meetingConfig?['joinUrl'] as String?;
-
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF667eea).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: const Color(0xFF667eea).withOpacity(0.3), width: 2),
-              ),
-              child: Column(
-                children: [
-                  const Icon(Icons.videocam,
-                      color: Color(0xFF667eea), size: 64),
-                  const SizedBox(height: 16),
-                  const Text(
-                    '🏥 Video Consultation',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Booking ID: ${widget.bookingId}',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Show meeting details if available
-            if (hasVideoData &&
-                _meetingConfig!.containsKey('participants')) ...[
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  children: [
-                    const Icon(Icons.check_circle,
-                        color: Colors.green, size: 32),
-                    const SizedBox(height: 12),
-                    const Text(
-                      '✅ Video Room Created',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInfoRow(
-                        'Doctor',
-                        _meetingConfig!['participants']?['doctor']?['name'] ??
-                            'Doctor'),
-                    _buildInfoRow(
-                        'Patient',
-                        _meetingConfig!['participants']?['patient']?['name'] ??
-                            'Patient'),
-                    _buildInfoRow('Meeting ID',
-                        _meetingConfig!['meetingId']?.toString() ?? 'N/A'),
-                    _buildInfoRow(
-                        'Status',
-                        _meetingConfig!['appointmentDetails']?['status'] ??
-                            'Ready'),
-                  ],
-                ),
-              ),
-
-              // Join URL Button
-              if (joinUrl != null && joinUrl.isNotEmpty) ...[
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    // Show dialog with join URL
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Row(
-                          children: [
-                            Icon(Icons.videocam, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Text('Join Video Call'),
-                          ],
-                        ),
-                        content: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                                'Click the link below to join the video consultation:'),
-                            const SizedBox(height: 16),
-                            SelectableText(
-                              joinUrl,
-                              style: const TextStyle(
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Note: The link will open in a new window.',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Close'),
-                          ),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              Navigator.pop(context);
-                              // Open URL in new window/browser
-                              final uri = Uri.parse(joinUrl);
-                              if (await canLaunchUrl(uri)) {
-                                await launchUrl(
-                                  uri,
-                                  mode: LaunchMode.externalApplication,
-                                );
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Opening video call in browser...'),
-                                    backgroundColor: Colors.blue,
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Could not open: $joinUrl'),
-                                    backgroundColor: Colors.red,
-                                  ),
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.open_in_new),
-                            label: const Text('Open Link'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.videocam, size: 28),
-                  label: const Text('Join Video Call',
-                      style: TextStyle(fontSize: 18)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 32, vertical: 20),
-                    minimumSize: const Size(double.infinity, 60),
-                  ),
-                ),
-              ],
-            ] else ...[
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Column(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue, size: 32),
-                    SizedBox(height: 12),
-                    Text(
-                      '📞 Video Consultation Ready',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Your consultation is ready to begin.\nThe doctor will join shortly.',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _isLoading = true;
-                      });
-                      _loadMeetingDetails();
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF667eea),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back),
-                    label: const Text('Back'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[700],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20), // Extra padding at bottom
-          ],
-        ),
+  Widget _buildControlButton(IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        shape: BoxShape.circle,
       ),
+      child: Icon(icon, color: color, size: 24),
     );
   }
 

@@ -13,6 +13,7 @@ import 'screens/medicines/checkout_screen.dart';
 import 'screens/medicines/medicines_list_screen.dart';
 import 'screens/medicines/medicine_details_screen.dart';
 import 'screens/consultation/video_consultation_screen.dart';
+import 'screens/bookings/pharmacist_order_tracking_screen.dart';
 import 'services/cart_service.dart';
 
 void main() {
@@ -68,6 +69,13 @@ class OnMintUserApp extends StatelessWidget {
               builder: (context) => VideoConsultationScreen(
                 bookingId: args['bookingId'] as String,
               ),
+            );
+          }
+          if (settings.name != null && settings.name!.startsWith('/pharmacist-tracking')) {
+            final uri = Uri.parse(settings.name!);
+            final bookingId = uri.queryParameters['id'] ?? '';
+            return MaterialPageRoute(
+              builder: (context) => PharmacistOrderTrackingScreen(bookingId: bookingId),
             );
           }
           // Doctor detail navigation removed - needs to fetch doctor data first

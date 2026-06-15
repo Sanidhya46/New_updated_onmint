@@ -625,12 +625,7 @@ class _AllMedicinesScreenState extends State<AllMedicinesScreen>
                           ),
                           child: IconButton(
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Added to cart'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
+                              // Removed SnackBar notification
                             },
                             icon: const Icon(
                               Icons.shopping_cart_outlined,

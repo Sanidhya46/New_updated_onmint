@@ -58,6 +58,10 @@ class Booking {
   final String? report;
   final DateTime? reportUploadedAt;
   final bool collectionScheduled;
+  final bool doctorOnCall;
+  final bool patientOnCall;
+  final bool consultationEnded;
+  final DateTime? consultationEndedAt;
 
   Booking({
     required this.id,
@@ -89,6 +93,10 @@ class Booking {
     this.report,
     this.reportUploadedAt,
     this.collectionScheduled = false,
+    this.doctorOnCall = false,
+    this.patientOnCall = false,
+    this.consultationEnded = false,
+    this.consultationEndedAt,
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
@@ -245,6 +253,10 @@ class Booking {
         report: json['report'],
         reportUploadedAt: json['reportUploadedAt'] != null ? DateTime.parse(json['reportUploadedAt'].toString()) : null,
         collectionScheduled: json['collectionScheduled'] ?? false,
+        doctorOnCall: json['doctor_on_call'] ?? false,
+        patientOnCall: json['patient_on_call'] ?? false,
+        consultationEnded: json['consultation_ended'] ?? false,
+        consultationEndedAt: json['consultation_ended_at'] != null ? DateTime.parse(json['consultation_ended_at'].toString()) : null,
       );
     } catch (e) {
       print('Error parsing booking: $e');
@@ -288,6 +300,10 @@ class Booking {
       if (report != null) 'report': report,
       if (reportUploadedAt != null) 'reportUploadedAt': reportUploadedAt!.toIso8601String(),
       'collectionScheduled': collectionScheduled,
+      'doctor_on_call': doctorOnCall,
+      'patient_on_call': patientOnCall,
+      'consultation_ended': consultationEnded,
+      if (consultationEndedAt != null) 'consultation_ended_at': consultationEndedAt!.toIso8601String(),
     };
   }
 

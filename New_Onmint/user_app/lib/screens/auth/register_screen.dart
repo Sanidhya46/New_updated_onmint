@@ -87,49 +87,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FB),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Blank white area at the top for future image
-            Container(
-              width: double.infinity,
-              height: 250,
-              color: Colors.white,
-            ),
-            
-            // Register Form Card
-            Transform.translate(
-              offset: const Offset(0, -20),
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/images/register_login/register_top_banner.png',
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                  
+                  // Register Form Card
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.03),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
                               color: const Color(0xFF0D6EFD),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.person_outline, color: Colors.white, size: 24),
+                            child: const Icon(Icons.person_outline, color: Colors.white, size: 18),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -137,16 +137,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 const Text(
                                   'Create Your Profile',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF152238),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
                                   'Please fill in your details to continue',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 9,
                                     color: Colors.grey.shade600,
                                   ),
                                 ),
@@ -156,7 +156,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                       
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 6),
 
                       _buildInputField(
                         label: 'Full Name',
@@ -171,7 +171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 6),
 
                       Row(
                         children: [
@@ -193,7 +193,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 6),
 
                       _buildInputField(
                         label: 'Mobile Number',
@@ -210,7 +210,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 6),
 
                       _buildInputField(
                         label: 'Email Address',
@@ -226,7 +226,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 6),
 
                       _buildInputField(
                         label: 'Create Password',
@@ -257,7 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 6),
 
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,100 +302,120 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ],
                       ),
-
-                      const SizedBox(height: 24),
-
-                      SizedBox(
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _handleRegister,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0D6EFD),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          
+          // Sticky Bottom Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    height: 40,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _handleRegister,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0D6EFD),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text(
+                              'CONTINUE',
+                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                             ),
-                            elevation: 0,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Already have an account? ",
+                        style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacementNamed('/login');
+                        },
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0D6EFD),
+                            fontSize: 13,
                           ),
-                          child: _isLoading
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text(
-                                  'CONTINUE',
-                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                                ),
                         ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
-            
-            const SizedBox(height: 8),
-            
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Already have an account? ",
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pushReplacementNamed('/login');
-                  },
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0D6EFD),
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 32),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildGenderDropdown() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Gender',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF152238),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Gender',
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF152238),
           ),
-          DropdownButtonHideUnderline(
+        ),
+        const SizedBox(height: 2),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedGender,
               isExpanded: true,
               isDense: true,
               icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade400),
-              style: const TextStyle(fontSize: 14, color: Color(0xFF152238)),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF152238)),
               items: ['Male', 'Female', 'Other'].map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
                   child: Row(
                     children: [
-                      Icon(Icons.transgender, color: const Color(0xFF0D6EFD), size: 16),
-                      const SizedBox(width: 8),
+                      Icon(Icons.transgender, color: const Color(0xFF0D6EFD), size: 14),
+                      const SizedBox(width: 6),
                       Text(value),
                     ],
                   ),
@@ -408,8 +428,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
               },
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -424,45 +444,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     String? prefixText,
     String? Function(String?)? validator,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF152238),
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF152238),
           ),
-          TextFormField(
+        ),
+        const SizedBox(height: 2),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: TextFormField(
             controller: controller,
             obscureText: obscureText,
             keyboardType: keyboardType,
             validator: validator,
-            style: const TextStyle(fontSize: 14, color: Color(0xFF152238)),
+            style: const TextStyle(fontSize: 11, color: Color(0xFF152238)),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-              prefixText: prefixText,
-              prefixStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0D6EFD)),
+              hintStyle: TextStyle(fontSize: 10, color: Colors.grey.shade400),
               border: InputBorder.none,
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(vertical: 8),
-              icon: Icon(icon, color: const Color(0xFF0D6EFD), size: 20),
+              icon: Padding(
+                padding: const EdgeInsets.only(left: 12.0),
+                child: Icon(icon, color: const Color(0xFF0D6EFD), size: 14),
+              ),
+              prefixText: prefixText,
+              prefixStyle: const TextStyle(fontSize: 11, color: Color(0xFF152238)),
               suffixIcon: suffixIcon,
-              suffixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

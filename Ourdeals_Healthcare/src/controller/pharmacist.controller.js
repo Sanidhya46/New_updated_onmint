@@ -1,4 +1,4 @@
-﻿import { Medicine } from '../models/Medicine.model.js';
+import { Medicine } from '../models/Medicine.model.js';
 import { Pharmacist } from '../models/Pharmacist.model.js';
 import { bookingService } from '../services/booking.service.js';
 import { successResponse, errorResponse, paginatedResponse } from '../utils/response.util.js';
@@ -200,11 +200,22 @@ const getOrders = async (req, res) => {
     ]);
 
     // Transform orders to include flattened patient info and delivery address
-    const transformedOrders = orders.map(order => ({
-      ...order,
-      patientName: order.patient ? `${order.patient.firstName} ${order.patient.lastName}` : 'Unknown',
-      patientPhone: order.patient?.phone || 'N/A',
-      deliveryAddress: order.location?.address || 'N/A',
+    const { s3Service } = await import('../services/s3.service.js');
+    const transformedOrders = await Promise.all(orders.map(async (order) => {
+      const transformed = {
+        ...order,
+        patientName: order.patient ? `${order.patient.firstName} ${order.patient.lastName}` : 'Unknown',
+        patientPhone: order.patient?.phone || 'N/A',
+        deliveryAddress: order.location?.address || 'N/A',
+      };
+      
+      if (transformed.prescriptionImages && transformed.prescriptionImages.length > 0) {
+        transformed.prescriptionImagesSigned = await Promise.all(
+          transformed.prescriptionImages.map(img => s3Service.getSignedUrl(img))
+        );
+      }
+      
+      return transformed;
     }));
 
     res.json(
@@ -246,11 +257,22 @@ const getPendingOrders = async (req, res) => {
     ]);
 
     // Transform orders to include flattened patient info and delivery address
-    const transformedOrders = orders.map(order => ({
-      ...order,
-      patientName: order.patient ? `${order.patient.firstName} ${order.patient.lastName}` : 'Unknown',
-      patientPhone: order.patient?.phone || 'N/A',
-      deliveryAddress: order.location?.address || 'N/A',
+    const { s3Service } = await import('../services/s3.service.js');
+    const transformedOrders = await Promise.all(orders.map(async (order) => {
+      const transformed = {
+        ...order,
+        patientName: order.patient ? `${order.patient.firstName} ${order.patient.lastName}` : 'Unknown',
+        patientPhone: order.patient?.phone || 'N/A',
+        deliveryAddress: order.location?.address || 'N/A',
+      };
+      
+      if (transformed.prescriptionImages && transformed.prescriptionImages.length > 0) {
+        transformed.prescriptionImagesSigned = await Promise.all(
+          transformed.prescriptionImages.map(img => s3Service.getSignedUrl(img))
+        );
+      }
+      
+      return transformed;
     }));
 
     res.json(
@@ -370,6 +392,75 @@ const getDashboard = async (req, res) => {
   }
 };
 
+const submitOffer = async (req, res) => {
+  try {
+    const pharmacistId = req.user.userId;
+    const { id } = req.params;
+    const { amount, deliveryTime } = req.body;
+
+    if (!amount || !deliveryTime) {
+      return res.status(400).json(errorResponse('Amount and delivery time are required'));
+    }
+
+    const { RealTimeBooking } = await import('../models/RealTimeBooking.model.js');
+    const { notificationService } = await import('../services/notification.service.js');
+    const { getSocketHandler } = await import('../socket/socket.handler.js');
+
+    const booking = await RealTimeBooking.findById(id);
+
+    if (!booking) {
+      return res.status(404).json(errorResponse('Booking not found'));
+    }
+
+    if (booking.status !== 'requested') {
+      return res.status(400).json(errorResponse('Booking is no longer accepting offers'));
+    }
+
+    // Check if offer already submitted by this vendor
+    const existingOffer = booking.offers?.find(o => o.vendorId.toString() === pharmacistId.toString());
+    if (existingOffer) {
+      return res.status(400).json(errorResponse('You have already submitted an offer for this order'));
+    }
+
+    // Add new offer
+    const newOffer = {
+      vendorId: pharmacistId,
+      amount: Number(amount),
+      deliveryTime,
+      status: 'pending',
+      createdAt: new Date()
+    };
+
+    if (!booking.offers) {
+      booking.offers = [];
+    }
+    
+    booking.offers.push(newOffer);
+    await booking.save();
+
+    // Notify patient
+    await notificationService.send({
+      recipient: booking.patient,
+      sender: pharmacistId,
+      type: "booking_update",
+      title: "New Prescription Offer",
+      message: `A pharmacy has submitted an offer of ₹${amount} for your prescription.`,
+      data: { bookingId: booking._id },
+      sendPush: true,
+    });
+
+    const socketHandler = getSocketHandler();
+    socketHandler.emitToUser(booking.patient.toString(), "booking:new_offer", {
+      bookingId: booking._id,
+      offer: newOffer
+    });
+
+    res.json(successResponse('Offer submitted successfully. Waiting for patient approval.', newOffer));
+  } catch (error) {
+    res.status(500).json(errorResponse(error.message || 'Failed to submit offer'));
+  }
+};
+
 export {
   updateProfile,
   addMedicine,
@@ -382,4 +473,5 @@ export {
   updateOrderStatus,
   updateStock,
   getDashboard,
+  submitOffer,
 };

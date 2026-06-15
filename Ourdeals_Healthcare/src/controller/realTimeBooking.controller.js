@@ -24,7 +24,6 @@ const createBookingRequest = async (req, res) => {
       title: title,
       requirements: {
         description: description,
-        urgency: requirements.urgency || req.body.urgency || "medium",
         preferredTime: requirements.preferredTime || req.body.preferredTime,
         specialRequirements: requirements.specialRequirements || req.body.specialRequirements,
       },
@@ -501,6 +500,91 @@ const markAsViewed = async (req, res) => {
   }
 };
 
+const syncCart = async (req, res) => {
+  try {
+    const patientId = req.user.userId;
+    const { serviceType, medicines, tests, price } = req.body;
+    
+    if (!serviceType) {
+      return res.status(400).json(errorResponse("serviceType is required"));
+    }
+    
+    // Resolve full medicine details with prices and names if only ID & quantity is passed
+    let fullMedicines = medicines;
+    if (medicines && Array.isArray(medicines) && serviceType === 'pharmacist') {
+      const { Medicine } = await import('../models/Medicine.model.js');
+      fullMedicines = await Promise.all(medicines.map(async (item) => {
+        if (!item.medicineId) return null;
+        if (item.name && item.price) return item; // Already resolved
+        const medicine = await Medicine.findById(item.medicineId);
+        if (!medicine) return null;
+        return {
+          medicineId: medicine._id,
+          name: medicine.name,
+          quantity: item.quantity || 1,
+          price: medicine.discountedPrice || medicine.price,
+        };
+      }));
+      fullMedicines = fullMedicines.filter(m => m !== null);
+    }
+    
+    let calculatedPrice = price;
+    if (!calculatedPrice && fullMedicines) {
+      calculatedPrice = fullMedicines.reduce((total, item) => total + (item.price * item.quantity), 0);
+    }
+
+    const cartData = { medicines: fullMedicines, tests, price: calculatedPrice };
+    const cart = await realTimeBookingService.syncCart(patientId, serviceType, cartData);
+    
+    res.json(successResponse("Cart synced successfully", cart));
+  } catch (error) {
+    res.status(500).json(errorResponse(error.message || "Failed to sync cart"));
+  }
+};
+
+const getCart = async (req, res) => {
+  try {
+    const patientId = req.user.userId;
+    const { serviceType } = req.query;
+    
+    if (!serviceType) {
+      return res.status(400).json(errorResponse("serviceType query param is required"));
+    }
+    
+    const cart = await realTimeBookingService.getCart(patientId, serviceType);
+    res.json(successResponse("Cart retrieved", cart || {}));
+  } catch (error) {
+    res.status(500).json(errorResponse(error.message || "Failed to get cart"));
+  }
+};
+
+const checkoutCart = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    
+    const checkoutData = {
+      location: {
+        address: req.body.address || req.body.location?.address || '',
+        coordinates: req.body.coordinates || req.body.location?.coordinates || [72.8777, 19.0760],
+      },
+      patientName: req.body.name || req.body.patientName,
+      patientPhone: req.body.phone || req.body.patientPhone || req.body.contactNumber,
+      paymentMethod: req.body.paymentMethod || 'COD',
+      notes: req.body.notes,
+    };
+    
+    if (!checkoutData.location.address) {
+      return res.status(400).json(errorResponse("Delivery address is required"));
+    }
+    
+    const booking = await realTimeBookingService.checkoutCart(bookingId, checkoutData);
+    res.json(successResponse("Checkout successful, order placed", booking));
+  } catch (error) {
+    const statusCode = error.status || 500;
+    res.status(statusCode).json(errorResponse(error.message || "Failed to checkout cart"));
+  }
+};
+
 export {
   createBookingRequest,
   acceptBookingRequest,
@@ -512,4 +596,7 @@ export {
   getProviderBookings,
   getProviderDashboard,
   markAsViewed,
+  syncCart,
+  getCart,
+  checkoutCart,
 };

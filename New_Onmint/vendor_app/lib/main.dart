@@ -6,6 +6,7 @@ import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/pharmacist/accepted_order_details_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,6 +31,16 @@ class MyApp extends StatelessWidget {
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
           '/home': (context) => const HomeScreen(),
+        },
+        onGenerateRoute: (settings) {
+          if (settings.name != null && settings.name!.startsWith('/accepted-order')) {
+            final uri = Uri.parse(settings.name!);
+            final bookingId = uri.queryParameters['id'] ?? '';
+            return MaterialPageRoute(
+              builder: (context) => AcceptedOrderDetailsScreen(bookingId: bookingId),
+            );
+          }
+          return null;
         },
       ),
     );

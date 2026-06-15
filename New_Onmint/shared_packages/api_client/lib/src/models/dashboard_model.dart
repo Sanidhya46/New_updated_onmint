@@ -9,6 +9,7 @@ class DashboardStats {
   final int? todayAppointments; // NEW: For doctor dashboard
   final int? completedConsultations;
   final int? pendingRequests;
+  final int? acceptedAppointments; // NEW
   final double? earnings;
   final double? rating;
   final int? totalRatings;
@@ -42,6 +43,7 @@ class DashboardStats {
     this.todayAppointments,
     this.completedConsultations,
     this.pendingRequests,
+    this.acceptedAppointments,
     this.earnings,
     this.rating,
     this.totalRatings,
@@ -74,6 +76,7 @@ class DashboardStats {
       todayAppointments: json['todayAppointments'],
       completedConsultations: json['completedConsultations'] ?? json['totalConsultations'],
       pendingRequests: json['pendingRequests'],
+      acceptedAppointments: json['acceptedAppointments'],
       earnings: json['earnings']?.toDouble(),
       rating: json['rating'] is Map ? json['rating']['average']?.toDouble() : json['rating']?.toDouble(),
       totalRatings: json['totalRatings'] ?? (json['rating'] is Map ? json['rating']['count'] : null),
@@ -113,6 +116,7 @@ class DashboardStats {
       'todayAppointments': todayAppointments,
       'completedConsultations': completedConsultations,
       'pendingRequests': pendingRequests,
+      'acceptedAppointments': acceptedAppointments,
       'earnings': earnings,
       'rating': rating,
       'totalRatings': totalRatings,

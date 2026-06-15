@@ -56,7 +56,7 @@ class AuthApiService {
   // Change password
   Future<void> changePassword(String currentPassword, String newPassword) async {
     await _client.post('/auth/change-password', data: {
-      'currentPassword': currentPassword,
+      'oldPassword': currentPassword,
       'newPassword': newPassword,
     });
   }

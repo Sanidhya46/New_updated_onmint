@@ -149,6 +149,9 @@ const getAppointmentDetails = async (req, res) => {
     let isRealTime = false;
     try {
       booking = await bookingService.getBooking(id);
+      if (booking.notifiedProviders) {
+        isRealTime = true;
+      }
     } catch (err) {
       if (err.message === 'Booking not found') {
         const { realTimeBookingService } = await import('../services/realTimeBooking.service.js');
@@ -162,6 +165,15 @@ const getAppointmentDetails = async (req, res) => {
     // Verify this appointment belongs to the doctor
     if (!isRealTime) {
       if (booking.provider?.toString() !== doctorId && booking.provider?._id?.toString() !== doctorId) {
+        return res.status(403).json(errorResponse('Not authorized to view this appointment'));
+      }
+    } else {
+      const isAccepted = booking.acceptedProvider?.toString() === doctorId || booking.acceptedProvider?._id?.toString() === doctorId;
+      const isNotified = booking.notifiedProviders?.some(
+        np => np.provider?.toString() === doctorId || np.provider?._id?.toString() === doctorId
+      );
+      
+      if (!isAccepted && !isNotified) {
         return res.status(403).json(errorResponse('Not authorized to view this appointment'));
       }
     }
@@ -384,6 +396,71 @@ const markVideoCallCompleted = async (req, res) => {
   }
 };
 
+const scheduleAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { scheduledDate, scheduledTime } = req.body;
+    const doctorId = req.user.userId;
+
+    let booking;
+    try {
+      booking = await bookingService.getBooking(id);
+    } catch (err) {
+      if (err.message === 'Booking not found') {
+        const { realTimeBookingService } = await import('../services/realTimeBooking.service.js');
+        booking = await realTimeBookingService.getBookingById(id, doctorId);
+      } else {
+        throw err;
+      }
+    }
+
+    if (booking.provider?.toString() !== doctorId && booking.provider?._id?.toString() !== doctorId &&
+        booking.acceptedProvider?.toString() !== doctorId && booking.acceptedProvider?._id?.toString() !== doctorId) {
+      return res.status(403).json(errorResponse('Not authorized to schedule this appointment'));
+    }
+
+    // Combine date and time if necessary, or just save them directly
+    let timeToSave = scheduledTime;
+    if (scheduledDate && scheduledTime) {
+      // Trying to construct a valid Date string
+      const [time, period] = scheduledTime.split(' ');
+      let [hours, minutes] = time.split(':');
+      hours = parseInt(hours);
+      if (period === 'PM' && hours < 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      
+      const dateObj = new Date(scheduledDate);
+      dateObj.setHours(hours, parseInt(minutes), 0, 0);
+      timeToSave = dateObj.toISOString();
+    }
+
+    let updatedBooking;
+    const BookingModel = await import('../models/Booking.model.js').then(m => m.Booking);
+    
+    // First try standard booking
+    updatedBooking = await BookingModel.findByIdAndUpdate(
+      id,
+      { scheduledTime: timeToSave },
+      { new: true }
+    );
+
+    if (!updatedBooking) {
+      // Try RealTimeBooking
+      const RealTimeBookingModel = await import('../models/RealTimeBooking.model.js').then(m => m.RealTimeBooking);
+      updatedBooking = await RealTimeBookingModel.findByIdAndUpdate(
+        id,
+        { 'requirements.preferredTime': timeToSave, scheduledTime: timeToSave },
+        { new: true }
+      );
+    }
+
+    res.json(successResponse('Appointment scheduled successfully', updatedBooking));
+  } catch (error) {
+    res.status(error.statusCode || 500)
+      .json(errorResponse(error.message || 'Failed to schedule appointment'));
+  }
+};
+
 export {
   updateProfile,
   setAvailability,
@@ -395,4 +472,5 @@ export {
   updateLocation,
   completeAppointment,
   markVideoCallCompleted,
+  scheduleAppointment,
 };

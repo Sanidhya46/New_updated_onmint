@@ -256,14 +256,12 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     }
   }
 
-  // ── Build ────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _isRequested ? const Color(0xFFFDF9F9) : const Color(0xFFF6F6F6),
+      backgroundColor: _isRequested ? const Color(0xFFFCF3F3) : const Color(0xFFF6F6F6),
       appBar: AppBar(
-        backgroundColor: _isRequested ? const Color(0xFFFF5252) : Colors.white,
+        backgroundColor: _isRequested ? const Color(0xFFF75555) : Colors.white,
         foregroundColor: _isRequested ? Colors.white : Colors.black,
         elevation: 0,
         centerTitle: true,
@@ -279,12 +277,11 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
             color: _isRequested ? Colors.white : Colors.black,
           ),
         ),
-        actions: [
-          if (!_isRequested)
-            IconButton(
-              icon: const Icon(Icons.headset_mic_outlined, color: Colors.black),
-              onPressed: () {},
-            ),
+        actions: _isRequested ? [] : [
+          IconButton(
+            icon: const Icon(Icons.headset_mic_outlined, color: Colors.black),
+            onPressed: () {},
+          ),
         ],
       ),
       body: _isLoading
@@ -292,11 +289,39 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
               child: CircularProgressIndicator(color: Color(0xFFE52329)))
           : _ride == null
               ? const Center(child: Text('Ride not found'))
-              : (_isRequested ? _buildRequestedBody() : _buildActiveBody()),
+              : _buildBody(),
     );
   }
+  Widget _buildBody() {
+    if (_isRequested) {
+      return Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Request Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  _buildRequestSummaryCard(),
+                  const SizedBox(height: 20),
+                  const Text('Patient Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  _buildRequestPatientDetailsCard(),
+                  const SizedBox(height: 20),
+                  const Text('Service Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  const SizedBox(height: 12),
+                  _buildRequestServiceDetailsCard(),
+                ],
+              ),
+            ),
+          ),
+          _buildAcceptRejectButtons(),
+        ],
+      );
+    }
 
-  Widget _buildActiveBody() {
     return Column(
       children: [
         Expanded(
@@ -313,11 +338,15 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                 const SizedBox(height: 12),
                 _buildRouteCard(),
                 const SizedBox(height: 12),
-                _buildStatusStepper(),
+                _buildStatusStepperHorizontal(),
                 const SizedBox(height: 12),
-                _buildActionShortcuts(),
-                const SizedBox(height: 12),
+                if (!_isCompleted) ...[
+                  _buildActionShortcuts(),
+                  const SizedBox(height: 12),
+                ],
                 if (_isCompleted) ...[
+                  _buildActionShortcuts(),
+                  const SizedBox(height: 12),
                   _buildThankYouCard(),
                   const SizedBox(height: 12),
                 ],
@@ -329,136 +358,152 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
       ],
     );
   }
+  // ── Request Summary Card ──────────────────────────────────────────
 
-  Widget _buildRequestedBody() {
-    return Column(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildNewRequestSummaryCard(),
-                const SizedBox(height: 12),
-                _buildNewPatientDetailsCard(),
-                const SizedBox(height: 12),
-                _buildNewServiceDetailsCard(),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-        _buildNewAcceptRejectBottom(),
-      ],
-    );
-  }
-
-  Widget _buildNewRequestSummaryCard() {
+  Widget _buildRequestSummaryCard() {
     final patient = _ride!['patient'] ?? {};
     final fullName = patient['fullName'] ?? patient['firstName'] != null
         ? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim()
         : 'Unknown Patient';
     final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Male';
     final age = _ride!['patientAge'] ?? patient['age'] ?? '--';
-    
+
     String formattedDate = '--';
-    String formattedTime = '--';
     if (_ride!['createdAt'] != null) {
       final dt = DateTime.tryParse(_ride!['createdAt'].toString());
       if (dt != null) {
-        formattedDate = DateFormat('dd MMM yyyy').format(dt.toLocal());
-        formattedTime = DateFormat('hh:mm a').format(dt.toLocal());
+        formattedDate = DateFormat('dd MMM yyyy, hh:mm a').format(dt.toLocal());
       }
     }
-
-    final distance = _ride!['distanceText'] ?? '3.2 km';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade100),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 60, height: 60,
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFEDF2F7)),
+            child: ClipOval(
+              child: patient['profilePicture'] != null
+                  ? Image.network(patient['profilePicture'], fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.person, color: Colors.grey, size: 32))
+                  : const Icon(Icons.person, color: Colors.grey, size: 32),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(fullName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                const SizedBox(height: 4),
+                Text('$gender  •  $age Years', style: TextStyle(color: Colors.grey[700], fontSize: 13)),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(color: const Color(0xFFFCF3F3), borderRadius: BorderRadius.circular(6)),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.location_on_outlined, color: Colors.red, size: 12),
+                      const SizedBox(width: 4),
+                      Text('3.2 km away', style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w500)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text('Requested On', style: TextStyle(color: Colors.grey[500], fontSize: 11)),
+              const SizedBox(height: 4),
+              Text(formattedDate, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Request Patient Details Card ────────────────────────────────
+
+  Widget _buildRequestPatientDetailsCard() {
+    final patient = _ride!['patient'] ?? {};
+    final fullName = patient['fullName'] ?? patient['firstName'] != null
+        ? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim()
+        : 'Unknown Patient';
+    final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Male';
+    final age = _ride!['patientAge'] ?? patient['age'] ?? '--';
+    final pickup = _ride!['location']?['address'] ?? _ride!['pickupLocation']?['address'] ?? 'Pickup not specified';
+    final drop = _ride!['dropLocation']?['address'] ?? _ride!['dropOffLocation']?['address'] ?? 'Drop not specified';
+    final phone = patient['phone'] ?? 'N/A';
+    final details = _ride!['notes'] ?? _ride!['requirements']?['description'] ?? 'Patient having chest pain and difficulty in breathing.';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
+        children: [
+          _buildDetailItem(Icons.person_outline, 'Name', fullName, color: Colors.red),
+          const Divider(),
+          _buildDetailItem(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender', color: Colors.red),
+          const Divider(),
+          _buildDetailItem(Icons.location_on_outlined, 'Pickup Location', pickup, color: Colors.red),
+          const Divider(),
+          _buildDetailItem(Icons.my_location_outlined, 'Drop-off Location (Optional)', drop, color: Colors.red),
+          const Divider(),
+          _buildDetailItem(Icons.phone_outlined, 'Phone Number', phone, color: Colors.red),
+          const Divider(),
+          _buildDetailItem(Icons.description_outlined, 'Additional Details', details, color: Colors.red),
+        ],
+      ),
+    );
+  }
+
+  // ── Request Service Details Card ────────────────────────────────
+
+  Widget _buildRequestServiceDetailsCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          _buildDetailItem(Icons.local_hospital_outlined, 'Service Type', 'Ambulance', color: Colors.red),
+          const Divider(),
+          _buildDetailItem(Icons.health_and_safety_outlined, 'Purpose', 'Medical Emergency', color: Colors.red),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(IconData icon, String label, String value, {Color color = Colors.grey}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Request Summary',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black),
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: Text(label, style: TextStyle(color: Colors.grey[800], fontSize: 13)),
           ),
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Color(0xFFEDF2F7),
-                ),
-                child: ClipOval(
-                  child: patient['profilePicture'] != null
-                      ? Image.network(patient['profilePicture'], fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.person,
-                              color: Colors.grey, size: 32))
-                      : const Icon(Icons.person, color: Colors.grey, size: 32),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fullName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '$gender • $age Years',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.location_on_outlined, color: Colors.red, size: 12),
-                          const SizedBox(width: 4),
-                          Text(
-                            '$distance away',
-                            style: const TextStyle(color: Colors.red, fontSize: 11, fontWeight: FontWeight.w500),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'Requested On',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 11),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$formattedDate,\n$formattedTime',
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11, height: 1.3),
-                  ),
-                ],
-              ),
-            ],
+          Expanded(
+            flex: 3,
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13), textAlign: TextAlign.right),
           ),
         ],
       ),
@@ -806,22 +851,6 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
                         Text(formattedTime, style: const TextStyle(fontSize: 11, color: Colors.black87)),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '₹$price',
-                      style: const TextStyle(
-                        color: Color(0xFF1E8E3E),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      'Service Fee',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 9,
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -832,145 +861,129 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     );
   }
 
-  // ── Route Card ────────────────────────────────────────────────────
+  // ── Status Stepper ────────────────────────────────────────────────
 
-  Widget _buildRouteCard() {
-    final pickup = _ride!['location']?['address'] ??
-        _ride!['pickupLocation']?['address'] ??
-        'Pickup not specified';
-    final drop = _ride!['dropLocation']?['address'] ??
-        _ride!['dropOffLocation']?['address'] ??
-        'Drop not specified';
-
+  Widget _buildStatusStepperHorizontal() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Column(
-              children: [
-                const Icon(Icons.location_on, color: Color(0xFF1E8E3E), size: 16),
-                Expanded(
-                  child: CustomPaint(
-                    painter: _DashedLinePainter(),
-                    child: const SizedBox(width: 2, height: double.infinity),
-                  ),
-                ),
-                const Icon(Icons.location_on, color: Color(0xFFE52329), size: 16),
-              ],
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Pickup Point',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              pickup,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 11,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_isCompleted)
-                        _buildCallChip(),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Drop Point',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              drop,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 11,
-                                height: 1.3,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (_isCompleted)
-                        _buildCallChip(),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCallChip() {
-    return GestureDetector(
-      onTap: _callPatient,
-      child: Column(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F1FF),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.phone, color: Color(0xFF1565C0), size: 16),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(height: 2),
-          Text(
-            'Call',
-            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHorizontalStep(
+            title: 'Accepted',
+            time: _acceptedAt != null ? _fmt(_acceptedAt) : 'Just Now',
+            isActive: _currentStep >= 0,
+            isFirst: true,
+            isLast: false,
+            isNextActive: _currentStep >= 1,
+          ),
+          _buildHorizontalStep(
+            title: 'On The Way',
+            time: _currentStep >= 1 ? (_onTheWayAt != null ? _fmt(_onTheWayAt) : _fmt(DateTime.now())) : '--:--',
+            isActive: _currentStep >= 1,
+            isFirst: false,
+            isLast: false,
+            isNextActive: _currentStep >= 2,
+          ),
+          _buildHorizontalStep(
+            title: 'At Pickup Point',
+            time: _currentStep >= 2 ? (_atPickupAt != null ? _fmt(_atPickupAt) : _fmt(DateTime.now())) : '--:--',
+            isActive: _currentStep >= 2,
+            isFirst: false,
+            isLast: false,
+            isNextActive: _currentStep >= 3,
+          ),
+          _buildHorizontalStep(
+            title: 'At Drop Point',
+            time: _currentStep >= 3 ? (_atDropAt != null ? _fmt(_atDropAt) : _fmt(DateTime.now())) : '--:--',
+            isActive: _currentStep >= 3,
+            isFirst: false,
+            isLast: true,
+            isNextActive: false,
           ),
         ],
       ),
     );
   }
 
-  // ── Status Stepper ────────────────────────────────────────────────
-
-  // ── Status Stepper ────────────────────────────────────────────────
-
-  Widget _buildStatusStepper() {
+  Widget _buildHorizontalStep({
+    required String title,
+    required String time,
+    required bool isActive,
+    required bool isFirst,
+    required bool isLast,
+    required bool isNextActive,
+  }) {
+    return Expanded(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 2,
+                  color: isFirst ? Colors.transparent : (isActive ? Colors.green : Colors.grey.shade300),
+                ),
+              ),
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive ? Colors.green : Colors.white,
+                  border: Border.all(
+                    color: isActive ? Colors.transparent : Colors.grey.shade400,
+                    width: 2,
+                  ),
+                ),
+                child: isActive
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
+                    : null,
+              ),
+              Expanded(
+                child: Container(
+                  height: 2,
+                  color: isLast ? Colors.transparent : (isNextActive ? Colors.green : Colors.grey.shade300),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive ? Colors.green : Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            time,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildRouteCard() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
@@ -1247,133 +1260,108 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
 
   // ── Bottom Action Button ──────────────────────────────────────────
 
-  // ── Bottom Action Button ──────────────────────────────────────────
+  Widget _buildAcceptRejectButtons() {
+    return Container(
+      color: const Color(0xFFFCF3F3),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isProcessing ? null : _rejectRide,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: Color(0xFFE52329), width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.close, color: Color(0xFFE52329), size: 18),
+                    label: const Text(
+                      'Reject Request',
+                      style: TextStyle(color: Color(0xFFE52329), fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _isProcessing ? null : _acceptRide,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.green,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        side: const BorderSide(color: Colors.green, width: 1.5),
+                      ),
+                    ),
+                    icon: _isProcessing
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.green, strokeWidth: 2))
+                        : const Icon(Icons.check, color: Colors.green, size: 18),
+                    label: Text(
+                      _isProcessing ? 'Wait...' : 'Accept Request',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'You can accept or reject this booking request.\nOnce accepted, the patient will be notified.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildBottomButton() {
-    // Completed — no button
     if (_isCompleted) return const SizedBox.shrink();
 
     String label = '';
-    VoidCallback? onPress;
-    IconData iconData = Icons.directions_car;
+    VoidCallback? onPressed;
 
-    if (_isRequested) {
-      // Show accept/reject — handled separately
-      return _buildAcceptRejectButtons();
-    } else if (_isAccepted) {
-      label = 'I Am On The Way';
-      iconData = Icons.directions_car;
-      onPress = _isProcessing ? null : _startRide;
+    if (_isAccepted) {
+      label = 'Start Trip';
+      onPressed = _startRide;
     } else if (_isOnTheWay) {
-      label = 'At Pickup Point';
-      iconData = Icons.directions_car;
-      onPress = _isProcessing ? null : _arriveAtPickup;
+      label = 'Reached Pickup Location';
+      onPressed = _arriveAtPickup;
     } else if (_isAtPickup) {
-      label = 'At Drop Point';
-      iconData = Icons.directions_car;
-      onPress = _isProcessing ? null : _completeRide;
+      label = 'Complete Trip';
+      onPressed = _completeRide;
     } else {
       return const SizedBox.shrink();
     }
 
     return Container(
       color: Colors.white,
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: SafeArea(
         top: false,
         child: SizedBox(
           width: double.infinity,
-          height: 56,
-          child: ElevatedButton.icon(
-            onPressed: onPress,
+          height: 48,
+          child: ElevatedButton(
+            onPressed: _isProcessing ? null : onPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFE52329),
               foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            icon: _isProcessing
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Icon(iconData, size: 24),
-            label: _isProcessing
-                ? const Text('Please wait...',
-                    style: TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold))
-                : Text(label,
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600)),
+            child: _isProcessing
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAcceptRejectButtons() {
-    return Container(
-      color: Colors.white,
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _isProcessing ? null : _acceptRide,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFE52329),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                icon: const Icon(Icons.check_circle_outline),
-                label: const Text(
-                  'Accept Request',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: OutlinedButton.icon(
-                onPressed: _isProcessing ? null : _rejectRide,
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(
-                      color: Color(0xFFE52329), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                icon: const Icon(Icons.cancel_outlined,
-                    color: Color(0xFFE52329)),
-                label: const Text(
-                  'Reject Request',
-                  style: TextStyle(
-                      color: Color(0xFFE52329),
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

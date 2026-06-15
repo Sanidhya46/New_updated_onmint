@@ -303,7 +303,7 @@ class PatientApiService {
   
   // Profile Management
   Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
-    final response = await _client.put('/patient/profile', data: data);
+    final response = await _client.put('/auth/profile', data: data);
     return response.data['data'];
   }
   
@@ -329,12 +329,45 @@ class PatientApiService {
   // REALTIME BOOKING ENDPOINTS
   // ============================================
   
-  /// Create instant/realtime booking request
-  /// Notifies nearby providers who can accept the request
-  Future<Map<String, dynamic>> createRealtimeBooking(Map<String, dynamic> data) async {
+  // Real-time Booking
+  Future<dynamic> createRealtimeBooking(Map<String, dynamic> bookingData) async {
     try {
-      final response = await _client.post('/realtime/create', data: data);
-      return ResponseHandler.extractData<Map<String, dynamic>>(response);
+      final response = await _client.post('/realtime/create', data: bookingData);
+      return ResponseHandler.extractData(response);
+    } on DioException catch (e) {
+      throw Exception(ResponseHandler.handleDioError(e));
+    }
+  }
+
+  // Cart
+  Future<dynamic> syncCart(String serviceType, List<Map<String, dynamic>> items, {double? price}) async {
+    try {
+      final response = await _client.post('/realtime/cart/sync', data: {
+        'serviceType': serviceType,
+        'medicines': items,
+        'price': price,
+      });
+      return ResponseHandler.extractData(response);
+    } on DioException catch (e) {
+      throw Exception(ResponseHandler.handleDioError(e));
+    }
+  }
+
+  Future<dynamic> getCart(String serviceType) async {
+    try {
+      final response = await _client.get('/realtime/cart', queryParameters: {
+        'serviceType': serviceType,
+      });
+      return ResponseHandler.extractData(response);
+    } on DioException catch (e) {
+      throw Exception(ResponseHandler.handleDioError(e));
+    }
+  }
+
+  Future<dynamic> checkoutCart(String bookingId, Map<String, dynamic> checkoutData) async {
+    try {
+      final response = await _client.post('/realtime/$bookingId/checkout', data: checkoutData);
+      return ResponseHandler.extractData(response);
     } on DioException catch (e) {
       throw Exception(ResponseHandler.handleDioError(e));
     }
@@ -418,6 +451,32 @@ class PatientApiService {
         if (timeSlot != null) 'timeSlot': timeSlot,
       });
       return ResponseHandler.extractData<Map<String, dynamic>>(response);
+    } on DioException catch (e) {
+      throw Exception(ResponseHandler.handleDioError(e));
+    }
+  }
+
+  // ============================================
+  // VIDEO CALL ENDPOINTS
+  // ============================================
+
+  /// Join video call (marks patient_on_call = true)
+  Future<Map<String, dynamic>> joinVideoCall(String bookingId) async {
+    try {
+      final response = await _client.post('/video/room', data: {
+        'bookingId': bookingId,
+      });
+      return response.data['data'];
+    } on DioException catch (e) {
+      throw Exception(ResponseHandler.handleDioError(e));
+    }
+  }
+
+  /// Get real-time call status
+  Future<Map<String, dynamic>> getCallStatus(String bookingId) async {
+    try {
+      final response = await _client.get('/video/call-status/$bookingId');
+      return response.data['data'];
     } on DioException catch (e) {
       throw Exception(ResponseHandler.handleDioError(e));
     }

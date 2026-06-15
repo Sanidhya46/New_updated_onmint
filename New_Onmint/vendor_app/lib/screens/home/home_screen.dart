@@ -59,8 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     bool hideAppBar = _selectedIndex == 3 || 
-        (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse' || role == 'pathology' || role == 'bloodbank')) || 
-        (_selectedIndex == 1 && (role == 'nurse' || role == 'pathology' || role == 'bloodbank'));
+        (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse' || role == 'pathology' || role == 'bloodbank' || role == 'pharmacist')) || 
+        (_selectedIndex == 1 && (role == 'nurse' || role == 'pathology' || role == 'bloodbank' || role == 'pharmacist'));
 
     return Scaffold(
       appBar: hideAppBar ? null : AppBar(

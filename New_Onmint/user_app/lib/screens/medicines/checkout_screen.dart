@@ -13,86 +13,11 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _streetController = TextEditingController();
-  final _pincodeController = TextEditingController();
-  final _notesController = TextEditingController();
+  String _paymentMethod = 'cod';
+  bool _isLoading = false;
   final _apiClient = OnMintApiClient();
 
-  String? _selectedState;
-  String? _selectedCity;
-  String _paymentMethod = 'cash';
-  bool _useRegisteredAddress = false;
-  bool _isLoading = false;
-
-  // Indian States
-  final List<String> _states = [
-    'Andhra Pradesh',
-    'Arunachal Pradesh',
-    'Assam',
-    'Bihar',
-    'Chhattisgarh',
-    'Goa',
-    'Gujarat',
-    'Haryana',
-    'Himachal Pradesh',
-    'Jharkhand',
-    'Karnataka',
-    'Kerala',
-    'Madhya Pradesh',
-    'Maharashtra',
-    'Manipur',
-    'Meghalaya',
-    'Mizoram',
-    'Nagaland',
-    'Odisha',
-    'Punjab',
-    'Rajasthan',
-    'Sikkim',
-    'Tamil Nadu',
-    'Telangana',
-    'Tripura',
-    'Uttar Pradesh',
-    'Uttarakhand',
-    'West Bengal',
-    'Delhi',
-    'Jammu and Kashmir',
-  ];
-
-  // Cities by state (sample - add more as needed)
-  final Map<String, List<String>> _citiesByState = {
-    'Maharashtra': [
-      'Mumbai',
-      'Pune',
-      'Nagpur',
-      'Nashik',
-      'Aurangabad',
-      'Thane',
-      'Kolhapur'
-    ],
-    'Delhi': ['New Delhi', 'Dwarka', 'Rohini', 'Karol Bagh', 'Connaught Place'],
-    'Karnataka': ['Bangalore', 'Mysore', 'Mangalore', 'Hubli', 'Belgaum'],
-    'Tamil Nadu': [
-      'Chennai',
-      'Coimbatore',
-      'Madurai',
-      'Tiruchirappalli',
-      'Salem'
-    ],
-    'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar'],
-    'Rajasthan': ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Ajmer'],
-    'Uttar Pradesh': [
-      'Lucknow',
-      'Kanpur',
-      'Agra',
-      'Varanasi',
-      'Meerut',
-      'Noida'
-    ],
-    'West Bengal': ['Kolkata', 'Howrah', 'Durgapur', 'Asansol', 'Siliguri'],
-    'Punjab': ['Chandigarh', 'Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala'],
-    'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar'],
-  };
+  String _userAddress = 'Fetching address...';
 
   @override
   void initState() {
@@ -102,173 +27,139 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   Future<void> _loadUserAddress() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-    // Refresh user profile to get latest data
     await authProvider.refreshProfile();
-
     final user = authProvider.currentUser;
 
     if (user?.address != null) {
-      final address = user!.address!;
+      final addr = user!.address!;
+      final parts = [addr.street, addr.city, addr.state, addr.pincode]
+          .where((p) => p != null && p.isNotEmpty)
+          .toList();
       setState(() {
-        _streetController.text = address.street ?? '';
-        _selectedCity = address.city;
-        _selectedState = address.state;
-        _pincodeController.text = address.pincode ?? '';
+        _userAddress = parts.join(', ');
+        if (_userAddress.isEmpty) _userAddress = 'Address not provided in profile';
       });
-
-      // Debug print to check address data
-      print('Loaded user address: ${address.fullAddress}');
-      print('Street: ${address.street}');
-      print('City: ${address.city}');
-      print('State: ${address.state}');
-      print('Pincode: ${address.pincode}');
     } else {
-      print('User address is null');
-      print('User data: ${user?.toJson()}');
+      setState(() {
+        _userAddress = 'Address not provided in profile';
+      });
     }
   }
 
-  void _toggleUseRegisteredAddress(bool? value) async {
-    setState(() {
-      _useRegisteredAddress = value ?? false;
-    });
-
-    if (value == true) {
-      await _loadUserAddress();
-      // Force UI update after loading address
-      setState(() {});
-    } else {
-      _streetController.clear();
-      _pincodeController.clear();
-      setState(() {
-        _selectedCity = null;
-        _selectedState = null;
-      });
-    }
+  void _showChangeAddressDialog() {
+    final controller = TextEditingController(
+      text: _userAddress == 'Address not provided in profile' ? '' : _userAddress,
+    );
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF0F2147), width: 1.5),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Update Delivery Address', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F2147))),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: 'Enter your new delivery address',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Colors.grey),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF0F2147)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      if (controller.text.trim().isNotEmpty) {
+                        setState(() {
+                          _userAddress = controller.text.trim();
+                        });
+                      }
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0F2147),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Save', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _placeOrder() async {
-    if (!_useRegisteredAddress && !_formKey.currentState!.validate()) {
+    final cart = Provider.of<CartService>(context, listen: false);
+    if (cart.itemCount == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cart is empty')),
+      );
       return;
     }
 
-    if (!_useRegisteredAddress &&
-        (_selectedState == null || _selectedCity == null)) {
+    if (_userAddress.trim().isEmpty || _userAddress == 'Address not provided in profile') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select state and city')),
+        const SnackBar(content: Text('Please update your delivery address in profile')),
       );
       return;
     }
 
     setState(() => _isLoading = true);
-
     try {
-      final cart = Provider.of<CartService>(context, listen: false);
+      await _apiClient.initialize();
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final user = authProvider.currentUser;
-      await _apiClient.initialize();
+      
+      final finalAddress = _userAddress;
 
-      // Build medicines array with details
-      final items = cart.items.values.toList();
-
-      // Build medicines array for API (only medicineId and quantity)
-      final medicines = items
-          .map((item) => {
-                'medicineId': item.medicineId,
-                'quantity': item.quantity,
-              })
-          .toList();
-
-      // Build description from cart items
-      final medicineList =
-          items.map((item) => '${item.name} (${item.quantity}x)').join(', ');
-
-      // Use registered address or form address
-      String address;
-      List<double> coordinates;
-
-      if (_useRegisteredAddress && user?.address != null) {
-        final userAddress = user!.address!;
-
-        // Use the fullAddress method if available, otherwise build manually
-        if (userAddress.fullAddress.isNotEmpty) {
-          address = userAddress.fullAddress;
-        } else {
-          // Fallback to manual building with better defaults
-          final street = userAddress.street?.isNotEmpty == true
-              ? userAddress.street!
-              : 'Address not provided';
-          final city = userAddress.city?.isNotEmpty == true
-              ? userAddress.city!
-              : 'City not provided';
-          final state = userAddress.state?.isNotEmpty == true
-              ? userAddress.state!
-              : 'State not provided';
-          final pincode = userAddress.pincode?.isNotEmpty == true
-              ? userAddress.pincode!
-              : '000000';
-
-          address = '$street, $city, $state - $pincode';
-        }
-
-        // Use user's location coordinates if available
-        coordinates = user.location?.coordinates ?? [0.0, 0.0];
-
-        // Debug print
-        print('Using registered address: $address');
-      } else {
-        final street = _streetController.text.isNotEmpty
-            ? _streetController.text
-            : 'Street not provided';
-        final city = _selectedCity?.isNotEmpty == true
-            ? _selectedCity!
-            : 'City not provided';
-        final state = _selectedState?.isNotEmpty == true
-            ? _selectedState!
-            : 'State not provided';
-        final pincode = _pincodeController.text.isNotEmpty
-            ? _pincodeController.text
-            : '000000';
-
-        address = '$street, $city, $state - $pincode';
-        // Default coordinates (will be updated by backend if needed)
-        coordinates = [0.0, 0.0];
-
-        // Debug print
-        print('Using form address: $address');
-      }
-
-      final orderData = {
+      final bookingData = {
         'serviceType': 'pharmacist',
-        'description':
-            'Medicine order: $medicineList. Total: ₹${cart.totalAmount.toStringAsFixed(2)}',
-        'medicines':
-            medicines, // Send medicines array with medicineId and quantity
-        'address': address,
-        'coordinates': coordinates,
-        'urgency': 'medium',
+        'title': 'Medicine Order - ${cart.itemCount} items',
+        'description': 'Medicine Order - ${cart.itemCount} items',
+        'address': finalAddress,
+        'coordinates': user?.location?.coordinates ?? [72.8777, 19.0760],
+        'name': '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim(),
+        'phone': user?.phone ?? '',
+        'paymentMethod': _paymentMethod == 'online' ? 'online' : 'cash',
+        'totalAmount': cart.totalAmount,
         'isEmergency': false,
-        'notes': _notesController.text.isEmpty
-            ? 'Payment method: $_paymentMethod. ${cart.totalQuantity} items ordered.'
-            : _notesController.text,
+        'medicines': cart.getOrderItems(),
+        'notes': 'Medicine delivery order',
+        'preferredTime': DateTime.now().add(const Duration(hours: 8)).toIso8601String(),
       };
 
-      final response =
-          await _apiClient.patient.createRealtimeBooking(orderData);
-
-      cart.clear();
+      await _apiClient.patient.createRealtimeBooking(bookingData);
+      
+      cart.clear(); // Clear local cart
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'Order placed successfully! Nearby pharmacists will be notified.'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 3),
-          ),
-        );
-        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } catch (e) {
       if (mounted) {
@@ -288,329 +179,450 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final cart = Provider.of<CartService>(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Checkout'),
-        backgroundColor: AppColors.pharmacy,
-        foregroundColor: Colors.white,
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF0F2147),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Checkout', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        actions: const [
+          Row(
+            children: [
+              Icon(Icons.verified_user, color: Color(0xFF0F2147), size: 16),
+              SizedBox(width: 4),
+              Text(
+                'Secure',
+                style: TextStyle(color: Color(0xFF0F2147), fontWeight: FontWeight.bold),
+              ),
+              SizedBox(width: 16),
+            ],
+          ),
+        ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Order Summary
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Order Summary',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text('Total Items:'),
-                                Text('${cart.totalQuantity}'),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Total Amount:',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '₹${cart.totalAmount.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.pharmacy,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF0F2147)))
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        _buildProgressIndicator(),
+                        _buildDeliveryAddress(),
+                        _buildDeliveryTimeBanner(),
+                        _buildPaymentMethodSection(),
+                        _buildOrderSummary(cart),
+                        _buildSafeSecureBanner(),
+                        const SizedBox(height: 16),
+                        _buildFastDeliveryPromise(),
+                        const SizedBox(height: 24),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-
-                    // Use Registered Address Checkbox
-                    CheckboxListTile(
-                      title: const Text('Use my registered address'),
-                      value: _useRegisteredAddress,
-                      onChanged: _toggleUseRegisteredAddress,
-                      activeColor: AppColors.pharmacy,
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Show address form only if not using registered address
-                    if (!_useRegisteredAddress) ...[
-                      // Delivery Address
-                      const Text(
-                        'Delivery Address',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Street Address
-                      TextFormField(
-                        controller: _streetController,
-                        decoration: const InputDecoration(
-                          labelText: 'Street Address *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.home),
-                        ),
-                        maxLines: 2,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter street address';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // State Dropdown
-                      DropdownButtonFormField<String>(
-                        value: _selectedState,
-                        decoration: const InputDecoration(
-                          labelText: 'State *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.location_city),
-                        ),
-                        items: _states.map((state) {
-                          return DropdownMenuItem(
-                            value: state,
-                            child: Text(state),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedState = value;
-                            _selectedCity =
-                                null; // Reset city when state changes
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a state';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // City Dropdown
-                      DropdownButtonFormField<String>(
-                        value: _selectedCity,
-                        decoration: const InputDecoration(
-                          labelText: 'City *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.location_on),
-                        ),
-                        items: _selectedState != null &&
-                                _citiesByState.containsKey(_selectedState)
-                            ? _citiesByState[_selectedState]!.map((city) {
-                                return DropdownMenuItem(
-                                  value: city,
-                                  child: Text(city),
-                                );
-                              }).toList()
-                            : [],
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedCity = value;
-                          });
-                        },
-                        validator: (value) {
-                          if (value == null) {
-                            return 'Please select a city';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Pincode
-                      TextFormField(
-                        controller: _pincodeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Pincode *',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.pin_drop),
-                        ),
-                        keyboardType: TextInputType.number,
-                        maxLength: 6,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter pincode';
-                          }
-                          if (value.length != 6) {
-                            return 'Pincode must be 6 digits';
-                          }
-                          return null;
-                        },
-                      ),
-                    ] else ...[
-                      // Show registered address
-                      Consumer<AuthProvider>(
-                        builder: (context, authProvider, child) {
-                          final user = authProvider.currentUser;
-                          return Card(
-                            color: Colors.green.shade50,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(Icons.check_circle,
-                                          color: Colors.green),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Using Registered Address',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  if (user?.address != null) ...[
-                                    Text(
-                                      '${user!.address!.street?.isNotEmpty == true ? user!.address!.street! : 'Street not provided'}',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                    Text(
-                                      '${user!.address!.city?.isNotEmpty == true ? user!.address!.city! : 'City not provided'}, ${user!.address!.state?.isNotEmpty == true ? user!.address!.state! : 'State not provided'} - ${user!.address!.pincode?.isNotEmpty == true ? user!.address!.pincode! : 'Pincode not provided'}',
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  ] else
-                                    const Text(
-                                      'No registered address found. Please add an address in your profile.',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.red,
-                                        fontStyle: FontStyle.italic,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-
-                    // Payment Method
-                    const Text(
-                      'Payment Method',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    RadioListTile<String>(
-                      title: const Text('Cash on Delivery'),
-                      value: 'cash',
-                      groupValue: _paymentMethod,
-                      onChanged: (value) {
-                        setState(() {
-                          _paymentMethod = value!;
-                        });
-                      },
-                      activeColor: AppColors.pharmacy,
-                    ),
-                    RadioListTile<String>(
-                      title: const Text('Online Payment'),
-                      value: 'online',
-                      groupValue: _paymentMethod,
-                      onChanged: (value) {
-                        setState(() {
-                          _paymentMethod = value!;
-                        });
-                      },
-                      activeColor: AppColors.pharmacy,
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Delivery Notes
-                    TextFormField(
-                      controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Delivery Instructions (Optional)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.note),
-                        hintText: 'e.g., Call before delivery',
-                      ),
-                      maxLines: 3,
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Place Order Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _placeOrder,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.pharmacy,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
-                              )
-                            : const Text(
-                                'Place Order',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                _buildStickyBottomBar(context, cart),
+              ],
             ),
     );
   }
 
-  @override
-  void dispose() {
-    _streetController.dispose();
-    _pincodeController.dispose();
-    _notesController.dispose();
-    super.dispose();
+  Widget _buildProgressIndicator() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 32),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildStep(label: 'Cart', isCompleted: true, isActive: false),
+          _buildLine(isCompleted: true),
+          _buildStep(label: 'Address', isCompleted: true, isActive: false),
+          _buildLine(isCompleted: true),
+          _buildStep(label: 'Place Order', isCompleted: false, isActive: true, number: '3'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep({required String label, required bool isCompleted, required bool isActive, String? number}) {
+    return Column(
+      children: [
+        Container(
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: isCompleted || isActive ? const Color(0xFF0F2147) : Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF0F2147), width: 1.5),
+          ),
+          child: isCompleted
+              ? const Icon(Icons.check, size: 14, color: Colors.white)
+              : Center(child: Text(number ?? '', style: TextStyle(color: isActive ? Colors.white : const Color(0xFF0F2147), fontWeight: FontWeight.bold, fontSize: 10))),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isCompleted || isActive ? FontWeight.bold : FontWeight.normal,
+            color: isCompleted || isActive ? const Color(0xFF0F2147) : Colors.grey,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLine({required bool isCompleted}) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        height: 2,
+        color: isCompleted ? const Color(0xFF0F2147) : Colors.grey[300],
+      ),
+    );
+  }
+
+  Widget _buildDeliveryAddress() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.location_on_outlined, color: Color(0xFF0F2147), size: 20),
+                  SizedBox(width: 8),
+                  Text('Delivery Address', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F2147))),
+                ],
+              ),
+              InkWell(
+                onTap: _showChangeAddressDialog,
+                child: const Text('Change', style: TextStyle(color: Color(0xFF0F2147), fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.only(left: 28),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Consumer<AuthProvider>(
+                  builder: (context, auth, _) {
+                    final name = '${auth.currentUser?.firstName ?? ''} ${auth.currentUser?.lastName ?? ''}'.trim();
+                    return Text(name.isEmpty ? 'Patient' : name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13));
+                  }
+                ),
+                const SizedBox(height: 2),
+                Consumer<AuthProvider>(
+                  builder: (context, auth, _) => Text(auth.currentUser?.phone ?? '', style: const TextStyle(fontSize: 12, color: Colors.black87)),
+                ),
+                const SizedBox(height: 4),
+                Text(_userAddress, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeliveryTimeBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 1)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.delivery_dining, color: Color(0xFF0F2147), size: 20),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Delivery within 8 Hours', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Color(0xFF0F2147))),
+                SizedBox(height: 1),
+                Text('We will deliver your order within 8 hours', style: TextStyle(fontSize: 10, color: Colors.black54)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F2147),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text('8 HOURS', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Payment Method', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F2147))),
+          const SizedBox(height: 8),
+          
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFF0F2147), width: 1.5),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              children: [
+                Radio<String>(
+                  value: 'cod',
+                  groupValue: _paymentMethod,
+                  onChanged: (val) => setState(() => _paymentMethod = val!),
+                  activeColor: const Color(0xFF0F2147),
+                ),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Cash on Delivery (COD)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F2147))),
+                      SizedBox(height: 2),
+                      Text('Pay when you receive the order', style: TextStyle(color: Colors.black54, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(right: 12.0),
+                  child: Icon(Icons.money, color: Color(0xFF0F2147), size: 20),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, size: 14, color: Colors.grey),
+                SizedBox(width: 6),
+                Text('Only Cash on Delivery is available for this order.', style: TextStyle(fontSize: 11, color: Colors.black54)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOrderSummary(CartService cart) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Order Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F2147))),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Item Total (${cart.itemCount} Items)', style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+              Text('₹${cart.totalAmount.toStringAsFixed(2)}', style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.w500, fontSize: 12)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text('Delivery Charge', style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+                  const SizedBox(width: 4),
+                  Icon(Icons.info_outline, size: 14, color: Colors.grey[400]),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text('₹0.00', style: TextStyle(color: Colors.grey[800], fontWeight: FontWeight.w500, fontSize: 12)),
+                  const Text('(Free Delivery)', style: TextStyle(color: Color(0xFF64748B), fontSize: 10)),
+                ],
+              ),
+            ],
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F2147))),
+              Text('₹${cart.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF0F2147))),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSafeSecureBanner() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: const BoxDecoration(color: Color(0xFF0F2147), shape: BoxShape.circle),
+            child: const Icon(Icons.verified_user, color: Colors.white, size: 14),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Safe and Secure', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F2147))),
+                SizedBox(height: 2),
+                Text('You will pay in cash when your order is delivered.', style: TextStyle(fontSize: 11, color: Colors.black54)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFastDeliveryPromise() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.access_time, color: Color(0xFF0F2147), size: 20),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Fast Delivery Promise', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Color(0xFF0F2147))),
+                SizedBox(height: 2),
+                Text('We will deliver your order within 8 hours.', style: TextStyle(fontSize: 11, color: Colors.black54)),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F2147),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text('WITHIN 8 HOURS', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStickyBottomBar(BuildContext context, CartService cart) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, -4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Total Payable', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black87)),
+                const SizedBox(height: 2),
+                Text('₹${cart.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F2147))),
+                const Text('(Cash on Delivery)', style: TextStyle(fontSize: 9, color: Colors.grey)),
+              ],
+            ),
+            ElevatedButton(
+              onPressed: _placeOrder,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F2147),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Row(
+                children: [
+                  Text('Place Order', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  SizedBox(width: 6),
+                  Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
