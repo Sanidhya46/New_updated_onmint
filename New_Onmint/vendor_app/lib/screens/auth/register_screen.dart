@@ -9,6 +9,7 @@ import 'dart:io';
 
 import '../../config/app_colors.dart';
 import '../../config/app_config.dart';
+import '../../data/indian_states_cities.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -51,6 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _vehicleNumberController = TextEditingController();
   final _driverNameController = TextEditingController();
   final _driverMobileController = TextEditingController();
+  final _driverLicenseController = TextEditingController();
   String? _selectedAmbulanceType;
   final List<String> _ambulanceTypes = [
     'Basic',
@@ -89,16 +91,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _selectedState;
   Position? _currentPosition;
   final List<String> _states = [
-    'Delhi',
-    'Maharashtra',
-    'Karnataka',
+    'Andhra Pradesh',
+    'Arunachal Pradesh',
+    'Assam',
+    'Bihar',
+    'Chhattisgarh',
+    'Goa',
     'Gujarat',
-    'Uttar Pradesh',
-    'Rajasthan',
     'Haryana',
+    'Himachal Pradesh',
+    'Jharkhand',
+    'Karnataka',
+    'Kerala',
+    'Madhya Pradesh',
+    'Maharashtra',
+    'Manipur',
+    'Meghalaya',
+    'Mizoram',
+    'Nagaland',
+    'Odisha',
+    'Punjab',
+    'Rajasthan',
+    'Sikkim',
     'Tamil Nadu',
+    'Telangana',
+    'Tripura',
+    'Uttar Pradesh',
+    'Uttarakhand',
     'West Bengal',
-    'Punjab'
+    'Andaman and Nicobar Islands',
+    'Chandigarh',
+    'Dadra and Nagar Haveli and Daman and Diu',
+    'Delhi',
+    'Jammu and Kashmir',
+    'Ladakh',
+    'Lakshadweep',
+    'Puducherry',
   ];
 
   // Step 3 Fields
@@ -211,6 +239,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _pharmacistNameController.dispose();
     _pharmacistRegNumberController.dispose();
     _pharmacistDrugLicenseController.dispose();
+    _driverLicenseController.dispose();
     super.dispose();
   }
 
@@ -415,8 +444,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         reqData['driverName'] = _driverNameController.text.trim();
         reqData['driverMobileNumber'] =
             '+91${_driverMobileController.text.trim()}';
-        reqData['driverLicense'] =
-            'uploaded'; // Satisfy backend schema while file is uploaded
+        reqData['driverLicense'] = _driverLicenseController.text.trim();
         reqData['currentLocation[type]'] = 'Point';
         reqData['currentLocation[coordinates][0]'] = lng.toString();
         reqData['currentLocation[coordinates][1]'] = lat.toString();
@@ -516,8 +544,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SnackBar(content: Text('Registration successful!')));
       Navigator.pushReplacementNamed(context, '/home');
     } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+      if (mounted) {
+        final errorMsg = e.toString()
+            .replaceAll('Exception: ', '')
+            .replaceAll('Registration failed: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text(errorMsg, style: const TextStyle(fontSize: 12))),
+              ],
+            ),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -1116,7 +1162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(height: 16),
                             _buildTextField(
                               label: 'License Number',
-                              hint: 'Enter valid license number',
+                              hint: 'ex. DL-123456',
                               controller: _bloodBankLicenseController,
                               icon: Icons.description_outlined,
                               validator: (val) => val == null || val.trim().isEmpty ? 'Please enter license number' : null,
@@ -1200,62 +1246,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               icon: Icons.location_on_outlined,
                             ),
                             const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: _buildTextField(
-                                        label: 'City',
-                                        hint: 'Enter city',
-                                        icon: Icons.location_city_outlined,
-                                        controller: _cityController)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      const Text('State',
-                                          style: TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF000B22))),
-                                      const SizedBox(height: 6),
-                                      Container(
-                                        height: 48,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(color: Colors.grey.shade300),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child: DropdownButton<String>(
-                                            isExpanded: true,
-                                            value: _selectedState,
-                                            hint: const Text('Select state',
-                                                style: TextStyle(
-                                                    color: Colors.grey, fontSize: 13)),
-                                            items: _states.map((s) {
-                                              return DropdownMenuItem(
-                                                  value: s, child: Text(s, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 13, color: Colors.black87)));
-                                            }).toList(),
-                                            onChanged: (v) =>
-                                                setState(() => _selectedState = v),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                    child: _buildTextField(
-                                        label: 'Pincode',
-                                        hint: 'Enter pincode',
-                                        icon: Icons.pin_drop_outlined,
-                                        controller: _pincodeController,
-                                        keyboardType: TextInputType.number)),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
+                            _buildLocationRow(),
+                            const SizedBox(height: 8),
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(color: Colors.grey.shade200),
@@ -1292,20 +1284,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         Expanded(
                                           flex: 1,
                                           child: TextButton.icon(
-                                            onPressed: _getCurrentLocation,
-                                            icon: const Icon(Icons.my_location,
-                                                size: 16, color: Color(0xFF0033CC)),
-                                            label: const Text(
-                                              'Use Current Location',
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
+                                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
+                                  icon: _isFetchingLocation 
+                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0033CC)))
+                                      : const Icon(Icons.my_location, size: 16, color: Color(0xFF0033CC)),
+                                  label: Text(
+                                    _isFetchingLocation ? 'Fetching...' : 'Use Current Location',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.bold,
                                                   color: Color(0xFF0033CC)),
-                                            ),
-                                            style: TextButton.styleFrom(
+                                  ),
+                                  style: TextButton.styleFrom(
                                               backgroundColor:
-                                                  Colors.blue.shade100.withOpacity(0.5),
+                                                  Colors.blue.shade100.withOpacity(0.5
+                                ),
                                               padding: const EdgeInsets.symmetric(
                                                   horizontal: 8, vertical: 8),
                                               shape: RoundedRectangleBorder(
@@ -1373,7 +1367,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -1415,6 +1409,137 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+  Widget _buildLocationRow() {
+    final cities = _selectedState != null
+        ? IndianStatesData.getCitiesForState(_selectedState!)
+        : <String>[];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('State',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF000B22))),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                value: _selectedState,
+                hint: const Text('Select state', style: TextStyle(fontSize: 12)),
+                icon: const Icon(Icons.arrow_drop_down, size: 20),
+                items: IndianStatesData.states.map((state) {
+                  return DropdownMenuItem(
+                    value: state,
+                    child: Text(state, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedState = val;
+                    _cityController.clear(); // Reset city when state changes
+                  });
+                },
+                validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('City',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF000B22))),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                isExpanded: true,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                value: _cityController.text.isEmpty ? null : _cityController.text,
+                hint: Text(_selectedState == null ? 'Select state first' : 'Select city', 
+                  style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis),
+                icon: const Icon(Icons.arrow_drop_down, size: 20),
+                items: cities.map((city) {
+                  return DropdownMenuItem(
+                    value: city,
+                    child: Text(city, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12)),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _cityController.text = val ?? '';
+                  });
+                },
+                validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Pincode',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF000B22))),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _pincodeController,
+                keyboardType: TextInputType.number,
+                style: const TextStyle(fontSize: 12),
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12), // Match height of dropdowns
+                  hintText: 'Enter pincode',
+                  hintStyle: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                ),
+                validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStep2() {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -1490,7 +1615,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _licenseController,
                       icon: Icons.assignment_outlined,
                       label: 'License Number',
-                      hint: 'Enter license number',
+                      hint: 'ex. DL-123456',
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 8),
@@ -1580,59 +1705,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: _buildTextField(
-                            controller: _cityController,
-                            icon: Icons.location_city,
-                            label: 'City',
-                            hint: 'City',
-                            validator: (v) => v!.isEmpty ? 'Required' : null,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          flex: 1,
-                          child: _buildFieldContainer(
-                            icon: Icons.map_outlined,
-                            label: 'State',
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                value: _selectedState,
-                                hint: Text('State',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade400)),
-                                items: _states
-                                    .map((s) => DropdownMenuItem(
-                                        value: s,
-                                        child: Text(s, overflow: TextOverflow.ellipsis,
-                                            style:
-                                                const TextStyle(fontSize: 10))))
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setState(() => _selectedState = v),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          flex: 1,
-                          child: _buildTextField(
-                            controller: _pincodeController,
-                            icon: Icons.pin_drop_outlined,
-                            label: 'Pincode',
-                            hint: 'Pincode',
-                            keyboardType: TextInputType.number,
-                            validator: (v) => v!.isEmpty ? 'Required' : null,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildLocationRow(),
                     const SizedBox(height: 12),
 
                     // Current Location Box
@@ -1645,41 +1718,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text.rich(
-                                TextSpan(
-                                    text: 'Current Location ',
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text.rich(
+                                  TextSpan(
+                                      text: 'Current Location ',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87),
+                                      children: [
+                                        TextSpan(
+                                            text: '(Optional)',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.normal,
+                                                color: Colors.grey)),
+                                      ]),
+                                ),
+                                Text('Use your current location on map',
                                     style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87),
-                                    children: [
-                                      TextSpan(
-                                          text: '(Optional)',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.normal,
-                                              color: Colors.grey)),
-                                    ]),
-                              ),
-                              Text('Use your current location on map',
-                                  style: TextStyle(
-                                      fontSize: 10, color: Colors.grey)),
-                            ],
+                                        fontSize: 10, color: Colors.grey)),
+                              ],
+                            ),
                           ),
                           TextButton.icon(
-                            onPressed: _getCurrentLocation,
-                            icon: const Icon(Icons.my_location,
-                                size: 16, color: Color(0xFF0033CC)),
-                            label: const Text('Use Current Location',
-                                style: TextStyle(
+                                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
+                                  icon: _isFetchingLocation 
+                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0033CC)))
+                                      : const Icon(Icons.my_location, size: 16, color: Color(0xFF0033CC)),
+                                  label: Text(
+                                    _isFetchingLocation ? 'Fetching...' : 'Use Current Location',
+                                    
+                                    style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0033CC))),
-                            style: TextButton.styleFrom(
+                                    color: Color(0xFF0033CC)),
+                                  ),
+                                  style: TextButton.styleFrom(
                               backgroundColor:
-                                  Colors.blue.shade100.withOpacity(0.5),
+                                  Colors.blue.shade100.withOpacity(0.5
+                                ),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                               shape: RoundedRectangleBorder(
@@ -1792,7 +1872,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           children: [
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Form(
                   key: _formKey2,
                   child: Container(
@@ -1817,7 +1897,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _licenseController,
                         icon: Icons.description_outlined,
                         label: 'License Number',
-                        hint: 'e.g., DL-12345678',
+                        hint: 'ex. DL-123456',
                         validator: (v) => v!.isEmpty ? 'Required' : null,
                       ),
                       const SizedBox(height: 12),
@@ -1833,7 +1913,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: _pharmacistRegNumberController,
                         icon: Icons.badge_outlined,
                         label: 'Pharmacist Registration Number',
-                        hint: 'Enter registration number',
+                        hint: 'ex. PR-987654',
                         validator: (v) => v!.isEmpty ? 'Required' : null,
                       ),
                       const SizedBox(height: 16),
@@ -1903,59 +1983,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         validator: (v) => v!.isEmpty ? 'Required' : null,
                       ),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: _buildTextField(
-                              controller: _cityController,
-                              icon: Icons.location_city,
-                              label: 'City',
-                              hint: 'Enter city',
-                              validator: (v) => v!.isEmpty ? 'Required' : null,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            flex: 1,
-                            child: _buildFieldContainer(
-                              icon: Icons.map_outlined,
-                              label: 'State',
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  isExpanded: true,
-                                  value: _selectedState,
-                                  hint: Text('Select state',
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: Colors.grey.shade400)),
-                                  items: _states
-                                      .map((s) => DropdownMenuItem(
-                                          value: s,
-                                          child: Text(s, overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                  fontSize: 11))))
-                                      .toList(),
-                                  onChanged: (v) =>
-                                      setState(() => _selectedState = v),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            flex: 1,
-                            child: _buildTextField(
-                              controller: _pincodeController,
-                              icon: Icons.pin_drop_outlined,
-                              label: 'Pincode',
-                              hint: 'Enter pincode',
-                              keyboardType: TextInputType.number,
-                              validator: (v) => v!.isEmpty ? 'Required' : null,
-                            ),
-                          ),
-                        ],
-                      ),
+                      _buildLocationRow(),
                       const SizedBox(height: 12),
                       // Current Location Box
                       Container(
@@ -1989,18 +2017,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             Expanded(
                               flex: 1,
                               child: TextButton.icon(
-                                onPressed: _getCurrentLocation,
-                                icon: const Icon(Icons.my_location,
-                                    size: 16, color: Color(0xFF0033CC)),
-                                label: const Text('Use Current Location',
+                                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
+                                  icon: _isFetchingLocation 
+                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0033CC)))
+                                      : const Icon(Icons.my_location, size: 16, color: Color(0xFF0033CC)),
+                                  label: Text(
+                                    _isFetchingLocation ? 'Fetching...' : 'Use Current Location',
                                     overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontSize: 11,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0033CC))),
-                                style: TextButton.styleFrom(
+                                        color: Color(0xFF0033CC)),
+                                  ),
+                                  style: TextButton.styleFrom(
                                   backgroundColor:
-                                      Colors.blue.shade100.withOpacity(0.5),
+                                      Colors.blue.shade100.withOpacity(0.5
+                                ),
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 8),
                                   shape: RoundedRectangleBorder(
@@ -2065,7 +2097,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: const BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -2139,7 +2171,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Expanded(
               child: SingleChildScrollView(
                 key: const ValueKey('step3_scroll'),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Column(
                   children: [
                     _buildDocUploadCard(
@@ -2186,7 +2218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       file: _gstCert,
                       onTap: () => _pickImage('gst'),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     Container(
                       decoration: BoxDecoration(
                           color: Colors.blue.shade50,
@@ -2215,7 +2247,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             children: [
                               Icon(Icons.access_time,
                                   color: Colors.grey.shade600, size: 20),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               const Expanded(
                                   child: Text(
                                       'Verification usually takes 24-48 hours.',
@@ -2226,45 +2258,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 48,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0033CC),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('SUBMIT FOR VERIFICATION',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+                                ],
+                              ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12, offset: Offset(0, -2), blurRadius: 10)
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0033CC),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('SUBMIT FOR VERIFICATION',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, color: Colors.white, size: 18),
-                        ],
-                      ),
               ),
             ),
           ],
@@ -2343,7 +2370,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       file: _gstCert,
                       onTap: () => _pickImage('gst'),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -2388,46 +2415,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 48,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0033CC),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('SUBMIT FOR VERIFICATION',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, color: Colors.white),
+                                ],
+                              ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12, offset: Offset(0, -2), blurRadius: 10)
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0033CC),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('SUBMIT FOR VERIFICATION',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, color: Colors.white),
-                        ],
-                      ),
               ),
             ),
           ],
@@ -2532,40 +2553,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0033CC),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+            const SizedBox(height: 4),
+            Container(
+              width: double.infinity,
+              height: 48,
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0033CC),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: _isLoading ? null : _submit,
+                child: _isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2))
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('SUBMIT FOR VERIFICATION',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold)),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward, color: Colors.white),
+                        ],
+                      ),
+              ),
             ),
-            onPressed: _isLoading ? null : _submit,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2))
-                : const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('SUBMIT FOR VERIFICATION',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold)),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, color: Colors.white),
-                    ],
-                  ),
-          ),
+          ],
         ),
       ),
     );
@@ -2673,7 +2693,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           style: const TextStyle(fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
             prefixIcon: prefixIcon,
             suffixIcon: suffixIcon,
             contentPadding:
@@ -2760,7 +2780,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _vehicleNumberController,
                       icon: Icons.badge_outlined,
                       label: 'Ambulance Registration Number',
-                      hint: 'Enter registration number',
+                      hint: 'ex. MH-01-AB-1234',
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 8),
@@ -2790,7 +2810,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _driverNameController,
                       icon: Icons.person_outline,
                       label: 'Driver Name',
-                      hint: 'Enter driver name',
+                      hint: 'ex. John Doe',
+                      validator: (v) => v!.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _driverLicenseController,
+                      icon: Icons.card_membership_outlined,
+                      label: 'Driver License Number',
+                      hint: 'ex. DL-1234567890',
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 8),
@@ -2872,59 +2900,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       validator: (v) => v!.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: _buildTextField(
-                            controller: _cityController,
-                            icon: Icons.location_city,
-                            label: 'City',
-                            hint: 'City',
-                            validator: (v) => v!.isEmpty ? 'Required' : null,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          flex: 1,
-                          child: _buildFieldContainer(
-                            icon: Icons.map_outlined,
-                            label: 'State',
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                isExpanded: true,
-                                value: _selectedState,
-                                hint: Text('State',
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.grey.shade400)),
-                                items: _states
-                                    .map((s) => DropdownMenuItem(
-                                        value: s,
-                                        child: Text(s, overflow: TextOverflow.ellipsis,
-                                            style:
-                                                const TextStyle(fontSize: 10))))
-                                    .toList(),
-                                onChanged: (v) =>
-                                    setState(() => _selectedState = v),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          flex: 1,
-                          child: _buildTextField(
-                            controller: _pincodeController,
-                            icon: Icons.pin_drop_outlined,
-                            label: 'Pincode',
-                            hint: 'Pincode',
-                            keyboardType: TextInputType.number,
-                            validator: (v) => v!.isEmpty ? 'Required' : null,
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildLocationRow(),
                     const SizedBox(height: 12),
 
                     // Current Location Box
@@ -2937,41 +2913,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text.rich(
-                                TextSpan(
-                                    text: 'Current Location ',
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text.rich(
+                                  TextSpan(
+                                      text: 'Current Location ',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87),
+                                      children: [
+                                        TextSpan(
+                                            text: '(Optional)',
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.normal,
+                                                color: Colors.grey)),
+                                      ]),
+                                ),
+                                Text('Use your current location on map',
                                     style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87),
-                                    children: [
-                                      TextSpan(
-                                          text: '(Optional)',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.normal,
-                                              color: Colors.grey)),
-                                    ]),
-                              ),
-                              Text('Use your current location on map',
-                                  style: TextStyle(
-                                      fontSize: 10, color: Colors.grey)),
-                            ],
+                                        fontSize: 10, color: Colors.grey)),
+                              ],
+                            ),
                           ),
                           TextButton.icon(
-                            onPressed: _getCurrentLocation,
-                            icon: const Icon(Icons.my_location,
-                                size: 16, color: Color(0xFF0033CC)),
-                            label: const Text('Use Current Location',
-                                style: TextStyle(
+                                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
+                                  icon: _isFetchingLocation 
+                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0033CC)))
+                                      : const Icon(Icons.my_location, size: 16, color: Color(0xFF0033CC)),
+                                  label: Text(
+                                    _isFetchingLocation ? 'Fetching...' : 'Use Current Location',
+                                    
+                                    style: const TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0033CC))),
-                            style: TextButton.styleFrom(
+                                    color: Color(0xFF0033CC)),
+                                  ),
+                                  style: TextButton.styleFrom(
                               backgroundColor:
-                                  Colors.blue.shade100.withOpacity(0.5),
+                                  Colors.blue.shade100.withOpacity(0.5
+                                ),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 8),
                               shape: RoundedRectangleBorder(
@@ -3180,7 +3163,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           children: [
                             Icon(Icons.access_time,
                                 color: Colors.grey.shade600, size: 20),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             const Expanded(
                                 child: Text(
                                     'Verification usually takes 24-48 hours.',
@@ -3191,44 +3174,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
+                  const SizedBox(height: 8),
 
-          // Bottom Button
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0033CC),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                onPressed: _isLoading ? null : _submit,
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('SUBMIT FOR VERIFICATION',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold)),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward,
-                              color: Colors.white, size: 18),
-                        ],
+                  // Bottom Button
+                  Container(
+                    width: double.infinity,
+                    height: 48,
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0033CC),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
                       ),
+                      onPressed: _isLoading ? null : _submit,
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('SUBMIT FOR VERIFICATION',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold)),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward,
+                                    color: Colors.white, size: 18),
+                              ],
+                            ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -3323,7 +3304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 controller: _nurseRegNumberController,
                                 style: const TextStyle(fontSize: 12),
                                 decoration: InputDecoration(
-                                  hintText: 'Enter your nursing registration number',
+                                  hintText: 'ex. NUR-987654',
                                   hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 11),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
@@ -3437,57 +3418,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               validator: (v) => v!.isEmpty ? 'Required' : null,
                             ),
                             const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildTextField(
-                                    controller: _cityController,
-                                    icon: Icons.location_city,
-                                    label: 'City',
-                                    hint: 'City',
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildFieldContainer(
-                                    icon: Icons.map_outlined,
-                                    label: 'State',
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        isExpanded: true,
-                                        value: _selectedState,
-                                        hint: Text('State',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.grey.shade400)),
-                                        items: _states
-                                            .map((s) => DropdownMenuItem(
-                                                value: s,
-                                                child: Text(s,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                        fontSize: 11))))
-                                            .toList(),
-                                        onChanged: (v) =>
-                                            setState(() => _selectedState = v),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            _buildTextField(
-                              controller: _pincodeController,
-                              icon: Icons.pin_drop_outlined,
-                              label: 'Pincode',
-                              hint: 'Pincode',
-                              keyboardType: TextInputType.number,
-                              validator: (v) => v!.isEmpty ? 'Required' : null,
-                            ),
+                            _buildLocationRow(),
                             const SizedBox(height: 16),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -3497,17 +3428,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         fontSize: 13,
                                         fontWeight: FontWeight.bold)),
                                 TextButton.icon(
-                                  onPressed: _getCurrentLocation,
-                                  icon: const Icon(Icons.my_location,
-                                      size: 16, color: Color(0xFF0033CC)),
-                                  label: const Text('Use Current Location',
-                                      style: TextStyle(
+                                  onPressed: _isFetchingLocation ? null : _getCurrentLocation,
+                                  icon: _isFetchingLocation 
+                                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0033CC)))
+                                      : const Icon(Icons.my_location, size: 16, color: Color(0xFF0033CC)),
+                                  label: Text(
+                                    _isFetchingLocation ? 'Fetching...' : 'Use Current Location',
+                                    
+                                    style: const TextStyle(
                                           fontSize: 12,
-                                          color: Color(0xFF0033CC))),
+                                          color: Color(0xFF0033CC)),
+                                  ),
                                   style: TextButton.styleFrom(
                                     backgroundColor: Colors.blue.shade50,
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
+                                        horizontal: 12, vertical: 8
+                                ),
                                   ),
                                 ),
                               ],
@@ -3682,7 +3618,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       file: _nurseExperienceCert,
                       onTap: () => _pickImage('nurseExperience'),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                     
                     Container(
                       padding: const EdgeInsets.all(16),
@@ -3728,46 +3664,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      height: 48,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0033CC),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('SUBMIT FOR VERIFICATION',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, color: Colors.white),
+                                ],
+                              ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12, offset: Offset(0, -2), blurRadius: 10)
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0033CC),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('SUBMIT FOR VERIFICATION',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, color: Colors.white),
-                        ],
-                      ),
               ),
             ),
           ],
@@ -3860,8 +3790,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   child: _buildTextField(
                                     controller: _doctorRegNumberController,
                                     icon: Icons.badge_outlined,
-                                    label: 'Registration Number',
-                                    hint: 'KP-DOC-2024-001',
+                                    label: 'Medical Registration Number',
+                                    hint: 'ex. MED123456',
                                     validator: (v) => v!.isEmpty ? 'Required' : null,
                                   ),
                                 ),
@@ -4037,60 +3967,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               validator: (v) => v!.isEmpty ? 'Required' : null,
                             ),
                             const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildTextField(
-                                    controller: _cityController,
-                                    icon: Icons.location_city,
-                                    label: 'City',
-                                    hint: 'City',
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildFieldContainer(
-                                    icon: Icons.map_outlined,
-                                    label: 'State',
-                                    child: DropdownButtonHideUnderline(
-                                      child: DropdownButton<String>(
-                                        isExpanded: true,
-                                        value: _selectedState,
-                                        hint: Text('State',
-                                            style: TextStyle(
-                                                fontSize: 11,
-                                                color: Colors.grey.shade400)),
-                                        items: _states
-                                            .map((s) => DropdownMenuItem(
-                                                value: s,
-                                                child: Text(s,
-                                                    overflow: TextOverflow.ellipsis,
-                                                    style: const TextStyle(
-                                                        fontSize: 11))))
-                                            .toList(),
-                                        onChanged: (v) =>
-                                            setState(() => _selectedState = v),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 1,
-                                  child: _buildTextField(
-                                    controller: _pincodeController,
-                                    icon: Icons.pin_drop_outlined,
-                                    label: 'Pincode',
-                                    hint: 'Pincode',
-                                    keyboardType: TextInputType.number,
-                                    validator: (v) => v!.isEmpty ? 'Required' : null,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            _buildLocationRow(),
                             const SizedBox(height: 12),
                             
                             // Current Location Box
@@ -4384,47 +4261,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 8),
+                    // Bottom button
+                    Container(
+                      width: double.infinity,
+                      height: 48,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _submit,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0033CC),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2))
+                            : const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('SUBMIT FOR VERIFICATION',
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold)),
+                                  SizedBox(width: 8),
+                                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                                ],
+                              ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            // Bottom button
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12, offset: Offset(0, -2), blurRadius: 10)
-                ],
-              ),
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0033CC),
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8)),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text('SUBMIT FOR VERIFICATION',
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold)),
-                          SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                        ],
-                      ),
               ),
             ),
           ],

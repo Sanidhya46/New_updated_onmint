@@ -72,7 +72,13 @@ class _BookingDetailsScreenEnhancedState
     } catch (e) {
       if (mounted) {
         setState(() => _isActing = false);
-        ToastUtils.showError('Failed to accept booking. Please try again.');
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('409') || errStr.contains('already accepted') || errStr.contains('expired')) {
+          ToastUtils.showError('This booking has already been accepted or expired.');
+          Navigator.pop(context, true);
+        } else {
+          ToastUtils.showError('Failed to accept booking. Please try again.');
+        }
       }
     }
   }
@@ -125,6 +131,8 @@ class _BookingDetailsScreenEnhancedState
     final String status = booking['status']?.toString() ?? 'Pending';
     final String notes = booking['notes']?.toString() ?? 'Nursing Service';
     final String emergencyType = booking['isEmergency'] == true ? 'Urgent' : 'Normal';
+    final String patientCity = patientData['city']?.toString() ?? booking['city']?.toString() ?? '';
+    final String patientState = patientData['state']?.toString() ?? booking['state']?.toString() ?? '';
 
     String requestedOn = 'Just Now';
     if (booking['createdAt'] != null) {
@@ -235,6 +243,14 @@ class _BookingDetailsScreenEnhancedState
                   _buildDetailRow(Icons.medical_services_outlined, 'Service', notes),
                   const Divider(color: Color(0xFFF1F5F9), height: 16),
                   _buildDetailRow(Icons.location_on_outlined, 'Address', address),
+                  if (patientCity.isNotEmpty) ...[
+                    const Divider(color: Color(0xFFF1F5F9), height: 16),
+                    _buildDetailRow(Icons.location_city, 'City', patientCity),
+                  ],
+                  if (patientState.isNotEmpty) ...[
+                    const Divider(color: Color(0xFFF1F5F9), height: 16),
+                    _buildDetailRow(Icons.map_outlined, 'State', patientState),
+                  ],
                 ],
               ),
             ),

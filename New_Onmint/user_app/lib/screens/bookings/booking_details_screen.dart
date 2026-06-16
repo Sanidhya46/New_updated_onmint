@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_config.dart';
 import 'review_booking_screen.dart';
 
 /// Booking details screen for patients
@@ -172,61 +173,116 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     );
   }
 
+  String? _resolvePrescriptionUrl(dynamic prescriptionData) {
+    if (prescriptionData == null) return null;
+
+    if (prescriptionData is Map) {
+      final fileUrl = prescriptionData['prescriptionFile']?.toString();
+      if (fileUrl != null && fileUrl.isNotEmpty) {
+        return _resolveAssetUrl(fileUrl);
+      }
+      return null;
+    }
+
+    final value = prescriptionData.toString().trim();
+    if (value.isEmpty) return null;
+
+    if (value.startsWith('http://') ||
+        value.startsWith('https://') ||
+        value.contains('amazonaws.com')) {
+      return value;
+    }
+
+    if (value.endsWith('.pdf') ||
+        value.endsWith('.png') ||
+        value.endsWith('.jpg') ||
+        value.endsWith('.jpeg') ||
+        value.startsWith('/')) {
+      return _resolveAssetUrl(value);
+    }
+
+    return null;
+  }
+
+  bool _hasPrescriptionFile(dynamic prescriptionData) {
+    return _resolvePrescriptionUrl(prescriptionData) != null;
+  }
+
+  String _resolveAssetUrl(String urlStr) {
+    final trimmed = urlStr.trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+      return trimmed;
+    }
+
+    String base = AppConfig.apiBaseUrl;
+    if (base.endsWith('/api/v1')) {
+      base = base.substring(0, base.length - 7);
+    }
+    if (trimmed.startsWith('/')) {
+      return '$base$trimmed';
+    }
+    return '$base/$trimmed';
+  }
+
   void _viewPrescription() {
     if (_booking?.prescription == null) return;
 
     final prescriptionData = _booking!.prescription;
-    final isUrl = prescriptionData.toString().startsWith('http') || prescriptionData.toString().endsWith('.pdf');
+    final fileUrl = _resolvePrescriptionUrl(prescriptionData);
 
-    if (isUrl) {
-      final fullUrl = prescriptionData.toString().startsWith('http')
-          ? prescriptionData.toString()
-          : 'http://localhost:5000${prescriptionData.toString()}';
-      
-      _launchDownloadUrl(fullUrl);
+    if (fileUrl != null) {
+      _launchDownloadUrl(fileUrl);
       return;
     }
 
-    // Navigate to prescription view screen or show in dialog
+    if (prescriptionData is Map) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Prescription'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Doctor: ${_booking!.providerDetails?.fullName ?? 'N/A'}',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                if (prescriptionData['diagnosis'] != null) ...[
+                  const Text('Diagnosis',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  Text(prescriptionData['diagnosis'].toString()),
+                  const SizedBox(height: 12),
+                ],
+                if (prescriptionData['advice'] != null)
+                  Text(prescriptionData['advice'].toString()),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Prescription'),
         content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Doctor: ${_booking!.providerDetails?.fullName ?? 'N/A'}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Date: ${_formatDate(DateTime.now())}',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Prescription Details:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(prescriptionData.toString()),
-            ],
-          ),
+          child: Text(prescriptionData.toString()),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prescription details saved.')));
-            },
-            child: const Text('Download'),
           ),
         ],
       ),
@@ -495,90 +551,82 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                           ),
                         ],
 
-                        // Show prescription if available
-                        if (_booking!.prescription != null) ...[
+                        // Prescription Section
+                        if (_booking!.status.toLowerCase() == 'completed') ...[
                           const SizedBox(height: 20),
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
+                              color: _hasPrescriptionFile(_booking!.prescription)
+                                  ? Colors.green.withOpacity(0.1)
+                                  : Colors.orange.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: Colors.green.withOpacity(0.3)),
+                                  color: _hasPrescriptionFile(_booking!.prescription)
+                                      ? Colors.green.withOpacity(0.3)
+                                      : Colors.orange.withOpacity(0.3)),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    Icon(Icons.receipt_long,
-                                        color: Colors.green, size: 24),
+                                    Icon(
+                                        _hasPrescriptionFile(_booking!.prescription)
+                                            ? Icons.receipt_long
+                                            : Icons.hourglass_empty,
+                                        color: _hasPrescriptionFile(_booking!.prescription)
+                                            ? Colors.green
+                                            : Colors.orange,
+                                        size: 24),
                                     const SizedBox(width: 12),
-                                    const Text(
-                                      'Prescription Received',
+                                    Text(
+                                      _hasPrescriptionFile(_booking!.prescription)
+                                          ? 'Prescription Available'
+                                          : 'Prescription on the way',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.green,
+                                        color: _booking!.prescription != null ? Colors.green : Colors.orange,
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border:
-                                        Border.all(color: Colors.grey[300]!),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      if (_booking!.prescription
-                                          is Map<String, dynamic>) ...[
-                                        // If prescription is a Map, show structured data
-                                        _buildPrescriptionDetails(
-                                            _booking!.prescription
-                                                as Map<String, dynamic>),
-                                      ] else if (_booking!.prescription
-                                          is String) ...[
-                                        // If prescription is a String, show as text
-                                        Text(
-                                          _booking!.prescription.toString(),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
+                                if (!_hasPrescriptionFile(_booking!.prescription))
+                                  const Text(
+                                    'The doctor is preparing your prescription. It will be available here soon.',
+                                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                                  )
+                                else
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Expanded(
+                                          child: Text(
+                                            'Your digital prescription is ready to be downloaded or viewed.',
+                                            style: TextStyle(fontSize: 14, color: Colors.black87),
                                           ),
                                         ),
-                                      ] else ...[
-                                        // Fallback for other types
-                                        Text(
-                                          'Prescription ID: ${_booking!.prescription.toString()}',
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
                                         ElevatedButton.icon(
                                           onPressed: () => _viewPrescription(),
-                                          icon: const Icon(Icons.visibility,
-                                              size: 16),
-                                          label: const Text('View Details'),
+                                          icon: const Icon(Icons.file_download, size: 16),
+                                          label: const Text('View and Download'),
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor: Colors.green,
                                             foregroundColor: Colors.white,
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16, vertical: 8),
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                           ),
                                         ),
                                       ],
-                                    ],
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                           ),
@@ -1415,25 +1463,43 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
               if (status == 'accepted') ...[
                 _buildConsultationConfirmedCard(),
                 const SizedBox(height: 12),
-                _buildWhatsNextSection(),
+                _buildWhatsNextSection(isAccepted: true),
+              ],
+
+              if (status == 'in_progress') ...[
+                _buildPrescriptionStatusSection(
+                  hasPrescription: _hasPrescriptionFile(_booking!.prescription),
+                ),
               ],
 
               if (status == 'completed') ...[
                 _buildConsultationSummaryTile(),
                 const SizedBox(height: 12),
-                if (_booking!.prescription != null) _buildPrescriptionReadyTile(),
-                const SizedBox(height: 24),
-                if (_booking!.prescription != null)
+                _buildPrescriptionStatusSection(
+                  hasPrescription: _hasPrescriptionFile(_booking!.prescription),
+                ),
+                if (_hasPrescriptionFile(_booking!.prescription)) ...[
+                  const SizedBox(height: 16),
                   ElevatedButton.icon(
                     onPressed: () => _viewPrescription(),
                     icon: const Icon(Icons.download, color: Colors.white),
-                    label: const Text('Download Prescription', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white)),
+                    label: const Text(
+                      'View and Download',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0D47A1),
                       minimumSize: const Size(double.infinity, 54),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
+                ],
                 const SizedBox(height: 16),
                 OutlinedButton.icon(
                   onPressed: () {},
@@ -1667,7 +1733,7 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
     );
   }
 
-  Widget _buildWhatsNextSection() {
+  Widget _buildWhatsNextSection({bool isAccepted = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1675,12 +1741,21 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text("What's Next?", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              const Text("What's Next?",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
               const SizedBox(height: 6),
               Text(
-                "We will notify you once the doctor is assigned.",
-                style: TextStyle(color: Colors.grey[700], fontSize: 12, height: 1.3),
+                isAccepted
+                    ? 'Join the video call at your scheduled time. Your prescription will appear here after the consultation.'
+                    : 'We will notify you once the doctor is assigned.',
+                style: TextStyle(
+                  color: Colors.grey[700],
+                  fontSize: 12,
+                  height: 1.3,
+                ),
               ),
+              const SizedBox(height: 8),
+              _buildWhatsNextChecklist(isAccepted: isAccepted),
             ],
           ),
         ),
@@ -1700,7 +1775,10 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
                 right: 4,
                 child: Container(
                   padding: const EdgeInsets.all(1),
-                  decoration: const BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: Colors.green,
+                    shape: BoxShape.circle,
+                  ),
                   child: const Icon(Icons.check, color: Colors.white, size: 10),
                 ),
               ),
@@ -1708,6 +1786,119 @@ class _BookingDetailsScreenState extends State<BookingDetailsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildWhatsNextChecklist({required bool isAccepted}) {
+    final steps = isAccepted
+        ? const [
+            'Doctor accepted your request',
+            'Join consultation at scheduled time',
+            'Prescription will be shared after consult',
+          ]
+        : const [
+            'Request submitted',
+            'Doctor assignment pending',
+            'Consultation confirmation',
+          ];
+
+    return Column(
+      children: steps.asMap().entries.map((entry) {
+        final isDone = isAccepted ? entry.key <= 0 : entry.key == 0;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            children: [
+              Icon(
+                isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                size: 16,
+                color: isDone ? const Color(0xFF2E7D32) : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  entry.value,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDone ? Colors.black87 : Colors.grey[600],
+                    fontWeight: isDone ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildPrescriptionStatusSection({required bool hasPrescription}) {
+    final title = hasPrescription
+        ? 'Prescription Available'
+        : 'Prescription on the way';
+    final subtitle = hasPrescription
+        ? 'Your digital prescription is ready to view and download.'
+        : 'The doctor is preparing your prescription. It will be available here soon.';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: hasPrescription
+            ? Colors.green.withOpacity(0.08)
+            : Colors.orange.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: hasPrescription
+              ? Colors.green.withOpacity(0.25)
+              : Colors.orange.withOpacity(0.25),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                hasPrescription ? Icons.receipt_long : Icons.hourglass_empty,
+                color: hasPrescription ? Colors.green : Colors.orange,
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: hasPrescription ? Colors.green : Colors.orange,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.3),
+          ),
+          if (hasPrescription) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => _viewPrescription(),
+                icon: const Icon(Icons.file_download, size: 18),
+                label: const Text('View and Download'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0D47A1),
+                  side: const BorderSide(color: Color(0xFF0D47A1)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

@@ -297,7 +297,6 @@ class _OrderManagementScreenState extends State<OrderManagementScreen>
                         ? 'assets/images/female_profile.png' 
                         : 'assets/images/male_profile.png') as ImageProvider,
                 onBackgroundImageError: (_, __) {},
-                child: patientPhoto.isEmpty ? const Icon(Icons.person, color: Colors.blue) : null,
               ),
               const SizedBox(width: 12),
               // Details

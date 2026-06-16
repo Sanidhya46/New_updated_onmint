@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
+import 'package:provider/provider.dart';
+import 'package:auth_service/auth_service.dart';
 import 'package:ui_components/ui_components.dart';
 import '../../config/app_colors.dart';
 
@@ -25,6 +27,23 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   double _selectedPrice = 0;
   int _selectedDuration = 1; // in days
   bool _isLoading = false;
+  String _userCity = '';
+  String _userState = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = authProvider.currentUser;
+      if (user != null) {
+        setState(() {
+          _userCity = user.city;
+          _userState = user.state;
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -62,6 +81,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
         },
         'notes': _notesController.text,
         'price': _selectedPrice * _selectedDuration,
+        'city': _userCity,
+        'state': _userState,
       };
 
       final booking = await _apiClient.patient.createBooking(bookingData);

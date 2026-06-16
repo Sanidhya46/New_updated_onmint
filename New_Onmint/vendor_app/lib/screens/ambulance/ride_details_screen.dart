@@ -23,6 +23,23 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
   bool _isLoading = true;
   bool _isProcessing = false;
 
+  /// Safely extract address string from any type (String, Map, int, etc.)
+  String _safeAddress(dynamic addr, [String fallback = 'Not specified']) {
+    if (addr == null) return fallback;
+    if (addr is String) return addr.isEmpty ? fallback : addr;
+    if (addr is Map) {
+      // Try nested 'address' key, then build from parts
+      if (addr['address'] != null) return addr['address'].toString();
+      final parts = [
+        addr['street']?.toString(),
+        addr['city']?.toString(),
+        addr['state']?.toString(),
+      ].where((p) => p != null && p.isNotEmpty).toList();
+      return parts.isNotEmpty ? parts.join(', ') : fallback;
+    }
+    return addr.toString();
+  }
+
   // Step timestamps
   DateTime? _acceptedAt;
   DateTime? _onTheWayAt;
@@ -441,8 +458,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         : 'Unknown Patient';
     final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Male';
     final age = _ride!['patientAge'] ?? patient['age'] ?? '--';
-    final pickup = _ride!['location']?['address'] ?? _ride!['pickupLocation']?['address'] ?? 'Pickup not specified';
-    final drop = _ride!['dropLocation']?['address'] ?? _ride!['dropOffLocation']?['address'] ?? 'Drop not specified';
+    final pickup = _safeAddress(_ride!['location'] ?? _ride!['pickupLocation'], 'Pickup not specified');
+    final drop = _safeAddress(_ride!['dropLocation'] ?? _ride!['dropOffLocation'], 'Drop not specified');
     final phone = patient['phone'] ?? 'N/A';
     final details = _ride!['notes'] ?? _ride!['requirements']?['description'] ?? 'Patient having chest pain and difficulty in breathing.';
 
@@ -518,12 +535,8 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
     final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Male';
     final age = _ride!['patientAge'] ?? patient['age'] ?? '--';
     
-    final pickup = _ride!['location']?['address'] ??
-        _ride!['pickupLocation']?['address'] ??
-        'Pickup not specified';
-    final drop = _ride!['dropLocation']?['address'] ??
-        _ride!['dropOffLocation']?['address'] ??
-        'Drop not specified';
+    final pickup = _safeAddress(_ride!['location'] ?? _ride!['pickupLocation'], 'Pickup not specified');
+    final drop = _safeAddress(_ride!['dropLocation'] ?? _ride!['dropOffLocation'], 'Drop not specified');
     final phone = patient['phone'] ?? 'N/A';
     final notes = _ride!['notes'] ??
         _ride!['requirements']?['description'] ??
@@ -733,7 +746,7 @@ class _RideDetailsScreenState extends State<RideDetailsScreen> {
         : 'Unknown Patient';
     final gender = _ride!['patientGender'] ?? patient['gender'] ?? 'Female';
     final age = _ride!['patientAge'] ?? patient['age'] ?? '27';
-    final address = _ride!['location']?['address'] ?? 'Address not available';
+    final address = _safeAddress(_ride!['location'], 'Address not available');
     final price = (_ride!['price'] ?? 0).toStringAsFixed(0);
 
     String formattedDate = '--';

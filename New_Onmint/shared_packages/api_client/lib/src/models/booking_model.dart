@@ -235,27 +235,27 @@ class Booking {
         location: location,
         timeSlot: timeSlot,
         notes: json['notes'],
-        price: (json['price'] ?? json['fees'] ?? json['totalAmount'] ?? json['amount'] ?? 0).toDouble(),
+        price: _parseDouble(json['price'] ?? json['fees'] ?? json['totalAmount'] ?? json['amount']),
         rating: rating,
         createdAt: _parseDateTime(json['createdAt']),
         updatedAt: _parseDateTime(json['updatedAt']),
         cancellationReason: json['cancellationReason'],
         cancelledAt: json['cancelledAt'] != null ? DateTime.parse(json['cancelledAt'].toString()) : null,
-        isEmergency: json['isEmergency'] ?? false,
-        bloodGroup: json['bloodGroup'],
-        unitsRequired: json['unitsRequired'],
+        isEmergency: json['isEmergency'] == true || json['isEmergency'] == 'true',
+        bloodGroup: json['bloodGroup']?.toString(),
+        unitsRequired: _parseInt(json['unitsRequired']),
         tests: tests,
-        consultationType: json['consultationType'],
-        urgency: json['urgency'],
-        videoCallLink: json['videoCallLink'],
+        consultationType: json['consultationType']?.toString(),
+        urgency: json['urgency']?.toString(),
+        videoCallLink: json['videoCallLink']?.toString(),
         prescription: json['prescription'],
-        videoCallCompleted: json['videoCallCompleted'] ?? false,
-        report: json['report'],
+        videoCallCompleted: json['videoCallCompleted'] == true || json['videoCallCompleted'] == 'true',
+        report: json['report']?.toString(),
         reportUploadedAt: json['reportUploadedAt'] != null ? DateTime.parse(json['reportUploadedAt'].toString()) : null,
-        collectionScheduled: json['collectionScheduled'] ?? false,
-        doctorOnCall: json['doctor_on_call'] ?? false,
-        patientOnCall: json['patient_on_call'] ?? false,
-        consultationEnded: json['consultation_ended'] ?? false,
+        collectionScheduled: json['collectionScheduled'] == true || json['collectionScheduled'] == 'true',
+        doctorOnCall: json['doctor_on_call'] == true || json['doctor_on_call'] == 'true',
+        patientOnCall: json['patient_on_call'] == true || json['patient_on_call'] == 'true',
+        consultationEnded: json['consultation_ended'] == true || json['consultation_ended'] == 'true',
         consultationEndedAt: json['consultation_ended_at'] != null ? DateTime.parse(json['consultation_ended_at'].toString()) : null,
       );
     } catch (e) {
@@ -263,6 +263,22 @@ class Booking {
       print('Booking JSON: $json');
       rethrow;
     }
+  }
+  
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
   
   static DateTime _parseDateTime(dynamic value) {

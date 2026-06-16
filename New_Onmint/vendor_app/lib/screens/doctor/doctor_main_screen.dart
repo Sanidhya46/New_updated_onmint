@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/app_colors.dart';
 import '../home/dashboards/doctor_dashboard.dart';
-import 'appointments_screen.dart';
+import 'bookings_screen.dart';
 import 'earnings_screen.dart';
 import '../profile/profile_screen.dart';
 
@@ -17,7 +17,7 @@ class _DoctorMainScreenState extends State<DoctorMainScreen> {
 
   final List<Widget> _screens = [
     const DoctorDashboard(),
-    const AppointmentsScreen(), // Or BookingsScreen
+    const BookingsScreen(),
     const EarningsScreen(),
     const ProfileScreen(),
   ];
@@ -25,7 +25,10 @@ class _DoctorMainScreenState extends State<DoctorMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,

@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:user_app/screens/services/confirm_nurse_booking_screen.dart';
 import 'package:user_app/screens/booking/nursing_care_selection_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:auth_service/auth_service.dart';
+import 'package:user_app/data/indian_states_cities.dart';
 
 class NurseBookingScreen extends StatefulWidget {
   const NurseBookingScreen({Key? key}) : super(key: key);
@@ -20,9 +23,37 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
   final TextEditingController _ageController = TextEditingController();
 
   String? _selectedGender;
+  String? _selectedState;
+  String? _selectedCity;
   final ScrollController _scrollController = ScrollController();
 
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _prefillUserData();
+    });
+  }
+
+  void _prefillUserData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user != null) {
+      _nameController.text = user.fullName;
+      _phoneController.text = user.phone;
+      setState(() {
+        _selectedState = user.state.isNotEmpty ? user.state : null;
+        _selectedCity = user.city.isNotEmpty ? user.city : null;
+        if (user.dateOfBirth != null) {
+          final age = DateTime.now().year - user.dateOfBirth!.year;
+          _ageController.text = age.toString();
+        }
+        _selectedGender = user.gender?.isNotEmpty == true ? user.gender : null;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -107,6 +138,8 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                 : 0,
             gender: _selectedGender ?? 'Other',
             notes: _notesController.text,
+            city: _selectedCity ?? '',
+            state: _selectedState ?? '',
             selectedCares: _selectedCares,
             preferredDate: _selectedDate,
             preferredTime: _selectedTime != null
@@ -154,7 +187,6 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
             ),
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              transform: Matrix4.translationValues(0, -20, 0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -204,6 +236,10 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
                         prefixIcon: Icons.location_on_outlined,
                         validator: (v) => v!.isEmpty ? 'Required' : null,
                       ),
+                      const SizedBox(height: 16),
+                      
+                      // State & City
+                      _buildStateCitySelectors(),
                       const SizedBox(height: 16),
 
                       // Row 1: Contact Name | Phone Number
@@ -561,6 +597,44 @@ class _NurseBookingScreenState extends State<NurseBookingScreen> {
           borderSide: const BorderSide(color: Colors.red, width: 2),
         ),
       ),
+    );
+  }
+
+  Widget _buildStateCitySelectors() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFieldLabel('State'),
+              TextFormField(
+                key: ValueKey(_selectedState),
+                initialValue: _selectedState ?? 'Not Provided',
+                readOnly: true,
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                decoration: _buildInputDecoration('State', Icons.map_outlined),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFieldLabel('City'),
+              TextFormField(
+                key: ValueKey(_selectedCity),
+                initialValue: _selectedCity ?? 'Not Provided',
+                readOnly: true,
+                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                decoration: _buildInputDecoration('City', Icons.location_city_outlined),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -219,7 +219,14 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
     final String patientImage = patientData['profilePicture']?.toString() ?? '';
     final String gender = patientData['gender']?.toString().capitalize() ?? 'Female';
     final String age = patientData['age']?.toString() ?? '27';
-    final String address = bookingData['location']?['address'] ?? 'H-101, Shanti Nagar,\nGovindpuram, Ghaziabad,\nUttar Pradesh - 201013';
+    final rawAddr = bookingData['location']?['address'];
+    String address;
+    if (rawAddr is Map) {
+      address = rawAddr['address']?.toString() ?? 
+          [rawAddr['street'], rawAddr['city'], rawAddr['state']].where((p) => p != null && p.toString().isNotEmpty).join(', ');
+    } else {
+      address = rawAddr?.toString() ?? 'H-101, Shanti Nagar, Govindpuram, Ghaziabad, Uttar Pradesh - 201013';
+    }
 
     final requestedOn = bookingData['createdAt'] != null ? DateTime.tryParse(bookingData['createdAt']) : DateTime.now();
     final String displayDate = requestedOn != null ? DateFormat('dd MMM yyyy').format(requestedOn) : '13 May 2025';
@@ -516,20 +523,21 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
             if (showPrimaryButton) ...[
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 36,
                 child: ElevatedButton(
                   onPressed: _isActing ? null : onPressed,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0D47A1), // Deep Blue
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 0),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (icon != null) Icon(icon, size: 22, color: Colors.white),
-                      const SizedBox(width: 8),
-                      Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold)),
+                      if (icon != null) Icon(icon, size: 16, color: Colors.white),
+                      const SizedBox(width: 6),
+                      Text(label, style: const TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -539,18 +547,19 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
             if (_bookingDetails?['report'] != null && _bookingDetails!['report'].toString().isNotEmpty) ...[
               SizedBox(
                 width: double.infinity,
-                height: 52,
+                height: 36,
                 child: ElevatedButton.icon(
                   onPressed: () {
                     final url = _bookingDetails!['report'].toString();
                     launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
                   },
-                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white),
-                  label: const Text('View Report', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.bold)),
+                  icon: const Icon(Icons.picture_as_pdf, color: Colors.white, size: 16),
+                  label: const Text('View Report', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade400,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(vertical: 0),
                   ),
                 ),
               ),
@@ -558,21 +567,21 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
             ],
             SizedBox(
               width: double.infinity,
-              height: 52,
+              height: 36,
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0D47A1), // Deep Blue
+                  foregroundColor: const Color(0xFF0D47A1),
                   side: const BorderSide(color: Color(0xFF0D47A1)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  padding: const EdgeInsets.symmetric(vertical: 8), // Decreased padding
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: EdgeInsets.zero,
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.arrow_back, size: 18),
-                    const SizedBox(width: 6),
-                    const Text('Back', style: TextStyle(fontFamily: 'Poppins', fontSize: 15, fontWeight: FontWeight.bold)),
+                    const Icon(Icons.arrow_back, size: 14),
+                    const SizedBox(width: 4),
+                    const Text('Back', style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),

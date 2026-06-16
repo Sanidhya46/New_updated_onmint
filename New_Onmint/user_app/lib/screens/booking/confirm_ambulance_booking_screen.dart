@@ -11,6 +11,8 @@ class ConfirmAmbulanceBookingScreen extends StatefulWidget {
   final String gender;
   final String notes;
   final List<double> coordinates;
+  final String city;
+  final String state;
 
   const ConfirmAmbulanceBookingScreen({
     Key? key,
@@ -22,6 +24,8 @@ class ConfirmAmbulanceBookingScreen extends StatefulWidget {
     required this.gender,
     required this.notes,
     required this.coordinates,
+    required this.city,
+    required this.state,
   }) : super(key: key);
 
   @override
@@ -53,11 +57,13 @@ class _ConfirmAmbulanceBookingScreenState
         'patientAge': widget.age,
         'patientGender': widget.gender,
         'notes': widget.notes,
-        'urgency': 'high', // ambulance usually high urgency
+        'urgency': 'high',
         'isEmergency': true,
         'paymentMethod': _selectedPayment,
         'totalAmount': 799,
         'coordinates': widget.coordinates,
+        'city': widget.city,
+        'state': widget.state,
       };
 
       await _apiClient.patient.createRealtimeBooking(bookingData);
@@ -262,6 +268,10 @@ class _ConfirmAmbulanceBookingScreenState
                             widget.age.toString()),
                         _buildSummaryRow(
                             Icons.person_outline, 'Gender', widget.gender),
+                        _buildSummaryRow(
+                            Icons.location_city, 'City', widget.city),
+                        _buildSummaryRow(
+                            Icons.map_outlined, 'State', widget.state),
                         _buildSummaryRow(
                             Icons.note_alt_outlined,
                             'Additional Details',

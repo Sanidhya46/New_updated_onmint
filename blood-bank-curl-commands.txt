@@ -1,0 +1,144 @@
+================================================================================
+BLOOD BANK REQUEST TEST - CURL COMMANDS
+================================================================================
+
+Patient Details:
+- Phone: 9875555555
+- Password: SecurePass@123!
+
+================================================================================
+STEP 1: LOGIN PATIENT
+================================================================================
+
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "9875555555",
+    "password": "SecurePass@123!"
+  }'
+
+Expected Response:
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "patient_id_here",
+    "firstName": "...",
+    "phone": "9875555555",
+    "role": "patient"
+  }
+}
+
+Save the token from response for next steps.
+
+================================================================================
+STEP 2: SEARCH BLOOD BANKS
+================================================================================
+
+Replace TOKEN with token from Step 1:
+
+curl -X GET "http://localhost:3000/api/patient/search/bloodbanks?location=Delhi&bloodType=O+" \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json"
+
+Expected Response:
+[
+  {
+    "id": "bloodbank_id",
+    "name": "Blood Bank Name",
+    "location": "...",
+    "availability": "..."
+  }
+]
+
+================================================================================
+STEP 3: CREATE BLOOD BANK REQUEST
+================================================================================
+
+Replace TOKEN with your token:
+
+curl -X POST http://localhost:3000/api/realtime-bookings \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serviceType": "blood",
+    "bloodType": "O+",
+    "unitsRequired": 2,
+    "urgency": "high",
+    "location": {
+      "latitude": 28.6139,
+      "longitude": 77.2090,
+      "address": "Delhi, India",
+      "zipCode": "110001"
+    },
+    "notes": "Emergency blood requirement for surgery",
+    "hospitalName": "Delhi Medical Center",
+    "preferredDate": "2025-12-20"
+  }'
+
+Expected Response:
+{
+  "_id": "booking_id",
+  "serviceType": "blood",
+  "bloodType": "O+",
+  "unitsRequired": 2,
+  "urgency": "high",
+  "status": "requested",
+  "location": {...},
+  "createdAt": "2025-12-19T10:30:00Z"
+}
+
+================================================================================
+STEP 4: GET BOOKING STATUS
+================================================================================
+
+Replace TOKEN with your token and booking_id with ID from Step 3:
+
+curl -X GET "http://localhost:3000/api/realtime-bookings/booking_id" \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json"
+
+Expected Response:
+{
+  "_id": "booking_id",
+  "serviceType": "blood",
+  "status": "requested",
+  "bloodType": "O+",
+  "unitsRequired": 2,
+  "urgency": "high",
+  ...
+}
+
+================================================================================
+STEP 5: LIST ALL PATIENT BOOKINGS
+================================================================================
+
+Replace TOKEN with your token:
+
+curl -X GET "http://localhost:3000/api/patient/bookings" \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json"
+
+Expected Response:
+{
+  "data": [
+    {
+      "_id": "booking_id",
+      "serviceType": "blood",
+      "status": "requested",
+      ...
+    }
+  ]
+}
+
+================================================================================
+NOTES:
+================================================================================
+
+1. Make sure the backend server is running on http://localhost:3000
+2. Update TOKEN with actual token from login response
+3. Update booking_id with actual booking ID from creation response
+4. For Windows, use 'curl' directly in Command Prompt (Windows 10+) or use Git Bash
+5. For Mac/Linux, these commands work directly in terminal
+6. To format JSON responses, install jq: brew install jq (Mac) or apt-get install jq (Linux)
+
+================================================================================

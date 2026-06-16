@@ -4,6 +4,7 @@ import 'package:auth_service/auth_service.dart';
 import '../../config/app_config.dart';
 import 'personal_info_screen.dart';
 import 'professional_info_screen.dart';
+import 'certificates_screen.dart';
 import 'change_password_screen.dart';
 import 'contact_support_screen.dart';
 import 'privacy_policy_screen.dart';
@@ -67,6 +68,21 @@ class ProfileScreen extends StatelessWidget {
                               ? const Icon(Icons.person, size: 36, color: Colors.grey)
                               : null,
                         ),
+                        // Red circle badge for unapproved/uncertified vendors
+                        if (user?.status != null && user!.status != 'approved')
+                          Positioned(
+                            top: 0,
+                            right: 0,
+                            child: Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                                border: Border.all(color: Colors.white, width: 2),
+                              ),
+                            ),
+                          ),
                         Positioned(
                           bottom: 0,
                           right: 0,
@@ -81,6 +97,7 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -154,28 +171,7 @@ class ProfileScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.shade50,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.star, color: Colors.orange, size: 14),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${user?.rating?.toStringAsFixed(1) ?? "4.5"} (${user?.totalRatings ?? 0})',
-                                      style: const TextStyle(
-                                        color: Colors.orange,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+
                             ],
                           ),
                         ],
@@ -203,6 +199,13 @@ class ProfileScreen extends StatelessWidget {
             ),
             _buildMenuItem(
               context,
+              Icons.verified_user_outlined,
+              'Certificates',
+              'Manage your professional documents',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CertificatesScreen())),
+            ),
+            _buildMenuItem(
+              context,
               Icons.lock_outline,
               'Change Password',
               'Update your account password',
@@ -223,7 +226,7 @@ class ProfileScreen extends StatelessWidget {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 8),
 
             // Logout Button
             Padding(
@@ -261,7 +264,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildMenuItem(BuildContext context, IconData icon, String title, String subtitle, {required VoidCallback onTap}) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:auth_service/auth_service.dart';
+import 'package:user_app/data/indian_states_cities.dart';
 import 'package:user_app/screens/booking/lab_test_selection_screen.dart';
 import 'package:user_app/screens/booking/confirm_lab_test_booking_screen.dart';
 
@@ -22,6 +25,26 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
 
   DateTime? _selectedDate;
   List<LabTestModel> _selectedTests = [];
+  String? _selectedState;
+  String? _selectedCity;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillUserData());
+  }
+
+  void _prefillUserData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user != null) {
+      _nameController.text = user.fullName.isNotEmpty ? user.fullName : '';
+      _phoneController.text = user.phone.isNotEmpty ? user.phone : '';
+      if (user.city.isNotEmpty) _selectedCity = user.city;
+      if (user.state.isNotEmpty) _selectedState = user.state;
+      setState(() {});
+    }
+  }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -80,6 +103,12 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
         );
         return;
       }
+      if (_selectedCity == null || _selectedCity!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select your city'), backgroundColor: Colors.orange),
+        );
+        return;
+      }
 
       Navigator.push(
         context,
@@ -91,6 +120,8 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
             preferredDate: _selectedDate!,
             notes: _notesController.text,
             selectedTests: _selectedTests,
+            city: _selectedCity ?? '',
+            state: _selectedState ?? '',
           ),
         ),
       );
@@ -139,10 +170,14 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
 
             // Booking Form Card
             Container(
-              margin: const EdgeInsets.all(16),
+              transform: Matrix4.translationValues(0.0, -4.0, 0.0),
+              margin: const EdgeInsets.fromLTRB(8, 0, 8, 16),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(16),
+                  bottomRight: Radius.circular(16),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -209,6 +244,66 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // State & City
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('State'),
+                                TextFormField(
+                                  key: ValueKey(_selectedState),
+                                  initialValue: _selectedState ?? 'Not Provided',
+                                  readOnly: true,
+                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  decoration: InputDecoration(
+                                    hintText: 'State',
+                                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+                                    prefixIcon: Icon(Icons.map_outlined, color: Colors.purple[400], size: 18),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.purple[700]!, width: 1.5)),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('City *'),
+                                TextFormField(
+                                  key: ValueKey(_selectedCity),
+                                  initialValue: _selectedCity ?? 'Not Provided',
+                                  readOnly: true,
+                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  decoration: InputDecoration(
+                                    hintText: 'City',
+                                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+                                    prefixIcon: Icon(Icons.location_city, color: Colors.purple[400], size: 18),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey[300]!)),
+                                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.purple[700]!, width: 1.5)),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
 
@@ -546,3 +641,75 @@ class _LabTestBookingScreenState extends State<LabTestBookingScreen> {
     );
   }
 }
+
+class _LabStatePickerDialog extends StatefulWidget {
+  final String? selectedState;
+  const _LabStatePickerDialog({this.selectedState});
+  @override
+  State<_LabStatePickerDialog> createState() => _LabStatePickerDialogState();
+}
+class _LabStatePickerDialogState extends State<_LabStatePickerDialog> {
+  final _sc = TextEditingController();
+  List<String> _filtered = IndianStatesData.states;
+  @override
+  void dispose() { _sc.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select State', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      content: SizedBox(width: double.maxFinite, height: 400,
+        child: Column(children: [
+          TextField(controller: _sc,
+            decoration: InputDecoration(hintText: 'Search state...', hintStyle: const TextStyle(fontSize: 12), prefixIcon: const Icon(Icons.search, size: 18), isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+            onChanged: (q) => setState(() { _filtered = IndianStatesData.states.where((s) => s.toLowerCase().contains(q.toLowerCase())).toList(); })),
+          const SizedBox(height: 8),
+          Expanded(child: ListView.builder(itemCount: _filtered.length, itemBuilder: (_, i) {
+            final s = _filtered[i];
+            return ListTile(dense: true, title: Text(s, style: const TextStyle(fontSize: 13)), selected: s == widget.selectedState, selectedTileColor: Colors.purple[50], onTap: () => Navigator.pop(context, s));
+          })),
+        ]),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))],
+    );
+  }
+}
+
+class _LabCityPickerDialog extends StatefulWidget {
+  final String state;
+  final String? selectedCity;
+  const _LabCityPickerDialog({required this.state, this.selectedCity});
+  @override
+  State<_LabCityPickerDialog> createState() => _LabCityPickerDialogState();
+}
+class _LabCityPickerDialogState extends State<_LabCityPickerDialog> {
+  final _sc = TextEditingController();
+  late List<String> _cities, _filtered;
+  @override
+  void initState() { super.initState(); _cities = IndianStatesData.getCitiesForState(widget.state); _filtered = _cities; }
+  @override
+  void dispose() { _sc.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Select City — ${widget.state}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      content: SizedBox(width: double.maxFinite, height: 400,
+        child: Column(children: [
+          TextField(controller: _sc,
+            decoration: InputDecoration(hintText: 'Search city...', hintStyle: const TextStyle(fontSize: 12), prefixIcon: const Icon(Icons.search, size: 18), isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+            onChanged: (q) => setState(() { _filtered = _cities.where((c) => c.toLowerCase().contains(q.toLowerCase())).toList(); })),
+          const SizedBox(height: 8),
+          Expanded(child: _filtered.isEmpty
+            ? const Center(child: Text('No cities found', style: TextStyle(color: Colors.grey)))
+            : ListView.builder(itemCount: _filtered.length, itemBuilder: (_, i) {
+                final c = _filtered[i];
+                return ListTile(dense: true, title: Text(c, style: const TextStyle(fontSize: 13)), selected: c == widget.selectedCity, selectedTileColor: Colors.purple[50], onTap: () => Navigator.pop(context, c));
+              })),
+        ]),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))],
+    );
+  }
+}
+

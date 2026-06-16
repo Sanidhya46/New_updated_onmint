@@ -232,7 +232,16 @@ class _RideRequestsScreenState extends State<RideRequestsScreen>
     final age = (patientData is Map) ? patientData['age'] ?? '35' : '35';
     final gender = (patientData is Map) ? patientData['gender'] ?? 'Male' : 'Male';
     
-    final address = request['location']?['address'] ?? 'Not specified';
+    var rawAddress;
+    if (request['location'] is Map) {
+      rawAddress = request['location']['address'] ?? request['location']['street'];
+    } else {
+      rawAddress = request['location'];
+    }
+    
+    final address = (rawAddress is Map) 
+        ? (rawAddress['address']?.toString() ?? rawAddress['street']?.toString() ?? 'Not specified')
+        : (rawAddress?.toString() ?? 'Not specified');
     final statusRaw = request['status']?.toString().toLowerCase() ?? '';
     final bookingId = request['_id']?.toString() ?? request['id']?.toString() ?? '';
 

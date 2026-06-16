@@ -60,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     bool hideAppBar = _selectedIndex == 3 || 
         (_selectedIndex == 0 && (role == 'ambulance' || role == 'nurse' || role == 'pathology' || role == 'bloodbank' || role == 'pharmacist')) || 
-        (_selectedIndex == 1 && (role == 'nurse' || role == 'pathology' || role == 'bloodbank' || role == 'pharmacist'));
+        (_selectedIndex == 1 && (role == 'ambulance' || role == 'nurse' || role == 'pathology' || role == 'bloodbank' || role == 'pharmacist'));
 
     return Scaffold(
       appBar: hideAppBar ? null : AppBar(
@@ -108,7 +108,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: screens[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: screens,
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _selectedIndex,

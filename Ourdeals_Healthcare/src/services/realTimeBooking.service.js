@@ -22,12 +22,14 @@ const createRealTimeBooking = async (bookingData) => {
     await booking.populate("patient");
 
     if (booking.status !== "in_cart") {
-      // Find nearby available providers
+      // Find available providers by city (or fallback to geo for doctor)
       const providers = await findAvailableProviders(
         booking.serviceType,
         booking.location.coordinates,
         booking.isEmergency,
-        booking.category
+        booking.category,
+        booking.city,
+        booking.state
       );
 
       if (providers.length === 0) {
@@ -68,33 +70,18 @@ const createRealTimeBooking = async (bookingData) => {
   }
 };
 
-const findAvailableProviders = async (serviceType, coordinates, isEmergency, category) => {
+const findAvailableProviders = async (serviceType, coordinates, isEmergency, category, city, state) => {
   try {
     const role = SERVICE_TYPE_TO_ROLE[serviceType];
     if (!role) {
       throw new Error(`Invalid service type: ${serviceType}`);
     }
 
-    let maxDistance = 20000; // Default 20km for all vendor roles
     let limit = 50;
-
-    // Pathology/labtest vendors: 12km range
-    if (role === 'pathology') {
-      maxDistance = 12000; // 12km for pathology/labtest
-    }
-
-    // Ambulance vendors: 20km range
-    if (role === 'ambulance') {
-      maxDistance = 20000; // 20km for ambulance
-      limit = 20;
-    }
-
-    // Nurse, bloodbank: 20km range (default)
-    // Doctor: no geo filter applied (handled below)
-
-    const [longitude, latitude] = coordinates;
+    if (role === 'ambulance') limit = 20;
 
     const rolesToSearch = [role];
+    // Pathology bookings also notify bloodbanks
     if (role === 'pathology') {
       rolesToSearch.push('bloodbank');
     }
@@ -104,32 +91,45 @@ const findAvailableProviders = async (serviceType, coordinates, isEmergency, cat
       status: "approved",
     };
 
-    if ((longitude !== 0 || latitude !== 0) && role !== 'doctor') {
-      query.location = {
-        $near: {
-          $geometry: {
-            type: "Point",
-            coordinates: [longitude, latitude],
-          },
-          $maxDistance: maxDistance,
-        },
-      };
+    if (role === 'doctor') {
+      // Doctor: no geo/city filter — search all approved doctors
+      if (category) {
+        query.category = category;
+      }
+    } else {
+      // All non-doctor services: match by city (case-insensitive)
+      if (city && city.trim() !== '') {
+        query.city = { $regex: new RegExp(`^${city.trim()}$`, 'i') };
+      } else {
+        // Fallback: if no city provided, use geo-radius (20km)
+        const [longitude, latitude] = coordinates;
+        if (longitude !== 0 || latitude !== 0) {
+          query.location = {
+            $near: {
+              $geometry: {
+                type: "Point",
+                coordinates: [longitude, latitude],
+              },
+              $maxDistance: 20000,
+            },
+          };
+        }
+      }
     }
 
-    if (role === 'doctor' && category) {
-      query.category = category;
-    }
-
-    // Add role-specific availability filters
+    // Ambulance: must be marked as available
     if (role === "ambulance") {
       query.isAvailable = true;
     }
 
+    logger.info(`Finding providers: role=${role}, city=${city || 'N/A'}, state=${state || 'N/A'}`);
+
     const providers = await User.find(query)
-      .select("_id firstName lastName phone email deviceTokens location")
+      .select("_id firstName lastName phone email deviceTokens location city state")
       .limit(limit)
       .lean();
 
+    logger.info(`Found ${providers.length} providers for ${serviceType} in city: ${city || 'N/A'}`);
     return providers;
   } catch (error) {
     logger.error("Find available providers failed", { error: error.message });
@@ -688,7 +688,9 @@ const checkoutCart = async (bookingId, checkoutData) => {
     booking.serviceType,
     booking.location?.coordinates || [0, 0],
     booking.isEmergency,
-    booking.category
+    booking.category,
+    booking.city,
+    booking.state
   );
 
   if (providers.length > 0) {

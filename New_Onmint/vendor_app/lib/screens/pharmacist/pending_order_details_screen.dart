@@ -206,6 +206,7 @@ class _PendingOrderDetailsScreenState extends State<PendingOrderDetailsScreen> {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
                                 const SizedBox(width: 4),

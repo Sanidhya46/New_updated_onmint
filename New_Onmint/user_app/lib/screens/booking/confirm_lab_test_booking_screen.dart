@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:intl/intl.dart';
 import 'package:user_app/screens/booking/lab_test_selection_screen.dart';
+import 'package:user_app/screens/booking/order_request_screen.dart';
 
 class ConfirmLabTestBookingScreen extends StatefulWidget {
   final String address;
@@ -10,6 +11,8 @@ class ConfirmLabTestBookingScreen extends StatefulWidget {
   final DateTime preferredDate;
   final String notes;
   final List<LabTestModel> selectedTests;
+  final String city;
+  final String state;
 
   const ConfirmLabTestBookingScreen({
     Key? key,
@@ -19,6 +22,8 @@ class ConfirmLabTestBookingScreen extends StatefulWidget {
     required this.preferredDate,
     required this.notes,
     required this.selectedTests,
+    required this.city,
+    required this.state,
   }) : super(key: key);
 
   @override
@@ -61,7 +66,9 @@ class _ConfirmLabTestBookingScreenState
         'preferredDate': widget.preferredDate.toIso8601String(),
         'paymentMethod': _selectedPayment,
         'totalAmount': totalAmount,
-        'coordinates': [0.0, 0.0], // default
+        'coordinates': [0.0, 0.0],
+        'city': widget.city,
+        'state': widget.state,
       };
 
       await _apiClient.patient.createRealtimeBooking(bookingData);
@@ -71,7 +78,16 @@ class _ConfirmLabTestBookingScreenState
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Lab Test request sent successfully!')),
         );
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => OrderRequestScreen(
+              bookingId: '',
+              bookingData: bookingData,
+              serviceType: 'lab test',
+            ),
+          ),
+          (route) => route.isFirst,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -204,11 +220,9 @@ class _ConfirmLabTestBookingScreenState
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-
             // Booking Summary
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -298,8 +312,15 @@ class _ConfirmLabTestBookingScreenState
                   _buildDetailRow(
                       Icons.person, 'Patient Name', widget.contactName),
                   _buildDetailRow(
-                      Icons.phone, 'Mobile Number', widget.phoneNumber,
-                      isLast: true),
+                      Icons.phone, 'Mobile Number', widget.phoneNumber),
+                  if (widget.city.isNotEmpty)
+                    _buildDetailRow(Icons.location_city, 'City', widget.city),
+                  if (widget.state.isNotEmpty)
+                    _buildDetailRow(Icons.map_outlined, 'State', widget.state, isLast: true),
+                  if (widget.city.isEmpty)
+                    _buildDetailRow(
+                        Icons.phone, 'Mobile Number', widget.phoneNumber,
+                        isLast: true),
                 ],
               ),
             ),
@@ -308,7 +329,7 @@ class _ConfirmLabTestBookingScreenState
 
             // Payment Details Section
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,

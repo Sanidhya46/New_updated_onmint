@@ -43,6 +43,8 @@ const createBookingRequest = async (req, res) => {
       isEmergency: req.body.isEmergency || false,
       notes: req.body.notes,
       totalAmount: req.body.totalAmount || 0,
+      city: req.body.city || '',
+      state: req.body.state || '',
     };
 
     // Validate required fields

@@ -1,0 +1,196 @@
+================================================================================
+BLOOD BANK REQUEST - JHANSI, UTTAR PRADESH
+COPY-PASTE READY CURL COMMANDS
+================================================================================
+
+Patient: Rajesh Kumar (9875555555)
+Location: Jhansi, Uttar Pradesh, India
+Blood Type: O+
+Units: 2
+Emergency: Yes
+
+================================================================================
+COMMAND 1: LOGIN & GET TOKEN
+================================================================================
+
+COPY AND PASTE THIS EXACTLY:
+
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"9875555555","password":"SecurePass@123!"}'
+
+SAVE THE TOKEN FROM RESPONSE!
+
+================================================================================
+COMMAND 2: CREATE BLOOD BANK REQUEST
+================================================================================
+
+Replace "YOUR_TOKEN_HERE" with the token from Command 1, then paste:
+
+curl -X POST http://localhost:3000/api/realtime-bookings/create \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serviceType":"blood",
+    "bloodGroup":"O+",
+    "unitsRequired":2,
+    "isEmergency":true,
+    "name":"Rajesh Kumar",
+    "phone":"9875555555",
+    "age":35,
+    "gender":"Male",
+    "address":"Jhansi, Uttar Pradesh, India",
+    "location":{"address":"Jhansi, Uttar Pradesh, India","coordinates":[78.5714,25.4358]},
+    "city":"Jhansi",
+    "state":"Uttar Pradesh",
+    "hospitalName":"Jhansi Medical Center",
+    "requirements":{"description":"Urgent blood requirement - Emergency transfusion needed for surgery","specialRequirements":"Need O+ blood type urgently"},
+    "notes":"Emergency blood requirement for surgical operation. Patient in critical condition.",
+    "totalAmount":0
+  }'
+
+SAVE THE BOOKING ID FROM RESPONSE!
+
+================================================================================
+COMMAND 3: GET BOOKING STATUS
+================================================================================
+
+Replace "YOUR_TOKEN_HERE" and "YOUR_BOOKING_ID_HERE", then paste:
+
+curl -X GET http://localhost:3000/api/realtime-bookings/YOUR_BOOKING_ID_HERE \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json"
+
+================================================================================
+COMMAND 4: LIST ALL PATIENT BOOKINGS
+================================================================================
+
+Replace "YOUR_TOKEN_HERE", then paste:
+
+curl -X GET http://localhost:3000/api/realtime-bookings/my-bookings \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json"
+
+================================================================================
+COMMAND 5: CANCEL BOOKING (IF NEEDED)
+================================================================================
+
+Replace "YOUR_TOKEN_HERE" and "YOUR_BOOKING_ID_HERE", then paste:
+
+curl -X POST http://localhost:3000/api/realtime-bookings/YOUR_BOOKING_ID_HERE/cancel \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"Request cancelled by patient"}'
+
+================================================================================
+LOCATION COORDINATES (IF CHANGING CITY)
+================================================================================
+
+JHANSI: 25.4358, 78.5714 (Current)
+LUCKNOW: 26.8467, 80.9462
+KANPUR: 26.4499, 80.3319
+AGRA: 27.1767, 78.0081
+VARANASI: 25.3176, 82.9739
+MATHURA: 27.4924, 77.6737
+
+Format in curl: "coordinates": [longitude, latitude]
+Example: [78.5714, 25.4358] for Jhansi
+
+================================================================================
+DIFFERENT BLOOD TYPES (IF CHANGING)
+================================================================================
+
+Change "bloodGroup" value to:
+- "O+"      (Current)
+- "O-"
+- "A+"
+- "A-"
+- "B+"
+- "B-"
+- "AB+"
+- "AB-"
+
+================================================================================
+WINDOWS USERS - BATCH COMMAND
+================================================================================
+
+@echo off
+setlocal enabledelayedexpansion
+
+REM Step 1: Login
+echo Logging in...
+for /f "delims=" %%a in ('curl -s -X POST http://localhost:3000/api/auth/login ^
+  -H "Content-Type: application/json" ^
+  -d "{\"phone\":\"9875555555\",\"password\":\"SecurePass@123!\"}" ^
+  ^| findstr "token"') do set TOKEN=%%a
+
+echo Token obtained (check output above)
+
+REM Step 2: Create Request
+echo Creating blood bank request...
+curl -X POST http://localhost:3000/api/realtime-bookings/create ^
+  -H "Authorization: Bearer !TOKEN!" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"serviceType\":\"blood\",\"bloodGroup\":\"O+\",\"unitsRequired\":2,\"isEmergency\":true,\"name\":\"Rajesh Kumar\",\"phone\":\"9875555555\",\"age\":35,\"gender\":\"Male\",\"address\":\"Jhansi, Uttar Pradesh, India\",\"location\":{\"address\":\"Jhansi, Uttar Pradesh, India\",\"coordinates\":[78.5714,25.4358]},\"city\":\"Jhansi\",\"state\":\"Uttar Pradesh\",\"hospitalName\":\"Jhansi Medical Center\",\"requirements\":{\"description\":\"Urgent blood requirement\"},\"notes\":\"Emergency blood requirement\",\"totalAmount\":0}"
+
+echo Done!
+pause
+
+================================================================================
+QUICK REFERENCE - WHAT TO SAVE
+================================================================================
+
+1. LOGIN RESPONSE - Extract "token" field
+   Example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWI..."
+   Use as: -H "Authorization: Bearer TOKEN_HERE"
+
+2. BOOKING RESPONSE - Extract "data._id" field
+   Example: "64f3a5b7c9d8e1f2g3h4i5j6"
+   Use as: /realtime-bookings/BOOKING_ID_HERE
+
+3. USER ID - Extract "user.id" field (optional, for reference)
+   Example: "64f3a5b7c9d8e1f2g3h4i5j6"
+
+================================================================================
+COMMON MISTAKES
+================================================================================
+
+❌ WRONG: coordinates: [25.4358, 78.5714]  (latitude first)
+✅ RIGHT: coordinates: [78.5714, 25.4358]  (longitude first)
+
+❌ WRONG: "serviceType": "Blood" (capitalized)
+✅ RIGHT: "serviceType": "blood" (lowercase)
+
+❌ WRONG: Missing phone in request
+✅ RIGHT: "phone": "9875555555"
+
+❌ WRONG: Empty address field
+✅ RIGHT: "address": "Jhansi, Uttar Pradesh, India"
+
+================================================================================
+FOR POSTMAN USERS
+================================================================================
+
+1. Import collection from: BLOOD_BOOKING_POSTMAN_TEST.json
+2. Set variables:
+   - api_url: http://localhost:3000/api
+   - phone: 9875555555
+   - password: SecurePass@123!
+3. Run "Login" request first
+4. Copy token to Authorization header
+5. Run "Create Blood Bank Request - Jhansi"
+
+================================================================================
+LIVE TESTING
+================================================================================
+
+Make sure these are running:
+1. Backend API: http://localhost:3000
+2. Patient account exists: 9875555555
+3. Database is accessible
+4. Network connection active
+
+================================================================================
+Status: Ready to Copy-Paste
+Date: June 16, 2025
+================================================================================

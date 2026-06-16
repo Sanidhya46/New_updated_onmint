@@ -128,7 +128,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                           width: double.infinity,
                           height: 200,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF1565C0),
+                            color: Colors.blue,
                             borderRadius: BorderRadius.only(
                               bottomLeft: Radius.circular(24),
                               bottomRight: Radius.circular(24),
@@ -161,7 +161,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                                     ),
                                     child: user?.profilePicture == null
                                         ? const Icon(Icons.person,
-                                            size: 44, color: Color(0xFF1565C0))
+                                            size: 44, color: Colors.blue,)
                                         : null,
                                   ),
                                   const SizedBox(width: 18),
@@ -271,7 +271,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                                 width: 8,
                                 height: 8,
                                 decoration: const BoxDecoration(
-                                  color: Color(0xFF1565C0),
+                                  color: Colors.blue,
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -285,7 +285,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                                 child: Text(
                                   _showAllRequests ? 'View Less' : 'View All',
                                   style: const TextStyle(
-                                    color: Color(0xFF1565C0),
+                                    color: Colors.blue,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -338,94 +338,78 @@ class _NurseDashboardState extends State<NurseDashboard> {
                 color: const Color(0xFFE8EEF9),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+              child: Column(
                 children: [
-                  SizedBox(
-                    width: 72,
-                    height: 72,
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          child: Icon(Icons.assignment_outlined,
-                              size: 52, color: const Color(0xFF1565C0)),
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            width: 30,
-                            height: 30,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF1565C0),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.add,
-                                size: 18, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Manage Your\nConsultations Easily',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF152238),
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Check your requests, track consultations, and manage your progress all in one place.',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade600,
-                            height: 1.4,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: Stack(
                           children: [
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF1565C0),
-                                shape: BoxShape.circle,
-                              ),
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              child: Icon(Icons.assignment_outlined,
+                                  size: 52, color: const Color(0xFF1565C0)),
                             ),
-                            const SizedBox(width: 5),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                shape: BoxShape.circle,
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: const BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.add,
+                                    size: 18, color: Colors.white),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Manage Your\nConsultations Easily',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF152238),
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Check your requests, track consultations, and manage your progress all in one place.',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blue,)),
+                      const SizedBox(width: 4),
+                      Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blue,)),
+                      const SizedBox(width: 4),
+                      Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.blue,)),
+                    ],
+                  )
                 ],
               ),
             ),
@@ -576,7 +560,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1565C0),
+                        color: Colors.blue,
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -604,7 +588,7 @@ class _NurseDashboardState extends State<NurseDashboard> {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF1565C0),
+                                color: Colors.blue,
                               ),
                             ),
                             const Text(

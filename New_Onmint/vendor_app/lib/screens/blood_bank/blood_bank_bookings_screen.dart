@@ -41,7 +41,11 @@ class _BloodBankBookingsScreenState extends State<BloodBankBookingsScreen>
     }
     try {
       await _apiClient.initialize();
-      final response = await _apiClient.get('/realtime/provider/bookings', queryParameters: {'limit': 100});
+      // Fetch ALL without status filter, filter locally — more robust
+      final response = await _apiClient.get('/realtime/provider/bookings', queryParameters: {
+        'limit': 100,
+        'serviceType': 'bloodbank',
+      });
 
       if (mounted) {
         setState(() {
@@ -77,9 +81,22 @@ class _BloodBankBookingsScreenState extends State<BloodBankBookingsScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ToastUtils.showError('Failed to load blood requests');
+        ToastUtils.showError('Failed to load blood requests: ${e.toString().replaceAll("Exception: ", "")}');
       }
     }
+  }
+
+  /// Safely extract address string from any type
+  String _safeAddress(dynamic loc) {
+    if (loc == null) return '';
+    if (loc is String) return loc;
+    if (loc is Map) {
+      final addr = loc['address'];
+      if (addr is Map) return addr['address']?.toString() ?? addr['street']?.toString() ?? '';
+      if (addr != null) return addr.toString();
+      return loc['street']?.toString() ?? loc['city']?.toString() ?? '';
+    }
+    return loc.toString();
   }
 
   @override
@@ -140,7 +157,20 @@ class _BloodBankBookingsScreenState extends State<BloodBankBookingsScreen>
 
   Widget _buildAllTab() {
     if (_allBookings.isEmpty) {
-      return const Center(child: Text('No requests found.', style: TextStyle(color: Colors.grey)));
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_outlined, size: 56, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            const Text('No blood requests found.',
+                style: TextStyle(color: Colors.grey, fontSize: 15)),
+            const SizedBox(height: 6),
+            Text('Pull down to refresh',
+                style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+          ],
+        ),
+      );
     }
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -209,7 +239,7 @@ class _BloodBankBookingsScreenState extends State<BloodBankBookingsScreen>
     final age = patientData['age'] ?? '35';
     final gender = patientData['gender'] ?? 'Male';
     final units = request['unitsRequired'] ?? '1';
-    final address = request['location']?['address'] ?? '';
+    final address = _safeAddress(request['location']);
     final bloodGroup = request['bloodGroup'] ?? 'O+';
     final statusRaw = request['status']?.toString().toLowerCase() ?? '';
     final bookingId = request['_id']?.toString() ?? '';

@@ -137,9 +137,6 @@ class _PendingOrdersScreenState extends State<PendingOrdersScreen> {
                 backgroundImage: order['profilePic'] != null 
                     ? NetworkImage(order['profilePic'])
                     : null,
-                child: order['profilePic'] == null 
-                    ? const Icon(Icons.person, color: Colors.grey, size: 32)
-                    : null,
               ),
               const SizedBox(width: 16),
               Expanded(

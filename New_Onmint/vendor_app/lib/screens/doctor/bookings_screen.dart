@@ -36,70 +36,46 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
   }
 
   Future<void> _loadAllBookings() async {
-    await _apiClient.initialize();
-    _loadRequestedBookings();
-    _loadAcceptedBookings();
-    _loadCompletedBookings();
-  }
+    setState(() {
+      _isLoadingRequested = true;
+      _isLoadingAccepted = true;
+      _isLoadingCompleted = true;
+    });
 
-  Future<void> _loadRequestedBookings() async {
-    setState(() => _isLoadingRequested = true);
     try {
-      final response = await _apiClient.doctor.getAppointments(status: 'requested');
-      final bookings = (response['data'] as List?)
+      await _apiClient.initialize();
+      final response = await _apiClient.doctor.getAppointments(page: 1, limit: 100);
+      final allBookings = (response['data'] as List?)
           ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
           .toList() ?? [];
+
       setState(() {
-        _requestedBookings = bookings;
+        _requestedBookings = allBookings.where((b) {
+          final s = b.status?.toLowerCase() ?? '';
+          return s == 'requested' || s == 'pending';
+        }).toList();
+        _acceptedBookings = allBookings.where((b) {
+          final s = b.status?.toLowerCase() ?? '';
+          return s == 'accepted' || s == 'confirmed' || s == 'scheduled';
+        }).toList();
+        _completedBookings = allBookings.where((b) {
+          final s = b.status?.toLowerCase() ?? '';
+          return s == 'completed' || s == 'cancelled' || s == 'rejected';
+        }).toList();
+
         _isLoadingRequested = false;
-      });
-    } catch (e) {
-      setState(() => _isLoadingRequested = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading requested bookings: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _loadAcceptedBookings() async {
-    setState(() => _isLoadingAccepted = true);
-    try {
-      final response = await _apiClient.doctor.getAppointments(status: 'accepted');
-      final bookings = (response['data'] as List?)
-          ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [];
-      setState(() {
-        _acceptedBookings = bookings;
         _isLoadingAccepted = false;
-      });
-    } catch (e) {
-      setState(() => _isLoadingAccepted = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading accepted bookings: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _loadCompletedBookings() async {
-    setState(() => _isLoadingCompleted = true);
-    try {
-      final response = await _apiClient.doctor.getAppointments(status: 'completed');
-      final bookings = (response['data'] as List?)
-          ?.map((e) => Booking.fromJson(e as Map<String, dynamic>))
-          .toList() ?? [];
-      setState(() {
-        _completedBookings = bookings;
         _isLoadingCompleted = false;
       });
     } catch (e) {
-      setState(() => _isLoadingCompleted = false);
+      setState(() {
+        _isLoadingRequested = false;
+        _isLoadingAccepted = false;
+        _isLoadingCompleted = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading completed bookings: $e')),
+          SnackBar(content: Text('Error loading bookings: $e')),
         );
       }
     }
@@ -211,15 +187,7 @@ class _BookingsScreenState extends State<BookingsScreen> with SingleTickerProvid
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        if (type == 'requested') {
-          await _loadRequestedBookings();
-        } else if (type == 'accepted') {
-          await _loadAcceptedBookings();
-        } else {
-          await _loadCompletedBookings();
-        }
-      },
+      onRefresh: _loadAllBookings,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: bookings.length,

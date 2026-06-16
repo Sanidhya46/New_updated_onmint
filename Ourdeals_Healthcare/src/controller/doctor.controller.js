@@ -2,7 +2,9 @@ import { Doctor } from '../models/Doctor.model.js';
 import { Booking } from '../models/Booking.model.js';
 import { bookingService } from '../services/booking.service.js';
 import { Prescription } from '../models/Prescription.model.js';
+import { s3Service } from '../services/s3.service.js';
 import { successResponse, errorResponse, paginatedResponse } from '../utils/response.util.js';
+import { logger } from '../utils/logger.util.js';
 
 
 const DOCTOR_ALLOWED_FIELDS = [
@@ -274,6 +276,77 @@ const createPrescription = async (req, res) => {
   }
 };
 
+const uploadPrescriptionFile = async (req, res) => {
+  try {
+    const doctorId = req.user.userId;
+    const bookingId = req.params.id;
+    const notes = req.body?.notes?.toString().trim() || '';
+
+    if (!req.file) {
+      return res.status(400).json(errorResponse('Prescription file is required'));
+    }
+
+    const bookingRecord = await bookingService.getBooking(bookingId);
+    if (!bookingRecord) {
+      return res.status(404).json(errorResponse('Booking not found'));
+    }
+
+    const providerId = bookingRecord.provider?.toString?.()
+      || bookingRecord.provider?._id?.toString?.();
+    if (!providerId || providerId !== doctorId) {
+      return res.status(403).json(errorResponse('Not authorized to upload prescription for this booking'));
+    }
+
+    if (!['in_progress', 'completed', 'accepted'].includes(bookingRecord.status)) {
+      return res.status(400).json(
+        errorResponse(`Booking must be accepted or in progress. Current status: ${bookingRecord.status}`)
+      );
+    }
+
+    const prescriptionFileUrl = await s3Service.uploadFile(req.file, 'prescriptions', doctorId);
+
+    let prescription = await Prescription.findOne({ booking: bookingId });
+    if (prescription) {
+      prescription.prescriptionFile = prescriptionFileUrl;
+      if (notes) {
+        prescription.notes = notes;
+        prescription.advice = notes;
+      }
+      await prescription.save();
+    } else {
+      prescription = await Prescription.create({
+        booking: bookingId,
+        patient: bookingRecord.patient?._id || bookingRecord.patient,
+        doctor: doctorId,
+        diagnosis: notes || 'Consultation prescription',
+        medicines: [],
+        advice: notes || undefined,
+        prescriptionFile: prescriptionFileUrl,
+        notes: notes || undefined,
+      });
+
+      await Booking.findByIdAndUpdate(bookingId, {
+        prescription: prescription._id,
+        status: bookingRecord.status === 'accepted' ? 'in_progress' : bookingRecord.status,
+      });
+    }
+
+    logger.info('Prescription file uploaded', {
+      bookingId,
+      doctorId,
+      prescriptionId: prescription._id,
+    });
+
+    res.status(201).json(successResponse('Prescription uploaded successfully', {
+      prescriptionId: prescription._id,
+      prescriptionFile: prescriptionFileUrl,
+    }));
+  } catch (error) {
+    logger.error('Upload prescription file failed', { error: error.message });
+    res.status(500).json(errorResponse(error.message || 'Failed to upload prescription'));
+  }
+};
+
 const getDashboard = async (req, res) => {
   try {
     const doctorId = req.user.userId;
@@ -473,4 +546,5 @@ export {
   completeAppointment,
   markVideoCallCompleted,
   scheduleAppointment,
+  uploadPrescriptionFile,
 };

@@ -75,6 +75,38 @@ class _BloodBankAcceptedOrderScreenState extends State<BloodBankAcceptedOrderScr
     }
   }
 
+  Future<void> _handleConnectWithPatient(String phoneNumber, String patientName) async {
+    final Uri launchUri = Uri(scheme: 'tel', path: phoneNumber);
+    
+    // Update status to in_progress before calling
+    await _updateStatus('in_progress');
+    
+    if (await canLaunchUrl(launchUri)) {
+      await launchUrl(launchUri);
+      
+      // Show call log confirmation dialog
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Call Completed'),
+            content: Text('Called $patientName successfully.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Reload booking to show updated timeline
+                  _loadBooking();
+                },
+                child: const Text('Done'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -107,11 +139,22 @@ class _BloodBankAcceptedOrderScreenState extends State<BloodBankAcceptedOrderScr
     final isEmergency = _booking!['isEmergency'] ?? true;
     final emergencyNote = _booking!['notes'] ?? 'Urgent requirement for surgery.\nPlease help.';
     
-    // Location/Hospital
     final locationData = _booking!['location'];
-    final address = (locationData is Map && locationData['address'] != null) 
-        ? locationData['address'] 
-        : 'Yashoda Hospital, Ghaziabad';
+    String address;
+    if (locationData is Map) {
+      final addr = locationData['address'];
+      if (addr is Map) {
+        address = addr['address']?.toString() ?? addr['street']?.toString() ?? 'Location not specified';
+      } else if (addr != null) {
+        address = addr.toString();
+      } else {
+        address = locationData['street']?.toString() ?? locationData['city']?.toString() ?? 'Location not specified';
+      }
+    } else if (locationData is String && locationData.isNotEmpty) {
+      address = locationData;
+    } else {
+      address = _booking!['hospitalName'] ?? _booking!['address']?.toString() ?? 'Location not specified';
+    }
 
     // Dates
     String dateStr = '13 May 2025';
@@ -153,77 +196,199 @@ class _BloodBankAcceptedOrderScreenState extends State<BloodBankAcceptedOrderScr
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _loadBooking,
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Column(
-            children: [
-              // User / Request Header Card
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Row(
+      body: Column(
+        children: [
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadBooking,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Column(
                   children: [
+                    // User / Request Header Card
                     Container(
-                      width: 50,
-                      height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        shape: BoxShape.circle,
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.02),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      // Replace with actual avatar image
-                      child: Image.asset('assets/images/male_profile.png',
-                        errorBuilder: (context, _, __) => const Icon(Icons.person, size: 30, color: Colors.blue),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
                         children: [
-                          Text(
-                            displayName,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF1A1A60),
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            // Replace with actual avatar image
+                            child: Image.asset('assets/images/male_profile.png',
+                              errorBuilder: (context, _, __) => const Icon(Icons.person, size: 30, color: Colors.blue),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$age Years / $gender',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.business, color: Colors.redAccent, size: 14),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  address,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  displayName,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1A1A60),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '$age Years / $gender',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: 12,
                                     color: Colors.grey.shade700,
                                     fontWeight: FontWeight.w500,
                                   ),
+                                ),
+                                const SizedBox(height: 4),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Icon(Icons.business, color: Colors.redAccent, size: 14),
+                                    const SizedBox(width: 4),
+                                    Expanded(
+                                      child: Text(
+                                        address,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Colors.grey.shade700,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Patient Details Card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Patient Details',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildRowItem(Icons.person_outline, 'Patient Name', displayName),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Color(0xFFF0F0F0), height: 1),
+                          ),
+                          _buildRowItem(Icons.people_outline, 'Age / Gender', '$age Years / $gender'),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Color(0xFFF0F0F0), height: 1),
+                          ),
+                          _buildRowItem(Icons.business, 'Hospital Name', address),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Request Details Card
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade200),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildRowItem(Icons.calendar_today_outlined, 'Date', dateStr),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Color(0xFFF0F0F0), height: 1),
+                          ),
+                          _buildRowItem(Icons.access_time, 'Time', timeStr),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Color(0xFFF0F0F0), height: 1),
+                          ),
+                          _buildRowItem(
+                            Icons.shopping_bag_outlined, 
+                            'Units Required', 
+                            '$units Units',
+                            valueColor: Colors.red,
+                            valueWeight: FontWeight.bold,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Color(0xFFF0F0F0), height: 1),
+                          ),
+                          _buildRowItem(
+                            Icons.water_drop_outlined, 
+                            'Emergency Type', 
+                            isEmergency ? 'Urgent' : 'Normal',
+                            valueColor: isEmergency ? Colors.red : Colors.green,
+                            valueWeight: FontWeight.bold,
+                            iconColor: Colors.red,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Divider(color: Color(0xFFF0F0F0), height: 1),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Icon(Icons.sticky_note_2_outlined, color: Colors.red, size: 16),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Emergency Note',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      emergencyNote,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.2,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -231,192 +396,131 @@ class _BloodBankAcceptedOrderScreenState extends State<BloodBankAcceptedOrderScr
                         ],
                       ),
                     ),
+                    const SizedBox(height: 24),
+
+                    // Timeline
+                    _buildHorizontalTimeline(status),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-
-              // Patient Details Card
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Patient Details',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green, // Color(0xFF10A843)
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildRowItem(Icons.person_outline, 'Patient Name', displayName),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(color: Color(0xFFF0F0F0), height: 1),
-                    ),
-                    _buildRowItem(Icons.people_outline, 'Age / Gender', '$age Years / $gender'),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(color: Color(0xFFF0F0F0), height: 1),
-                    ),
-                    _buildRowItem(Icons.business, 'Hospital Name', address),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Request Details Card
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildRowItem(Icons.calendar_today_outlined, 'Date', dateStr),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(color: Color(0xFFF0F0F0), height: 1),
-                    ),
-                    _buildRowItem(Icons.access_time, 'Time', timeStr),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(color: Color(0xFFF0F0F0), height: 1),
-                    ),
-                    _buildRowItem(
-                      Icons.shopping_bag_outlined, 
-                      'Units Required', 
-                      '$units Units',
-                      valueColor: Colors.red,
-                      valueWeight: FontWeight.bold,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(color: Color(0xFFF0F0F0), height: 1),
-                    ),
-                    _buildRowItem(
-                      Icons.water_drop_outlined, 
-                      'Emergency Type', 
-                      isEmergency ? 'Urgent' : 'Normal',
-                      valueColor: isEmergency ? Colors.red : Colors.green,
-                      valueWeight: FontWeight.bold,
-                      iconColor: Colors.red,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Divider(color: Color(0xFFF0F0F0), height: 1),
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.sticky_note_2_outlined, color: Colors.red, size: 16),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Emergency Note',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade700,
-                                ),
+            ),
+          ),
+          // Bottom Action Buttons - Always Visible
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(top: BorderSide(color: Color(0xFFF0F0F0))),
+            ),
+            child: Row(
+              children: [
+                // Reject Button
+                if (status == 'accepted' || status == 'requested')
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Reject Request?'),
+                            content: const Text('Are you sure you want to reject this blood request?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancel'),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                emergencyNote,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                  height: 1.2,
-                                ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _updateStatus('rejected');
+                                  Future.delayed(const Duration(milliseconds: 500), () {
+                                    Navigator.pop(context);
+                                  });
+                                },
+                                child: const Text('Reject', style: TextStyle(color: Colors.red)),
                               ),
                             ],
                           ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Colors.red.shade300, width: 1),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: Text(
+                        'Reject',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red.shade500,
                         ),
-                      ],
+                      ),
                     ),
-                  ],
+                  ),
+                if (status == 'accepted' || status == 'requested')
+                  const SizedBox(width: 12),
+                // Accept / Call / Complete Button
+                Expanded(
+                  child: status == 'completed'
+                      ? OutlinedButton.icon(
+                          onPressed: null,
+                          icon: const Icon(Icons.check_circle_outline, color: Colors.grey),
+                          label: const Text(
+                            'Completed',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade50,
+                            side: BorderSide(color: Colors.grey.shade300, width: 1),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                        )
+                      : status == 'accepted' || status == 'requested'
+                          ? OutlinedButton.icon(
+                              onPressed: () => _handleConnectWithPatient(phone, displayName),
+                              icon: const Icon(Icons.phone_outlined, color: Color(0xFF0047CB)),
+                              label: const Text(
+                                'Call Patient',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0047CB),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(color: Color(0xFF0047CB), width: 1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            )
+                          : OutlinedButton.icon(
+                              onPressed: () => _updateStatus('completed'),
+                              icon: const Icon(Icons.check_circle_outline, color: Colors.green),
+                              label: const Text(
+                                'Mark Complete',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.green, width: 1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                            ),
                 ),
-              ),
-              const SizedBox(height: 24),
-
-              // Timeline
-              _buildHorizontalTimeline(status),
-              const SizedBox(height: 32),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Color(0xFFF0F0F0))),
-        ),
-        child: SizedBox(
-          height: 56,
-          child: status == 'completed'
-              ? OutlinedButton.icon(
-                  onPressed: null, // disabled when completed
-                  icon: const Icon(Icons.check_circle_outline, color: Colors.grey),
-                  label: const Text(
-                    'Completed',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade100,
-                    side: BorderSide(color: Colors.grey.shade300, width: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                )
-              : OutlinedButton.icon(
-                  onPressed: () {
-                    if (status == 'accepted') {
-                      if (phone.isNotEmpty) _makePhoneCall(phone);
-                      _updateStatus('in_progress');
-                    } else if (status == 'in_progress' || status == 'on_the_way') {
-                      _updateStatus('completed');
-                    }
-                  },
-                  icon: Icon(
-                    status == 'accepted' ? Icons.phone_outlined : Icons.check_circle_outline,
-                    color: const Color(0xFF0047CB),
-                  ),
-                  label: Text(
-                    status == 'accepted' ? 'Connect with Patient' : 'Completed',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0047CB),
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFF0047CB), width: 1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-        ),
+        ],
       ),
     );
   }

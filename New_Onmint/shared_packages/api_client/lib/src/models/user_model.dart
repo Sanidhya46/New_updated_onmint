@@ -13,6 +13,7 @@ class User {
   final String? profilePictureUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Map<String, dynamic>? documents;
   
   // Patient-specific fields
   final DateTime? dateOfBirth;
@@ -83,6 +84,7 @@ class User {
     this.profilePictureUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.documents,
     this.dateOfBirth,
     this.gender,
     this.bloodGroup,
@@ -138,6 +140,7 @@ class User {
       profilePictureUrl: json['profilePictureUrl'],
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      documents: json['documents'] is Map<String, dynamic> ? json['documents'] : null,
       dateOfBirth: json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth']) : null,
       gender: json['gender'],
       bloodGroup: json['bloodGroup'],
@@ -146,8 +149,8 @@ class User {
           : null,
       specialization: json['specialization'],
       qualifications: json['qualifications'] != null ? List<String>.from(json['qualifications']) : null,
-      experience: json['experience'],
-      consultationFee: json['consultationFee']?.toDouble(),
+      experience: _parseInt(json['experience']),
+      consultationFee: _parseDouble(json['consultationFee']),
       languages: json['languages'] != null ? List<String>.from(json['languages']) : null,
       about: json['about'],
       licenseNumber: json['licenseNumber'],
@@ -158,15 +161,15 @@ class User {
           : null,
       pharmacyName: json['pharmacyName'],
       deliveryTimes: json['deliveryTimes'] != null ? List<String>.from(json['deliveryTimes']) : null,
-      minimumOrderAmount: json['minimumOrderAmount']?.toDouble(),
-      deliveryFee: json['deliveryFee']?.toDouble(),
+      minimumOrderAmount: _parseDouble(json['minimumOrderAmount']),
+      deliveryFee: _parseDouble(json['deliveryFee']),
       operatingHours: json['operatingHours'] != null ? OperatingHours.fromJson(json['operatingHours']) : null,
       driverName: json['driverName'],
       driverLicense: json['driverLicense'],
       vehicleNumber: json['vehicleNumber'],
       vehicleType: json['vehicleType'],
       equipmentAvailable: json['equipmentAvailable'] != null ? List<String>.from(json['equipmentAvailable']) : null,
-      isAvailable: json['isAvailable'],
+      isAvailable: json['isAvailable'] == true || json['isAvailable'] == 'true',
       currentLocation: json['currentLocation'] != null ? Location.fromJson(json['currentLocation']) : null,
       bloodStock: json['bloodStock'] != null
           ? (json['bloodStock'] as List).map((e) => BloodStock.fromJson(e)).toList()
@@ -177,10 +180,26 @@ class User {
       availability: json['availability'] != null
           ? (json['availability'] as List).map((e) => Availability.fromJson(e)).toList()
           : null,
-      rating: json['rating']?.toDouble(),
-      totalRatings: json['totalRatings'],
-      distance: json['distance']?.toDouble(), // NEW: Distance field from backend
+      rating: _parseDouble(json['rating']),
+      totalRatings: _parseInt(json['totalRatings']),
+      distance: _parseDouble(json['distance']), // NEW: Distance field from backend
     );
+  }
+
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -197,6 +216,7 @@ class User {
     if (deviceToken != null) data['deviceToken'] = deviceToken;
     if (profilePicture != null) data['profilePicture'] = profilePicture;
     if (profilePictureUrl != null) data['profilePictureUrl'] = profilePictureUrl;
+    if (documents != null) data['documents'] = documents;
     if (dateOfBirth != null) data['dateOfBirth'] = dateOfBirth!.toIso8601String();
     if (gender != null) data['gender'] = gender;
     if (bloodGroup != null) data['bloodGroup'] = bloodGroup;

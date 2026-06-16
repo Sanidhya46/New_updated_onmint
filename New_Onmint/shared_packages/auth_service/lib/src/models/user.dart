@@ -27,6 +27,7 @@ class User {
   final List<String>? languages;
   final String? about;
   final bool? isVerified;
+  final Map<String, dynamic>? documents;
   
   const User({
     required this.id,
@@ -52,6 +53,7 @@ class User {
     this.languages,
     this.about,
     this.isVerified,
+    this.documents,
   });
   
   /// Create User from JSON
@@ -99,6 +101,7 @@ class User {
         languages: json['languages'] is List ? (json['languages'] as List).map((e) => e.toString()).toList() : null,
         about: json['about']?.toString(),
         isVerified: json['isVerified'],
+        documents: json['documents'] is Map ? Map<String, dynamic>.from(json['documents']) : null,
       );
       
       print('User created - Email: ${user.email}, Role: ${user.role}, IsAdmin: ${user.isAdmin}');
@@ -135,6 +138,7 @@ class User {
       if (languages != null) 'languages': languages,
       if (about != null) 'about': about,
       if (isVerified != null) 'isVerified': isVerified,
+      if (documents != null) 'documents': documents,
     };
   }
 
@@ -175,6 +179,7 @@ class User {
     List<String>? languages,
     String? about,
     bool? isVerified,
+    Map<String, dynamic>? documents,
   }) {
     return User(
       id: id ?? this.id,
@@ -200,6 +205,7 @@ class User {
       languages: languages ?? this.languages,
       about: about ?? this.about,
       isVerified: isVerified ?? this.isVerified,
+      documents: documents ?? this.documents,
     );
   }
 

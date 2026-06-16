@@ -114,7 +114,7 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
                                     ),
                                     child: user?.profilePicture == null
                                         ? const Icon(Icons.person,
-                                            size: 44, color: Color(0xFFE52329))
+                                            size: 44, color: Color(0xFFE52329),)
                                         : null,
                                   ),
                                   const SizedBox(width: 18),
@@ -287,42 +287,47 @@ class _AmbulanceDashboardState extends State<AmbulanceDashboard> {
                   color: const Color(0xFFFFF5F5), // Light red background
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    const Icon(Icons.assignment, size: 32, color: Color(0xFFE52329)),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Manage Your Consultations Easily',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Check your requests, track consultations, and manage your progress all in one place.',
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontSize: 11,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
+                    Row(
+                      children: [
+                        const Icon(Icons.assignment, size: 32, color: Color(0xFFE52329),),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(width: 8, height: 8, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE52329))),
-                              const SizedBox(width: 4),
-                              Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[300])),
-                              const SizedBox(width: 4),
-                              Container(width: 8, height: 8, decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[300])),
+                              const Text(
+                                'Manage Your Consultations Easily',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Check your requests, track consultations, and manage your progress all in one place.',
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 11,
+                                ),
+                              ),
                             ],
-                          )
-                        ],
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE52329),)),
+                        const SizedBox(width: 4),
+                        Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE52329),)),
+                        const SizedBox(width: 4),
+                        Container(width: 6, height: 6, decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFE52329),)),
+                      ],
+                    )
                   ],
                 ),
               ),

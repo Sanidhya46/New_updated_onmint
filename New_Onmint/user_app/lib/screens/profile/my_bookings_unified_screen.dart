@@ -162,6 +162,34 @@ class _MyBookingsUnifiedScreenState extends State<MyBookingsUnifiedScreen>
           }
           return true;
         }).toList();
+
+        // Sort by status priority: Requested → Confirmed → In Progress → Completed
+        int _statusPriority(String status) {
+          switch (status.toLowerCase()) {
+            case 'requested':
+            case 'pending':
+              return 0;
+            case 'accepted':
+            case 'confirmed':
+              return 1;
+            case 'on_the_way':
+            case 'in_progress':
+              return 2;
+            case 'completed':
+              return 3;
+            default:
+              return 4;
+          }
+        }
+        _allServices.sort((a, b) {
+          final aPriority = _statusPriority(a['status']?.toString() ?? '');
+          final bPriority = _statusPriority(b['status']?.toString() ?? '');
+          if (aPriority != bPriority) return aPriority.compareTo(bPriority);
+          // Within same status, most recent first
+          final aDate = DateTime.tryParse(a['createdAt']?.toString() ?? '') ?? DateTime(2000);
+          final bDate = DateTime.tryParse(b['createdAt']?.toString() ?? '') ?? DateTime(2000);
+          return bDate.compareTo(aDate);
+        });
         _isLoadingAll = false;
       });
     } catch (e) {

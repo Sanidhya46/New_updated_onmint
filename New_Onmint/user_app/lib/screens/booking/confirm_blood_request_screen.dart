@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:ui_components/ui_components.dart';
+import 'order_request_screen.dart';
 
 class ConfirmBloodRequestScreen extends StatefulWidget {
   final String patientName;
@@ -10,6 +11,8 @@ class ConfirmBloodRequestScreen extends StatefulWidget {
   final String contactNumber;
   final String address;
   final String emergencyNote;
+  final String city;
+  final String state;
 
   const ConfirmBloodRequestScreen({
     Key? key,
@@ -20,6 +23,8 @@ class ConfirmBloodRequestScreen extends StatefulWidget {
     required this.contactNumber,
     required this.address,
     required this.emergencyNote,
+    required this.city,
+    required this.state,
   }) : super(key: key);
 
   @override
@@ -44,15 +49,25 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
         'unitsRequired': int.tryParse(widget.unitsRequired) ?? 1,
         'isEmergency': true,
         'address': widget.address,
-        'coordinates': [0, 0], // Optional or get actual if needed
+        'coordinates': [0, 0],
+        'city': widget.city,
+        'state': widget.state,
       };
 
-      await _apiClient.patient.createRealtimeBooking(requestData);
+      final response = await _apiClient.patient.createRealtimeBooking(requestData);
 
       if (mounted) {
         ToastUtils.showSuccess('Booking successfully created and sent to nearby blood banks');
-        // Use pushAndRemoveUntil to avoid glitchy pop animations and ensure we go to the root
-        Navigator.of(context, rootNavigator: true).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => OrderRequestScreen(
+              bookingId: response['_id'] ?? '',
+              bookingData: requestData,
+              serviceType: 'bloodbank',
+            ),
+          ),
+          (route) => route.isFirst,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -182,7 +197,7 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
             // Request Summary
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
@@ -226,6 +241,10 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
                   _buildSummaryRow(Icons.local_hospital_outlined, 'Hospital Name', widget.hospitalName),
                   _buildSummaryRow(Icons.phone_outlined, 'Contact Number', widget.contactNumber),
                   _buildSummaryRow(Icons.location_on_outlined, 'Address / Location', widget.address),
+                  if (widget.city.isNotEmpty)
+                    _buildSummaryRow(Icons.location_city, 'City', widget.city),
+                  if (widget.state.isNotEmpty)
+                    _buildSummaryRow(Icons.map_outlined, 'State', widget.state),
                   _buildSummaryRow(Icons.note_alt_outlined, 'Emergency Note', widget.emergencyNote.isEmpty ? 'Need ASAP' : widget.emergencyNote, showDivider: false),
                 ],
               ),
@@ -396,7 +415,7 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(icon, color: Colors.grey[500], size: 16),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               flex: 2,
               child: Text(
@@ -416,7 +435,7 @@ class _ConfirmBloodRequestScreenState extends State<ConfirmBloodRequestScreen> {
         ),
         if (showDivider) ...[
           const SizedBox(height: 8),
-          Divider(color: Colors.grey[200], thickness: 1),
+          Divider(color: Colors.grey[200], thickness: 1, height: 1),
           const SizedBox(height: 8),
         ],
       ],

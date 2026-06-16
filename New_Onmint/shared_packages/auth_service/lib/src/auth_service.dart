@@ -1,4 +1,5 @@
 import 'package:api_client/api_client.dart';
+import 'package:dio/dio.dart';
 
 /// Authentication service for OnMint healthcare platform
 class AuthService {
@@ -11,6 +12,12 @@ class AuthService {
         return await _apiClient.auth.registerWithFiles(registrationData, files: files, xFiles: xFiles, namedXFiles: namedXFiles);
       }
       return await _apiClient.auth.register(registrationData);
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map) {
+        final message = e.response?.data['message'] ?? 'Registration failed';
+        throw Exception(message);
+      }
+      throw Exception('Registration failed: ${e.message}');
     } catch (e) {
       throw Exception('Registration failed: $e');
     }
@@ -21,6 +28,12 @@ class AuthService {
     try {
       final loginData = {'phone': phone, 'password': password};
       return await _apiClient.auth.login(loginData);
+    } on DioException catch (e) {
+      if (e.response?.data != null && e.response?.data is Map) {
+        final message = e.response?.data['message'] ?? 'Login failed';
+        throw Exception(message);
+      }
+      throw Exception('Login failed: ${e.message}');
     } catch (e) {
       throw Exception('Login failed: $e');
     }

@@ -1,5 +1,7 @@
 import '../api_client_base.dart';
 import '../models/models.dart';
+import 'package:dio/dio.dart';
+import 'package:http_parser/http_parser.dart' show MediaType;
 
 class DoctorApiService {
   final ApiClient _client;
@@ -54,6 +56,58 @@ class DoctorApiService {
   Future<Prescription> createPrescription(Map<String, dynamic> data) async {
     final response = await _client.post('/doctor/prescriptions', data: data);
     return Prescription.fromJson(response.data['data']);
+  }
+
+  /// Upload a prescription file (PDF/JPG/PNG) for a consultation booking.
+  Future<Map<String, dynamic>> uploadPrescriptionFile(
+    String appointmentId,
+    String filePath, {
+    String? notes,
+  }) async {
+    final response = await _client.uploadMultipartData(
+      '/doctor/appointments/$appointmentId/prescription-file',
+      {if (notes != null && notes.isNotEmpty) 'notes': notes},
+      namedFiles: {'prescription': filePath},
+    );
+    return response.data['data'] as Map<String, dynamic>;
+  }
+
+  /// Upload prescription file from bytes (web-compatible).
+  Future<Map<String, dynamic>> uploadPrescriptionFileBytes(
+    String appointmentId,
+    List<int> bytes,
+    String filename, {
+    String? notes,
+  }) async {
+    final formData = FormData.fromMap({
+      if (notes != null && notes.isNotEmpty) 'notes': notes,
+    });
+    formData.files.add(
+      MapEntry(
+        'prescription',
+        MultipartFile.fromBytes(
+          bytes,
+          filename: filename,
+          contentType: _contentTypeForFilename(filename),
+        ),
+      ),
+    );
+    final response = await _client.post(
+      '/doctor/appointments/$appointmentId/prescription-file',
+      data: formData,
+    );
+    return response.data['data'] as Map<String, dynamic>;
+  }
+
+  MediaType _contentTypeForFilename(String filename) {
+    final lower = filename.toLowerCase();
+    if (lower.endsWith('.pdf')) {
+      return MediaType('application', 'pdf');
+    }
+    if (lower.endsWith('.png')) {
+      return MediaType('image', 'png');
+    }
+    return MediaType('image', 'jpeg');
   }
 
   // Dashboard

@@ -3,6 +3,9 @@ import 'package:api_client/api_client.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:provider/provider.dart';
+import 'package:auth_service/auth_service.dart';
+import 'package:user_app/data/indian_states_cities.dart';
 import 'package:user_app/screens/booking/confirm_ambulance_booking_screen.dart';
 
 class AmbulanceBookingScreen extends StatefulWidget {
@@ -20,6 +23,8 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
   final TextEditingController _notesController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   String? _selectedGender;
+  String? _selectedState;
+  String? _selectedCity;
 
   final ScrollController _scrollController = ScrollController();
   final _formKey = GlobalKey<FormState>();
@@ -33,6 +38,26 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
   void initState() {
     super.initState();
     _fetchCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillUserData());
+  }
+
+  void _prefillUserData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user != null) {
+      _nameController.text = user.fullName.isNotEmpty ? user.fullName : '';
+      _phoneController.text = user.phone.isNotEmpty ? user.phone : '';
+      if (user.city.isNotEmpty) _selectedCity = user.city;
+      if (user.state.isNotEmpty) _selectedState = user.state;
+      if (user.gender != null && user.gender!.isNotEmpty) {
+        _selectedGender = user.gender;
+      }
+      if (user.dateOfBirth != null) {
+        final age = DateTime.now().year - user.dateOfBirth!.year;
+        _ageController.text = age.toString();
+      }
+      setState(() {});
+    }
   }
 
   @override
@@ -111,6 +136,12 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
   }
 
   void _navigateToConfirm() {
+    if (_selectedCity == null || _selectedCity!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your city'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
     if (_formKey.currentState!.validate()) {
       Navigator.push(
         context,
@@ -128,6 +159,8 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
             coordinates: _currentPosition != null
                 ? [_currentPosition!.longitude, _currentPosition!.latitude]
                 : [0.0, 0.0],
+            city: _selectedCity ?? '',
+            state: _selectedState ?? '',
           ),
         ),
       ).then((_) {
@@ -234,6 +267,80 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
                               style:
                                   TextStyle(fontSize: 10, color: Colors.blue)),
                         ),
+                      const SizedBox(height: 12),
+
+                      // State & City selection
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('State'),
+                                TextFormField(
+                                  key: ValueKey(_selectedState),
+                                  initialValue: _selectedState ?? 'Not Provided',
+                                  readOnly: true,
+                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  decoration: InputDecoration(
+                                    hintText: 'State',
+                                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(bottom: 0),
+                                      child: Icon(Icons.map_outlined, color: Colors.red[700], size: 18),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.grey[200]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildFieldLabel('City *'),
+                                TextFormField(
+                                  key: ValueKey(_selectedCity),
+                                  initialValue: _selectedCity ?? 'Not Provided',
+                                  readOnly: true,
+                                  style: const TextStyle(fontSize: 12, color: Colors.black87),
+                                  decoration: InputDecoration(
+                                    hintText: 'City',
+                                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 11),
+                                    prefixIcon: Padding(
+                                      padding: const EdgeInsets.only(bottom: 0),
+                                      child: Icon(Icons.location_city, color: Colors.red[700], size: 18),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.grey[200]!),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide(color: Colors.red[300]!, width: 1.5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 12),
 
                       _buildFieldLabel('Drop-off Location'),
@@ -683,3 +790,151 @@ class _AmbulanceBookingScreenState extends State<AmbulanceBookingScreen> {
     );
   }
 }
+
+/// Dialog for selecting Indian state
+class _StatePickerDialog extends StatefulWidget {
+  final String? selectedState;
+  const _StatePickerDialog({this.selectedState});
+
+  @override
+  State<_StatePickerDialog> createState() => _StatePickerDialogState();
+}
+
+class _StatePickerDialogState extends State<_StatePickerDialog> {
+  final _searchController = TextEditingController();
+  List<String> _filtered = IndianStatesData.states;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select State', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search state...',
+                hintStyle: const TextStyle(fontSize: 12),
+                prefixIcon: const Icon(Icons.search, size: 18),
+                isDense: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onChanged: (q) => setState(() {
+                _filtered = IndianStatesData.states
+                    .where((s) => s.toLowerCase().contains(q.toLowerCase()))
+                    .toList();
+              }),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: ListView.builder(
+                itemCount: _filtered.length,
+                itemBuilder: (_, i) {
+                  final s = _filtered[i];
+                  return ListTile(
+                    dense: true,
+                    title: Text(s, style: const TextStyle(fontSize: 13)),
+                    selected: s == widget.selectedState,
+                    selectedTileColor: Colors.red[50],
+                    onTap: () => Navigator.pop(context, s),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))],
+    );
+  }
+}
+
+/// Dialog for selecting city based on selected state
+class _CityPickerDialog extends StatefulWidget {
+  final String state;
+  final String? selectedCity;
+  const _CityPickerDialog({required this.state, this.selectedCity});
+
+  @override
+  State<_CityPickerDialog> createState() => _CityPickerDialogState();
+}
+
+class _CityPickerDialogState extends State<_CityPickerDialog> {
+  final _searchController = TextEditingController();
+  late List<String> _cities;
+  late List<String> _filtered;
+
+  @override
+  void initState() {
+    super.initState();
+    _cities = IndianStatesData.getCitiesForState(widget.state);
+    _filtered = _cities;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Select City in ${widget.state}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      content: SizedBox(
+        width: double.maxFinite,
+        height: 400,
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search city...',
+                hintStyle: const TextStyle(fontSize: 12),
+                prefixIcon: const Icon(Icons.search, size: 18),
+                isDense: true,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onChanged: (q) => setState(() {
+                _filtered = _cities
+                    .where((c) => c.toLowerCase().contains(q.toLowerCase()))
+                    .toList();
+              }),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: _filtered.isEmpty
+                  ? const Center(child: Text('No cities found', style: TextStyle(color: Colors.grey)))
+                  : ListView.builder(
+                      itemCount: _filtered.length,
+                      itemBuilder: (_, i) {
+                        final c = _filtered[i];
+                        return ListTile(
+                          dense: true,
+                          title: Text(c, style: const TextStyle(fontSize: 13)),
+                          selected: c == widget.selectedCity,
+                          selectedTileColor: Colors.red[50],
+                          onTap: () => Navigator.pop(context, c),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))],
+    );
+  }
+}
+

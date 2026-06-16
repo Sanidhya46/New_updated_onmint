@@ -88,7 +88,7 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Order Details'),
         backgroundColor: const Color(0xFF0033CC),
@@ -127,7 +127,7 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
     final totalAmount = medicinesTotal + deliveryFee + packingFee;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -404,11 +404,12 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withOpacity(0.08),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -465,6 +466,7 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
         final double lineTotalWidth = availableWidth - lineLeft - lineRight;
         
         return Stack(
+          alignment: Alignment.topCenter,
           children: [
             Positioned(
               top: 9,
@@ -481,6 +483,7 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
               ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTrackerNode('Order Accepted', 'Just Now', currentStep >= 0, isFirst: true),
                 _buildTrackerNode('Packing Medicines', '10:20 AM', currentStep >= 1),
@@ -525,6 +528,25 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
     );
   }
 
+  Future<void> _chatPatient(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      ToastUtils.showError('Phone number not available');
+      return;
+    }
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    final Uri url = Uri.parse('whatsapp://send?phone=$cleanPhone');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      final Uri webUrl = Uri.parse('https://wa.me/$cleanPhone');
+      if (await canLaunchUrl(webUrl)) {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+      } else {
+        ToastUtils.showError('Could not launch WhatsApp');
+      }
+    }
+  }
+
   Widget _buildBottomBar() {
     if (_isUpdatingStatus) {
       return const SafeArea(child: SizedBox(height: 60, child: Center(child: CircularProgressIndicator())));
@@ -562,9 +584,11 @@ class _AcceptedOrderDetailsScreenState extends State<AcceptedOrderDetailsScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildActionButton(Icons.call, 'Call Customer', () => _callPatient(_orderData!['patientPhone'] ?? _orderData!['patient']?['phone'])),
-                _buildActionButton(Icons.chat, 'Chat', () {}),
-                _buildActionButton(Icons.map, 'Open Map', () {}),
+                Expanded(child: _buildActionButton(Icons.call, 'Call Customer', () => _callPatient(_orderData!['patientPhone'] ?? _orderData!['patient']?['phone']))),
+                Container(width: 1, height: 30, color: Colors.grey[300]),
+                Expanded(child: _buildActionButton(Icons.chat, 'Chat', () => _chatPatient(_orderData!['patientPhone'] ?? _orderData!['patient']?['phone']))),
+                Container(width: 1, height: 30, color: Colors.grey[300]),
+                Expanded(child: _buildActionButton(Icons.map, 'Open Map', () {})),
               ],
             ),
             if (currentIndex < statuses.length - 1) ...[

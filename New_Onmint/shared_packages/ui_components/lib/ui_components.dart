@@ -6,6 +6,7 @@ export 'src/widgets/custom_text_field.dart';
 export 'src/widgets/loading_widget.dart';
 export 'src/widgets/empty_state_widget.dart';
 export 'src/widgets/error_widget.dart';
+export 'src/widgets/searchable_dropdown.dart';
 
 // Utils
 export 'src/utils/toast_utils.dart';

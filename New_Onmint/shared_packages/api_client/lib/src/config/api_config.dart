@@ -1,11 +1,57 @@
 class ApiConfig {
+  // ════════════════════════════════════════════════════════════════════════════
+  // 🔧 SIMPLE SETUP - CHANGE ONLY LINE 7 WHEN YOU HOST YOUR API
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  // Change this to your hosted API URL
   static const String _baseUrlDev = 'http://localhost:5000/api/v1';
-  static const String _baseUrlProd = 'https://your-production-api.com/api/v1';
+  // Example: 'https://api.yourdomain.com/api/v1'
   
-  // Environment flag - set this based on your build configuration
-  static const bool _isProduction = false; // Change to true for production builds
+  // Change to true ONLY if you have separate dev & production environments
+  static const bool _isProduction = false; // MAKE TRUE WHILE HOSTING ..
   
-  static String get baseUrl => _isProduction ? _baseUrlProd : _baseUrlDev;
+  // ════════════════════════════════════════════════════════════════════════════
+  // ADVANCED: Only change this if you have separate production server
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  static const String _baseUrlProd = 'https://production-api.yourdomain.com/api/v1';
+  
+  // ════════════════════════════════════════════════════════════════════════════
+  // NO NEED TO CHANGE ANYTHING BELOW THIS LINE
+  // ════════════════════════════════════════════════════════════════════════════
+  
+  // Runtime configurable base URL (can be changed dynamically)
+  static String? _runtimeBaseUrl;
+  
+  // Get current base URL
+  // Logic: If _isProduction=true, use _baseUrlProd, else use _baseUrlDev
+  static String get baseUrl => _runtimeBaseUrl ?? (_isProduction ? _baseUrlProd : _baseUrlDev);
+  
+  // Set custom base URL at runtime
+  static void setBaseUrl(String url) {
+    _runtimeBaseUrl = url;
+    print('✅ API Base URL changed to: $url');
+  }
+  
+  // Reset to default configuration
+  static void resetToDefault() {
+    _runtimeBaseUrl = null;
+    print('✅ API Base URL reset to default: $baseUrl');
+  }
+  
+  // Get current configuration info
+  static String getConfigInfo() {
+    return '''
+╔════════════════════════════════════════════════════════════╗
+║              API Configuration Details                     ║
+╠════════════════════════════════════════════════════════════╣
+║ Current Base URL: $baseUrl
+║ Environment: ${_isProduction ? 'PRODUCTION' : 'DEVELOPMENT'}
+║ Dev URL: $_baseUrlDev
+║ Prod URL: $_baseUrlProd
+╚════════════════════════════════════════════════════════════╝
+    ''';
+  }
   
   // Connection timeouts
   static const Duration connectTimeout = Duration(seconds: 30);
@@ -19,6 +65,8 @@ class ApiConfig {
   static const String pharmacistEndpoint = '/pharmacist';
   static const String nurseEndpoint = '/nurse';
   static const String ambulanceEndpoint = '/ambulance';
+  static const String pathologyEndpoint = '/pathology';
+  static const String bloodbankEndpoint = '/bloodbank';
   
   // Headers
   static const Map<String, String> defaultHeaders = {

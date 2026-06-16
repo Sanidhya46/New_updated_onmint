@@ -19,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  String? _apiErrorMessage;
   String _selectedCountryCode = '+91';
   final List<String> _countryCodes = ['+91', '+1', '+44', '+61', '+81', '+49', '+33', '+86', '+7', '+55'];
 
@@ -43,7 +44,14 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (!success) {
-        if (mounted) ToastUtils.showError(authProvider.error ?? 'Login failed');
+        if (mounted) {
+          setState(() {
+            _apiErrorMessage = authProvider.error
+                    ?.replaceAll('Login failed: ', '')
+                    .replaceAll('Exception: ', '') ??
+                'Login failed. Please try again.';
+          });
+        }
         return;
       }
 
@@ -53,10 +61,20 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) Navigator.pushReplacementNamed(context, '/home');
       } else {
         await authProvider.logout();
-        if (mounted) ToastUtils.showError('This app is for healthcare providers only');
+        if (mounted) {
+          setState(() {
+            _apiErrorMessage = 'This app is for healthcare providers only';
+          });
+        }
       }
     } catch (e) {
-      if (mounted) ToastUtils.showError('Login failed: ${e.toString()}');
+      if (mounted) {
+        setState(() {
+          _apiErrorMessage = e.toString()
+              .replaceAll('Exception: ', '')
+              .replaceAll('Login failed: ', '');
+        });
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -72,50 +90,63 @@ class _LoginScreenState extends State<LoginScreen> {
     Widget? prefixWidget,
     Widget? suffixWidget,
     String? Function(String?)? validator,
+    ValueChanged<String>? onChanged,
   }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      obscureText: obscureText,
-      validator: validator,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
-        hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 12, right: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: const Color(0xFF0033CC), size: 22),
-              if (prefixWidget != null) ...[
-                const SizedBox(width: 8),
-                prefixWidget,
-              ]
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF152238),
           ),
         ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        suffixIcon: suffixWidget,
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+        const SizedBox(height: 4),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          validator: validator,
+          onChanged: onChanged,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 8),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: const Color(0xFF0033CC), size: 22),
+                  if (prefixWidget != null) ...[
+                    const SizedBox(width: 8),
+                    prefixWidget,
+                  ]
+                ],
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            suffixIcon: suffixWidget,
+            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0033CC), width: 1.5),
+            ),
+            filled: true,
+            fillColor: Colors.white,
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF0033CC), width: 1.5),
-        ),
-        filled: true,
-        fillColor: Colors.white,
-      ),
+      ],
     );
   }
 
@@ -192,6 +223,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 label: 'Mobile Number',
                                 hint: 'Enter mobile number',
                                 keyboardType: TextInputType.phone,
+                                onChanged: (_) {
+                                  if (_apiErrorMessage != null) {
+                                    setState(() => _apiErrorMessage = null);
+                                  }
+                                },
                                 prefixWidget: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
@@ -223,6 +259,40 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 validator: (v) => v!.isEmpty ? 'Required' : null,
                               ),
+
+                              // API Error Banner (after password)
+                              if (_apiErrorMessage != null) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFFCA5A5), width: 0.8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          _apiErrorMessage!,
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            color: Color(0xFFDC2626),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => setState(() => _apiErrorMessage = null),
+                                        child: const Icon(Icons.close, color: Color(0xFFDC2626), size: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+
                               const SizedBox(height: 16),
                               
                               Row(
@@ -255,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
                               
                               SizedBox(
                                 height: 45,
@@ -271,7 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       : const Text('LOGIN', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
                                 ),
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
                               
                               Row(
                                 children: [
@@ -283,7 +353,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   const Expanded(child: Divider(color: Colors.grey, thickness: 0.5)),
                                 ],
                               ),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 12),
                               
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -300,7 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 8),
                             ],
                           ),
                         ),

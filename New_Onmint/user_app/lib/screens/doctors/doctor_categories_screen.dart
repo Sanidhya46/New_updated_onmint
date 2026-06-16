@@ -161,13 +161,30 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: symptoms
-                .map((symptom) =>
-                    _buildSymptomItem(category['title'], path, symptom))
-                .toList(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 8.0;
+              const itemsPerRow = 4;
+              final itemWidth =
+                  (constraints.maxWidth - spacing * (itemsPerRow - 1)) /
+                      itemsPerRow;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: 12,
+                children: symptoms
+                    .map(
+                      (symptom) => SizedBox(
+                        width: itemWidth,
+                        child: _buildSymptomItem(
+                          category['title'],
+                          path,
+                          symptom,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              );
+            },
           ),
         ],
       ),
@@ -188,9 +205,7 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
           ),
         );
       },
-      child: SizedBox(
-        width: 80,
-        child: Column(
+      child: Column(
           children: [
             Container(
               width: 70,
@@ -224,7 +239,6 @@ class _DoctorCategoriesScreenState extends State<DoctorCategoriesScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }

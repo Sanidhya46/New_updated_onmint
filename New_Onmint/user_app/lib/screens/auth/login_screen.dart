@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  String? _apiErrorMessage;
 
   @override
   void dispose() {
@@ -54,15 +55,19 @@ class _LoginScreenState extends State<LoginScreen> {
         await authProvider.logout();
       }
     } else {
-      ToastUtils.showError(
-          authProvider.error ?? 'Login failed. Please try again.');
+      setState(() {
+        _apiErrorMessage = authProvider.error
+                ?.replaceAll('Login failed: ', '')
+                .replaceAll('Exception: ', '') ??
+            'Login failed. Please try again.';
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8FB),
+      backgroundColor: const Color(0xFFE6ECF4),
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -74,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
             
             // Login Form Card
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -112,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 12),
 
                     _buildInputField(
@@ -155,6 +160,39 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
+
+                    // Validation / Error Message
+                    if (_apiErrorMessage != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFFCA5A5), width: 0.8),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, color: Color(0xFFDC2626), size: 18),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _apiErrorMessage!,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFFDC2626),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () => setState(() => _apiErrorMessage = null),
+                              child: const Icon(Icons.close, color: Color(0xFFDC2626), size: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
 
                     const SizedBox(height: 2),
 
@@ -224,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     
                     Row(
                       children: [
@@ -268,14 +306,14 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
             
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   "Don't have an account? ",
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 11),
+                  style: TextStyle(color: Colors.black87, fontSize: 11),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -300,7 +338,7 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 Text(
                   "Need help? ",
-                  style: TextStyle(color: Colors.grey.shade700, fontSize: 11),
+                  style: TextStyle(color: Colors.black87, fontSize: 11),
                 ),
                 GestureDetector(
                   onTap: () {},
@@ -354,13 +392,18 @@ class _LoginScreenState extends State<LoginScreen> {
             controller: controller,
             obscureText: obscureText,
             validator: validator,
+            onChanged: (_) {
+              if (_apiErrorMessage != null) {
+                setState(() => _apiErrorMessage = null);
+              }
+            },
             style: const TextStyle(fontSize: 13, color: Color(0xFF152238)),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: TextStyle(fontSize: 12, color: Colors.grey.shade400),
               border: InputBorder.none,
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+              contentPadding: const EdgeInsets.symmetric(vertical: 14),
               icon: Padding(
                 padding: const EdgeInsets.only(left: 14.0),
                 child: Icon(icon, color: const Color(0xFF0D6EFD), size: 18),

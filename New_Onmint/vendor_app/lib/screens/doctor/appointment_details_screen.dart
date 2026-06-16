@@ -151,6 +151,10 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
   }
 
   Widget _buildCompactDetails() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final scale = screenWidth < 380 ? screenWidth / 380.0 : 1.0;
+    final headingSize = 15.75 * scale; // 14 * 1.125
+    final subFontSize = 12.375 * scale; // 11 * 1.125
     final patient = _appointment!['patient'] ?? {};
     final patientName = patient['fullName'] ?? '${patient['firstName'] ?? ''} ${patient['lastName'] ?? ''}'.trim();
     final gender = patient['gender'] ?? 'Male';
@@ -179,7 +183,7 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Request Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF152238))),
+              const Text('Request Summary', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.75, color: Color(0xFF152238))),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -232,7 +236,7 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Patient Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF152238))),
+              const Text('Patient Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.75, color: Color(0xFF152238))),
               const SizedBox(height: 8),
               _buildIconRow(Icons.person_outline, 'Name', patientName.isEmpty ? 'Patient' : patientName),
               const Divider(height: 12, color: Color(0xFFF0F0F0)),
@@ -255,7 +259,7 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Consultation Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF152238))),
+              const Text('Consultation Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.75, color: Color(0xFF152238))),
               const SizedBox(height: 8),
               _buildIconRow(Icons.medical_services_outlined, 'Consultation Type', consultationType),
               const Divider(height: 12, color: Color(0xFFF0F0F0)),
@@ -276,7 +280,7 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Request Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF152238))),
+              const Text('Request Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15.75, color: Color(0xFF152238))),
               const SizedBox(height: 8),
               _buildIconRow(Icons.calendar_today_outlined, 'Request Date', formattedDate),
               const Divider(height: 12, color: Color(0xFFF0F0F0)),
@@ -319,17 +323,22 @@ class _AppointmentDetailsScreenState extends State<AppointmentDetailsScreen> {
   }
 
   Widget _buildIconRow(IconData icon, String label, String value) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final scale = screenWidth < 380 ? screenWidth / 380.0 : 1.0;
+    final baseFontLabel = 12.375 * scale; // 11 * 1.125
+    final baseFontValue = 12.375 * scale; // 11 * 1.125
+    final iconSize = 15.75 * scale; // 14 * 1.125
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 14, color: Colors.blue.shade700),
-        const SizedBox(width: 8),
+        Icon(icon, size: iconSize, color: Colors.blue.shade700),
+        const SizedBox(width: 9), // 8 * 1.125
         SizedBox(
-          width: 100,
-          child: Text(label, style: const TextStyle(color: Colors.black54, fontSize: 11)),
+          width: 112, // 100 * 1.125 ≈ 112
+          child: Text(label, style: TextStyle(color: Colors.black54, fontSize: baseFontLabel)),
         ),
         Expanded(
-          child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11, color: Colors.black87)),
+          child: Text(value, style: TextStyle(fontWeight: FontWeight.w500, fontSize: baseFontValue, color: Colors.black87)),
         ),
       ],
     );

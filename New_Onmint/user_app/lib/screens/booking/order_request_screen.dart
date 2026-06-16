@@ -163,6 +163,8 @@ class _OrderRequestScreenState extends State<OrderRequestScreen> {
   @override
   Widget build(BuildContext context) {
     final type = widget.serviceType.toLowerCase();
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final scale = screenWidth < 380 ? screenWidth / 380.0 : 1.0;
 
     Color serviceColor;
     String serviceTitle;
@@ -210,71 +212,76 @@ class _OrderRequestScreenState extends State<OrderRequestScreen> {
     if (type == 'ambulance') {
       detailsRows = [
         _buildDetailRow(Icons.location_on_outlined, 'Pickup Location',
-            _extractLocation(widget.bookingData)),
+            _extractLocation(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.location_on_outlined, 'Drop-off Location',
-            _extractDropOffLocation(widget.bookingData)),
+            _extractDropOffLocation(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.person_outline, 'Contact Name',
-            _extractPatientName(widget.bookingData)),
+            _extractPatientName(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.phone_outlined, 'Phone Number',
-            _extractPhone(widget.bookingData)),
+            _extractPhone(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.note_alt_outlined, 'Additional Details',
             _extractNotes(widget.bookingData),
-            isLast: true),
+            isLast: true, scale: scale),
       ];
     } else if (type == 'bloodbank' || type == 'blood bank') {
       detailsRows = [
         _buildDetailRow(Icons.person_outline, 'Patient Name',
-            _extractPatientName(widget.bookingData)),
+            _extractPatientName(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.phone_outlined, 'Phone Number',
-            _extractPhone(widget.bookingData)),
+            _extractPhone(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.bloodtype_outlined, 'Blood Group / Unit',
-            _extractBloodDetails(widget.bookingData)),
+            _extractBloodDetails(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.calendar_today_outlined, 'Age',
-            '${_extractAge(widget.bookingData)} Years'),
+            '${_extractAge(widget.bookingData)} Years', scale: scale),
         _buildDetailRow(Icons.location_on_outlined, 'Location',
             _extractLocation(widget.bookingData),
-            isLast: true),
+            isLast: true, scale: scale),
       ];
     } else if (type == 'pathology' ||
         type == 'lab_test' ||
         type == 'lab test') {
       detailsRows = [
         _buildDetailRow(Icons.person_outline, 'Patient Name',
-            _extractPatientName(widget.bookingData)),
+            _extractPatientName(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.phone_outlined, 'Phone Number',
-            _extractPhone(widget.bookingData)),
+            _extractPhone(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.calendar_today_outlined, 'Age',
-            '${_extractAge(widget.bookingData)} Years'),
+            '${_extractAge(widget.bookingData)} Years', scale: scale),
         _buildDetailRow(Icons.science_outlined, 'Test Name',
-            _extractTestName(widget.bookingData)),
+            _extractTestName(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.location_on_outlined, 'Location',
             _extractLocation(widget.bookingData),
-            isLast: true),
+            isLast: true, scale: scale),
       ];
     } else {
       detailsRows = [
         _buildDetailRow(Icons.person_outline, 'Patient Name',
-            _extractPatientName(widget.bookingData)),
+            _extractPatientName(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.phone_outlined, 'Phone Number',
-            _extractPhone(widget.bookingData)),
+            _extractPhone(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.calendar_today_outlined, 'Age',
-            '${_extractAge(widget.bookingData)} Years'),
+            '${_extractAge(widget.bookingData)} Years', scale: scale),
         _buildDetailRow(Icons.transgender_outlined, 'Gender',
-            _extractGender(widget.bookingData)),
+            _extractGender(widget.bookingData), scale: scale),
         _buildDetailRow(Icons.location_on_outlined, 'Location',
             _extractLocation(widget.bookingData),
-            isLast: true),
+            isLast: true, scale: scale),
       ];
     }
 
-    return Scaffold(
-      backgroundColor: Colors.white,
+    return WillPopScope(
+      onWillPop: () async {
+        Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+        return false;
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A60)),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false),
         ),
         title: const Text(
           'My Booking',
@@ -462,25 +469,25 @@ class _OrderRequestScreenState extends State<OrderRequestScreen> {
             ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value,
-      {bool isLast = false}) {
+      {bool isLast = false, double scale = 1.0}) {
     return Column(
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: const Color(0xFF5A78FF)),
-            const SizedBox(width: 12),
+            Icon(icon, size: 16 * scale, color: const Color(0xFF5A78FF)),
+            SizedBox(width: 12 * scale),
             Expanded(
               flex: 2,
               child: Text(
                 label,
                 style: TextStyle(
                   color: Colors.grey[600],
-                  fontSize: 12,
+                  fontSize: 12 * scale,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -490,9 +497,9 @@ class _OrderRequestScreenState extends State<OrderRequestScreen> {
               child: Text(
                 value,
                 textAlign: TextAlign.right,
-                style: const TextStyle(
-                  color: Color(0xFF1A1A60),
-                  fontSize: 13,
+                style: TextStyle(
+                  color: const Color(0xFF1A1A60),
+                  fontSize: 13 * scale,
                   fontWeight: FontWeight.w700,
                 ),
               ),

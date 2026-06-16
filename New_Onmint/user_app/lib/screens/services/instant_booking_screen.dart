@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:auth_service/auth_service.dart';
 import 'package:api_client/api_client.dart';
 import '../booking/order_request_screen.dart';
 
@@ -32,11 +34,25 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
   String? _selectedBloodGroup;
   int _bloodUnits = 1;
   final Set<String> _selectedLabTests = {}; // Multiple tests
+  String _userCity = '';
+  String _userState = '';
 
   @override
   void initState() {
     super.initState();
     _initializeAndGetLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserCityState());
+  }
+
+  void _loadUserCityState() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user != null) {
+      setState(() {
+        _userCity = user.city;
+        _userState = user.state;
+      });
+    }
   }
 
   Future<void> _initializeAndGetLocation() async {
@@ -173,6 +189,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
           'totalAmount': 500.0 * _nurseDuration,
           'nurseService': _selectedNurseService,
           'duration': _nurseDuration,
+          'city': _userCity,
+          'state': _userState,
         };
 
         await _apiClient.patient.createRealtimeBooking(bookingData);
@@ -196,6 +214,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
           'notes':
               'Emergency blood request - $_selectedBloodGroup, $_bloodUnits unit(s)',
           'price': 500.0 * _bloodUnits,
+          'city': _userCity,
+          'state': _userState,
         };
 
         await _apiClient.patient.createBooking(bookingData);
@@ -234,6 +254,8 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
           'totalAmount': totalPrice,
           'tests': testsList,
           'homeCollection': true,
+          'city': _userCity,
+          'state': _userState,
         };
 
         await _apiClient.patient.createRealtimeBooking(bookingData);
@@ -261,6 +283,10 @@ class _InstantBookingScreenState extends State<InstantBookingScreen> {
           'notes': widget.serviceType == 'doctor'
               ? 'Emergency video consultation request'
               : 'Emergency ambulance request',
+          if (widget.serviceType != 'doctor') ...{
+            'city': _userCity,
+            'state': _userState,
+          },
         };
 
         // Add consultationType for doctor

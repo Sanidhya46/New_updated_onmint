@@ -132,8 +132,14 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
     final patientName = patientData['fullName'] ?? 'Rahul Sharma';
     final age = patientData['age'] ?? '35';
     final gender = patientData['gender'] ?? 'Male';
-    final address = _bookingDetails?['location']?['address'] ??
-        'H-101, Shanti Nagar,\nGovindpuram, Ghaziabad,\nUttar Pradesh - 201013';
+    final rawAddr = _bookingDetails?['location']?['address'];
+    String address;
+    if (rawAddr is Map) {
+      address = rawAddr['address']?.toString() ?? 
+          [rawAddr['street'], rawAddr['city'], rawAddr['state']].where((p) => p != null && p.toString().isNotEmpty).join(', ');
+    } else {
+      address = rawAddr?.toString() ?? 'H-101, Shanti Nagar, Govindpuram, Ghaziabad, Uttar Pradesh - 201013';
+    }
 
     // Dates & Times
     final requestedOn = _bookingDetails?['createdAt'] ?? '12 May 2025, 11:20 AM';
@@ -270,20 +276,34 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
                   ],
                 ),
                 padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Patient Details',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildDetailRow(Icons.person_outline, 'Name', patientName),
-                    _buildDivider(),
-                    _buildDetailRow(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender'),
-                    _buildDivider(),
-                    _buildDetailRow(Icons.location_on_outlined, 'Address', address),
-                  ],
+                child: Builder(
+                  builder: (context) {
+                    final String patientCity = patientData['city']?.toString() ?? _bookingDetails?['city']?.toString() ?? '';
+                    final String patientState = patientData['state']?.toString() ?? _bookingDetails?['state']?.toString() ?? '';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Patient Details',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF152238)),
+                        ),
+                        const SizedBox(height: 8),
+                        _buildDetailRow(Icons.person_outline, 'Name', patientName),
+                        _buildDivider(),
+                        _buildDetailRow(Icons.calendar_today_outlined, 'Age / Gender', '$age Years / $gender'),
+                        _buildDivider(),
+                        _buildDetailRow(Icons.location_on_outlined, 'Address', address),
+                        if (patientCity.isNotEmpty) ...[
+                          _buildDivider(),
+                          _buildDetailRow(Icons.location_city, 'City', patientCity),
+                        ],
+                        if (patientState.isNotEmpty) ...[
+                          _buildDivider(),
+                          _buildDetailRow(Icons.map_outlined, 'State', patientState),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -400,37 +420,44 @@ class _LabTestRequestDetailsScreenState extends State<LabTestRequestDetailsScree
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 20, color: const Color(0xFF0D47A1)),
-          const SizedBox(width: 16),
-          SizedBox(
-            width: 130,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w500,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Dynamically scale font based on available width
+        final double fontSize = constraints.maxWidth < 300 ? 10 : 12;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 6.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF0D47A1)),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 4,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF152238),
-                height: 1.4,
+              Expanded(
+                flex: 5,
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: fontSize,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF152238),
+                    height: 1.4,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

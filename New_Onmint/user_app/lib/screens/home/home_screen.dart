@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:api_client/api_client.dart';
 import 'dashboard_screen_simple.dart';
 import '../booking/blood_request_screen.dart';
 import '../profile/profile_screen.dart';
@@ -9,6 +10,9 @@ import '../../services/cart_service.dart';
 import '../../utils/app_colors.dart';
 import '../medicines/widgets/cart_floating_bar.dart';
 import '../medicines/prescription_camera_screen.dart';
+import '../bookings/booking_details_screen.dart';
+import '../booking/order_request_screen.dart';
+import '../booking/user_unified_tracking_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -30,10 +34,10 @@ class _HomeScreenState extends State<HomeScreen>
 
   late AnimationController _rotationController;
 
-  // Mock active booking state (should be bound to backend real-time stream)
-  bool _hasActiveBooking = true;
-  String _activeServiceType =
-      'ambulance'; // 'ambulance', 'doctor', 'nurse', 'lab_test'
+  final PatientService _patientService = PatientService();
+  bool _hasActiveBooking = false;
+  Map<String, dynamic>? _activeBookingDetails;
+  String _activeServiceType = '';
 
   @override
   void initState() {
@@ -42,6 +46,44 @@ class _HomeScreenState extends State<HomeScreen>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
+    _fetchActiveBooking();
+  }
+
+  Future<void> _fetchActiveBooking() async {
+    try {
+      final bookingsData = await _patientService.getBookings(page: 1, limit: 10);
+      
+      Map<String, dynamic>? mostRecentRequested;
+      Map<String, dynamic>? mostRecentInProgress;
+
+      for (var b in bookingsData) {
+        final status = b['status']?.toString().toLowerCase() ?? '';
+        final type = b['serviceType']?.toString().toLowerCase() ?? '';
+        if (type == 'pharmacist' || type == 'medicine') continue;
+        
+        if (['requested', 'pending', 'waiting for pharmacist'].contains(status)) {
+          if (mostRecentRequested == null) mostRecentRequested = b;
+        } else if (['accepted', 'confirmed', 'in_progress', 'processing', 'on_the_way'].contains(status)) {
+          if (mostRecentInProgress == null) mostRecentInProgress = b;
+        }
+      }
+
+      final targetBooking = mostRecentRequested ?? mostRecentInProgress;
+
+      if (mounted) {
+        setState(() {
+          if (targetBooking != null) {
+            _hasActiveBooking = true;
+            _activeBookingDetails = targetBooking;
+            _activeServiceType = targetBooking['serviceType']?.toString().toLowerCase() ?? '';
+          } else {
+            _hasActiveBooking = false;
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching active bookings: $e");
+    }
   }
 
   @override
@@ -59,41 +101,79 @@ class _HomeScreenState extends State<HomeScreen>
       case 'ambulance':
         return Colors.red;
       case 'doctor':
+      case 'consultation':
         return Colors.blue;
       case 'nurse':
         return Colors.blue;
       case 'lab_test':
+      case 'pathology':
         return Colors.teal;
+      case 'bloodbank':
+      case 'blood bank':
+        return Colors.red;
       default:
         return const Color(0xFF0D47A1);
     }
   }
 
-  IconData get _activeIcon {
+  Widget get _activeImage {
     switch (_activeServiceType) {
       case 'ambulance':
-        return Icons.airport_shuttle;
+        return Image.asset('assets/images/ambulance.png', width: 36, height: 36, errorBuilder: (_,__,___) => const Icon(Icons.local_shipping, color: Colors.red));
       case 'doctor':
-        return Icons.person;
+      case 'consultation':
+        return Image.asset('assets/images/doctor_icon.png', width: 36, height: 36, errorBuilder: (_,__,___) => const Icon(Icons.person, color: Colors.blue));
       case 'nurse':
-        return Icons.local_hospital;
+        return Image.asset('assets/images/nurse.png', width: 36, height: 36, errorBuilder: (_,__,___) => const Icon(Icons.local_hospital, color: Colors.blue));
       case 'lab_test':
-        return Icons.science;
+      case 'pathology':
+        return Image.asset('assets/images/lab_test.png', width: 36, height: 36, errorBuilder: (_,__,___) => const Icon(Icons.science, color: Colors.teal));
+      case 'bloodbank':
+      case 'blood bank':
+        return const Icon(Icons.bloodtype, color: Colors.red, size: 30);
       default:
-        return Icons.medical_services;
+        return const Icon(Icons.medical_services, color: Colors.blue, size: 30);
     }
   }
 
   void _openTrackingScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ActiveServiceTrackingScreen(
-          serviceType: _activeServiceType,
-          bookingDetails: const {'status': 'sample_collected'},
+    if (_activeBookingDetails == null) return;
+    final status = _activeBookingDetails!['status']?.toString().toLowerCase() ?? '';
+    final bookingId = _activeBookingDetails!['_id'] ?? _activeBookingDetails!['id'] ?? '';
+    
+    if (['requested', 'pending', 'waiting for pharmacist'].contains(status)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => OrderRequestScreen(
+            bookingId: bookingId,
+            bookingData: _activeBookingDetails!,
+            serviceType: _activeServiceType,
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      if (_activeServiceType == 'doctor' || _activeServiceType == 'consultation') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingDetailsScreen(
+              bookingId: bookingId,
+            ),
+          ),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => UserUnifiedTrackingScreen(
+              bookingId: bookingId,
+              serviceType: _activeServiceType,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -102,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen>
       body: Stack(
         children: [
           _screens[_selectedIndex],
-          if (_hasActiveBooking)
+          if (_hasActiveBooking && _selectedIndex == 0)
             Positioned(
               right: 20,
               bottom: 20, // Floating above the bottom nav bar
@@ -159,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                           ),
                           // Icon
-                          Icon(_activeIcon, color: _activeThemeColor, size: 30),
+                          _activeImage,
                         ],
                       ),
                     );

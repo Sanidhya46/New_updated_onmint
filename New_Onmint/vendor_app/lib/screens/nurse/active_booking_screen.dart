@@ -342,17 +342,37 @@ class _ActiveBookingScreenState extends State<ActiveBookingScreen> {
                     ),
                     padding: const EdgeInsets.all(16),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(6)),
+                              child: const Icon(Icons.timeline, color: Colors.green, size: 16),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Status Tracking',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF152238)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
                         _buildHorizontalTimeline(status),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 20),
+                        const Divider(height: 1, color: Color(0xFFE0E0E0)),
+                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildActionBtn(Icons.phone, 'Call Patient', () {
+                            Expanded(child: _buildActionBtn(Icons.phone, 'Call Patient', () {
                               if (phone.isNotEmpty) _makePhoneCall(phone);
-                            }),
-                            _buildActionBtn(Icons.chat_bubble, 'Chat', () {}),
-                            _buildActionBtn(Icons.map, 'Open Map', () {}),
+                            })),
+                            Container(width: 1, height: 40, color: Colors.grey.shade300),
+                            Expanded(child: _buildActionBtn(Icons.chat_bubble, 'Chat', () {})),
+                            Container(width: 1, height: 40, color: Colors.grey.shade300),
+                            Expanded(child: _buildActionBtn(Icons.map, 'Open Map', () {})),
                           ],
                         ),
                       ],

@@ -84,6 +84,17 @@ const RealTimeBookingSchema = new mongoose.Schema(
       enum: ["Male", "Female", "Other"],
     },
 
+    // City & State for city-based vendor matching
+    city: {
+      type: String,
+      trim: true,
+    },
+
+    state: {
+      type: String,
+      trim: true,
+    },
+
     hospitalName: {
       type: String,
       trim: true,

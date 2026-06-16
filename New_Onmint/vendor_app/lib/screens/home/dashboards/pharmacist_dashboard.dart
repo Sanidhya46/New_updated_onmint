@@ -28,7 +28,9 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
   }
 
   Future<void> _loadDashboard() async {
-    setState(() => _isLoading = true);
+    if (_dashboardData == null) {
+      setState(() => _isLoading = true);
+    }
     try {
       await _apiClient.initialize();
       // Using RealTimeBooking APIs to get dashboard and pending orders
@@ -73,9 +75,19 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                           _buildOrdersHeader(),
                           const SizedBox(height: 12),
                           _buildOrdersList(),
-                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
                           _buildInfoBanner(),
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),
@@ -207,7 +219,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     return Container(
       height: 30,
       width: 1,
-      color: Colors.grey[300],
+      color: Colors.blue,
     );
   }
 
@@ -447,45 +459,35 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
 
   Widget _buildInfoBanner() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0xFFF0F5FF),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          const Icon(Icons.assignment_add, size: 60, color: Color(0xFF0033CC)),
-          const SizedBox(width: 16),
+          const Icon(Icons.assignment_add, size: 20, color: Color(0xFF0033CC)),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
                   'Manage Your Orders Easily',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF001F4D),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 2),
                 const Text(
-                  'Check incoming orders, track medicine deliveries, and manage inventory all in one place.',
+                  'Check orders, deliveries, and inventory in one place.',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 8,
                     color: Colors.black54,
-                    height: 1.4,
                   ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildDot(true),
-                    const SizedBox(width: 4),
-                    _buildDot(false),
-                    const SizedBox(width: 4),
-                    _buildDot(false),
-                  ],
                 ),
               ],
             ),

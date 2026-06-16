@@ -59,8 +59,20 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
     await launchUrl(launchUri);
   }
 
+  Future<void> _openChat(String phoneNumber) async {
+    final cleanPhone = phoneNumber.replaceAll(RegExp(r'\D'), '');
+    final Uri waUri = Uri.parse('https://wa.me/$cleanPhone');
+    try {
+      await launchUrl(waUri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      final Uri smsUri = Uri(scheme: 'sms', path: phoneNumber);
+      await launchUrl(smsUri);
+    }
+  }
+
   void _viewReport() async {
-    if (_booking!['report'] != null && _booking!['report'].toString().isNotEmpty) {
+    if (_booking!['report'] != null &&
+        _booking!['report'].toString().isNotEmpty) {
       String urlStr = _booking!['report'].toString().trim();
       if (urlStr.startsWith('/')) {
         String base = AppConfig.apiBaseUrl;
@@ -69,10 +81,10 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
         }
         urlStr = base + urlStr;
       }
-      
+
       // Also handle cases where the string might be poorly formatted
       urlStr = urlStr.replaceAll(' ', '');
-      
+
       final uri = Uri.tryParse(urlStr);
       if (uri != null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -110,7 +122,7 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
     if (_booking!['report'] == null || _booking!['report'].toString().isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: ElevatedButton(
@@ -220,7 +232,7 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
                           ],
                         ),
                         const SizedBox(height: 10),
-                        _buildTimeline(status),
+                        Expanded(child: _buildTimeline(status)),
                         const SizedBox(height: 10),
                         _buildViewReportButton(),
                         const SizedBox(height: 10),
@@ -295,7 +307,10 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
 
     final sType = widget.serviceType.toLowerCase();
 
-    if (sType == 'lab_test' || sType == 'lab' || sType == 'pathology' || sType == 'labtest') {
+    if (sType == 'lab_test' ||
+        sType == 'lab' ||
+        sType == 'pathology' ||
+        sType == 'labtest') {
       cardTitle = 'Your Technician';
       roleText = provider['specialization'] ?? 'Lab Technician';
       subText =
@@ -310,7 +325,9 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
     } else if (sType == 'bloodbank' || sType == 'blood bank') {
       cardTitle = 'Your Blood Bank';
       roleText = provider['specialization'] ?? '(Blood Bank Office)';
-      locationText = '${provider['city'] ?? ''}, ${provider['state'] ?? ''}'.replaceAll(RegExp(r'^, |,$'), '').trim();
+      locationText = '${provider['city'] ?? ''}, ${provider['state'] ?? ''}'
+          .replaceAll(RegExp(r'^, |,$'), '')
+          .trim();
       if (locationText.isEmpty || locationText == ',') {
         locationText = provider['address'] ?? 'Ghaziabad, Uttar Pradesh';
       }
@@ -439,7 +456,8 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, color: Colors.grey, size: 14),
+                          const Icon(Icons.location_on,
+                              color: Colors.grey, size: 14),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -462,11 +480,16 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _buildCircleAction(Icons.call, 'Call', () {
-                    if (providerPhone != null)
+                    if (providerPhone != null) {
                       _makePhoneCall(providerPhone.toString());
+                    }
                   }),
                   const SizedBox(width: 8),
-                  _buildCircleAction(Icons.chat, 'Chat', () {}),
+                  _buildCircleAction(Icons.chat, 'Chat', () {
+                    if (providerPhone != null) {
+                      _openChat(providerPhone.toString());
+                    }
+                  }),
                 ],
               )
             ],
@@ -516,7 +539,10 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
     // Define steps based on service type
     List<Map<String, dynamic>> steps = [];
 
-    if (sType == 'lab_test' || sType == 'lab' || sType == 'pathology' || sType == 'labtest') {
+    if (sType == 'lab_test' ||
+        sType == 'lab' ||
+        sType == 'pathology' ||
+        sType == 'labtest') {
       steps = [
         {
           'id': 'accepted',
@@ -611,12 +637,14 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
           'id': 'connected',
           'alt_id': 'in_progress',
           'title': 'Connected With Blood Bank',
-          'subtitle': 'You are connected with the blood bank\nfor further assistance and confirmation.'
+          'subtitle':
+              'You are connected with the blood bank\nfor further assistance and confirmation.'
         },
         {
           'id': 'completed',
           'title': 'Completed',
-          'subtitle': 'Blood request has been successfully\ncompleted.\nThank you for choosing our service.'
+          'subtitle':
+              'Blood request has been successfully\ncompleted.\nThank you for choosing our service.'
         },
       ];
     } else {
@@ -657,45 +685,49 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
 
     return Column(
       children: List.generate(steps.length, (index) {
-        bool isCompleted = index <= currentIndex;
-        bool isLast = index == steps.length - 1;
+          bool isCompleted = index <= currentIndex;
+          bool isLast = index == steps.length - 1;
 
-        // Mock times for UI, usually would extract from booking tracking logs from backend
-        String formattedTime = '';
-        String formattedDate = '';
-        if (isCompleted && _booking!['updatedAt'] != null) {
-          final date = DateTime.tryParse(_booking!['updatedAt']);
-          if (date != null) {
-            formattedTime = DateFormat('hh:mm a').format(date);
-            formattedDate = DateFormat('dd MMM').format(date);
+          // Mock times for UI, usually would extract from booking tracking logs from backend
+          String formattedTime = '';
+          String formattedDate = '';
+          if (isCompleted && _booking!['updatedAt'] != null) {
+            final date = DateTime.tryParse(_booking!['updatedAt']);
+            if (date != null) {
+              formattedTime = DateFormat('hh:mm a').format(date);
+              formattedDate = DateFormat('dd MMM').format(date);
+            }
           }
-        }
 
-        // For accurate UI match, if we don't have real time, mock it for past steps so the UI looks complete
-        if (isCompleted && formattedTime.isEmpty) {
-          final mockTime = DateTime.now()
-              .subtract(Duration(minutes: (steps.length - index) * 15));
-          formattedTime = DateFormat('hh:mm a').format(mockTime);
-          formattedDate = DateFormat('dd MMM').format(mockTime);
-        }
+          // For accurate UI match, if we don't have real time, mock it for past steps so the UI looks complete
+          if (isCompleted && formattedTime.isEmpty) {
+            final mockTime = DateTime.now()
+                .subtract(Duration(minutes: (steps.length - index) * 15));
+            formattedTime = DateFormat('hh:mm a').format(mockTime);
+            formattedDate = DateFormat('dd MMM').format(mockTime);
+          }
 
-        Widget? extraContent;
+          Widget? extraContent;
 
-        return _buildTimelineStep(
-          steps[index]['title'],
-          steps[index]['subtitle'],
-          isCompleted,
-          isLast,
-          formattedTime,
-          formattedDate,
-          trailingWidget: extraContent,
-        );
+          return Padding(
+            padding: EdgeInsets.only(bottom: isLast ? 0 : 16.0),
+            child: _buildTimelineStep(
+              steps[index]['title'],
+              steps[index]['subtitle'],
+              isCompleted,
+              isLast,
+              formattedTime,
+              formattedDate,
+              trailingWidget: extraContent,
+            ),
+          );
       }),
     );
   }
 
   Widget _buildTimelineStep(String title, String subtitle, bool isCompleted,
-      bool isLast, String time, String date, {Widget? trailingWidget}) {
+      bool isLast, String time, String date,
+      {Widget? trailingWidget}) {
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -703,106 +735,105 @@ class _UserUnifiedTrackingScreenState extends State<UserUnifiedTrackingScreen> {
           // Left side indicator
           SizedBox(
             width: 40,
-            child: Column(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
+          child: Column(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? const Color(0xFF10A843)
+                      : Colors.grey.shade200,
+                  shape: BoxShape.circle,
+                  border: isCompleted
+                      ? Border.all(color: const Color(0xFFE5F6EB), width: 6)
+                      : Border.all(color: Colors.white, width: 4),
+                ),
+                child: isCompleted
+                    ? const Icon(Icons.check, color: Colors.white, size: 16)
+                    : null,
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
                     color: isCompleted
                         ? const Color(0xFF10A843)
-                        : Colors.grey.shade200,
-                    shape: BoxShape.circle,
-                    border: isCompleted
-                        ? Border.all(color: const Color(0xFFE5F6EB), width: 6)
-                        : Border.all(color: Colors.white, width: 4),
+                        : Colors.grey.shade300,
                   ),
-                  child: isCompleted
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : null,
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Right side content
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 0, top: 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: isCompleted
+                                  ? const Color(0xFF10A843)
+                                  : Colors.grey.shade500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black87,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (trailingWidget != null)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                        child: trailingWidget,
+                      ),
+                    if (time.isNotEmpty)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(time,
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey.shade800,
+                                  fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 2),
+                          Text(date,
+                              style: TextStyle(
+                                  fontSize: 11, color: Colors.grey.shade800)),
+                        ],
+                      ),
+                  ],
                 ),
                 if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: isCompleted
-                          ? const Color(0xFF10A843)
-                          : Colors.grey.shade300,
-                    ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Divider(height: 1, color: Colors.grey.shade300),
                   ),
+                if (isLast) const SizedBox(height: 8.0),
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          // Right side content
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 0, top: 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isCompleted
-                                    ? const Color(0xFF10A843)
-                                    : Colors.grey.shade500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              subtitle,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.black87,
-                                height: 1.4,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (trailingWidget != null)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                          child: trailingWidget,
-                        ),
-                      if (time.isNotEmpty)
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(time,
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    color: Colors.grey.shade800,
-                                    fontWeight: FontWeight.w500)),
-                            const SizedBox(height: 2),
-                            Text(date,
-                                style: TextStyle(
-                                    fontSize: 11, color: Colors.grey.shade800)),
-                          ],
-                        ),
-                    ],
-                  ),
-                  if (!isLast)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Divider(height: 1, color: Colors.grey.shade300),
-                    ),
-                  if (isLast)
-                    const SizedBox(height: 8.0),
-                ],
-              ),
-            ),
-          ),
+        ),
         ],
       ),
     );

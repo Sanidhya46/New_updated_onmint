@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:auth_service/auth_service.dart';
 import 'package:api_client/api_client.dart';
+import 'package:ui_components/ui_components.dart';
 import '../../services/cart_service.dart';
 import '../../utils/app_colors.dart';
+import '../../data/indian_states_cities.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -18,6 +20,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _apiClient = OnMintApiClient();
 
   String _userAddress = 'Fetching address...';
+  String? _selectedState;
+  String? _selectedCity;
 
   @override
   void initState() {
@@ -29,6 +33,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.refreshProfile();
     final user = authProvider.currentUser;
+
+    if (user != null) {
+      _selectedState = user.state;
+      if (_selectedState != null && _selectedState!.isEmpty) _selectedState = null;
+      _selectedCity = user.city;
+      if (_selectedCity != null && _selectedCity!.isEmpty) _selectedCity = null;
+    }
 
     if (user?.address != null) {
       final addr = user!.address!;
@@ -143,6 +154,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         'title': 'Medicine Order - ${cart.itemCount} items',
         'description': 'Medicine Order - ${cart.itemCount} items',
         'address': finalAddress,
+        'state': _selectedState ?? '',
+        'city': _selectedCity ?? '',
         'coordinates': user?.location?.coordinates ?? [72.8777, 19.0760],
         'name': '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim(),
         'phone': user?.phone ?? '',
@@ -212,6 +225,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: Column(
                       children: [
                         _buildProgressIndicator(),
+                        _buildStateCitySelectors(),
                         _buildDeliveryAddress(),
                         _buildDeliveryTimeBanner(),
                         _buildPaymentMethodSection(),
@@ -281,6 +295,68 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         margin: const EdgeInsets.only(bottom: 20),
         height: 2,
         color: isCompleted ? const Color(0xFF0F2147) : Colors.grey[300],
+      ),
+    );
+  }
+
+  Widget _buildStateCitySelectors() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.map_outlined, color: Color(0xFF0F2147), size: 20),
+              SizedBox(width: 8),
+              Text('State & City', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F2147))),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: SearchableDropdown(
+                  key: ValueKey('state_${_selectedState ?? "none"}'),
+                  items: IndianStatesData.states,
+                  value: _selectedState,
+                  hint: 'Select State',
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedState = val;
+                      _selectedCity = null;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SearchableDropdown(
+                  key: ValueKey('city_${_selectedState ?? "none"}_${_selectedCity ?? "none"}'),
+                  items: _selectedState != null
+                      ? IndianStatesData.getCitiesForState(_selectedState!)
+                      : [],
+                  value: _selectedCity,
+                  hint: 'Select City',
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedCity = val;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

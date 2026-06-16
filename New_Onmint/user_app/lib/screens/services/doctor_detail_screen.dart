@@ -63,24 +63,35 @@ class DoctorDetailScreen extends StatelessWidget {
                       ),
                     ),
                   const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 16,
+                    runSpacing: 4,
                     children: [
                       if (doctor.rating != null) ...[
-                        const Icon(Icons.star, color: Colors.amber, size: 20),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${doctor.rating!.toStringAsFixed(1)} (${doctor.totalRatings ?? 0} reviews)',
-                          style: const TextStyle(color: Colors.white),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 20),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${doctor.rating!.toStringAsFixed(1)} (${doctor.totalRatings ?? 0} reviews)',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
                         ),
                       ],
                       if (doctor.experience != null) ...[
-                        const SizedBox(width: 16),
-                        const Icon(Icons.work, color: Colors.white70, size: 20),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${doctor.experience} years',
-                          style: const TextStyle(color: Colors.white),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.work, color: Colors.white70, size: 20),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${doctor.experience} years',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
                         ),
                       ],
                     ],
@@ -200,11 +211,14 @@ class DoctorDetailScreen extends StatelessWidget {
                     children: [
                       const Icon(Icons.phone, color: AppColors.doctor),
                       const SizedBox(width: 8),
-                      Text(
-                        doctor.phone,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textSecondary,
+                      Flexible(
+                        child: Text(
+                          doctor.phone,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -215,11 +229,14 @@ class DoctorDetailScreen extends StatelessWidget {
                       children: [
                         const Icon(Icons.email, color: AppColors.doctor),
                         const SizedBox(width: 8),
-                        Text(
-                          doctor.email,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textSecondary,
+                        Flexible(
+                          child: Text(
+                            doctor.email,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],

@@ -4,6 +4,7 @@ import 'package:api_client/api_client.dart';
 import 'package:auth_service/auth_service.dart';
 import 'package:ui_components/ui_components.dart';
 import '../../config/app_colors.dart';
+import 'package:user_app/data/indian_states_cities.dart';
 import 'confirm_blood_request_screen.dart';
 
 class BloodRequestScreen extends StatefulWidget {
@@ -31,8 +32,28 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
   
   String? _selectedBloodGroup;
   bool _isLoading = false;
+  String? _selectedState;
+  String? _selectedCity;
 
   final List<String> _bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _prefillUserData());
+  }
+
+  void _prefillUserData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user != null) {
+      _patientNameController.text = user.fullName.isNotEmpty ? user.fullName : '';
+      _contactController.text = user.phone.isNotEmpty ? user.phone : '';
+      if (user.city.isNotEmpty) _selectedCity = user.city;
+      if (user.state.isNotEmpty) _selectedState = user.state;
+      setState(() {});
+    }
+  }
 
   @override
   void dispose() {
@@ -56,6 +77,11 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
       return;
     }
 
+    if (_selectedCity == null || _selectedCity!.isEmpty) {
+      ToastUtils.showError('Please select your city');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
@@ -74,6 +100,8 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
               contactNumber: _contactController.text,
               address: _addressController.text,
               emergencyNote: _reasonController.text,
+              city: _selectedCity ?? '',
+              state: _selectedState ?? '',
             ),
           ),
         ).then((_) {
@@ -101,10 +129,16 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: Navigator.canPop(context) ? IconButton(
+        leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ) : null,
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
+          },
+        ),
         iconTheme: const IconThemeData(color: Colors.black87),
       ),
       backgroundColor: Colors.white,
@@ -306,7 +340,86 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // ROW 5
+                    // State & City
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('State', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                              const SizedBox(height: 4),
+                              GestureDetector(
+                                onTap: () async {
+                                  final picked = await showDialog<String>(
+                                    context: context,
+                                    builder: (_) => _BloodStatePickerDialog(selectedState: _selectedState),
+                                  );
+                                  if (picked != null) {
+                                    setState(() { _selectedState = picked; _selectedCity = null; });
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: Colors.grey[300]!),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.map_outlined, color: Colors.grey[500], size: 18),
+                                      const SizedBox(width: 6),
+                                      Expanded(child: Text(_selectedState ?? 'Select State', style: TextStyle(fontSize: 12, color: _selectedState != null ? Colors.black87 : Colors.grey[400]), overflow: TextOverflow.ellipsis)),
+                                      Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 16),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('City *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black87)),
+                              const SizedBox(height: 4),
+                              GestureDetector(
+                                onTap: () async {
+                                  if (_selectedState == null) { ToastUtils.showError('Please select state first'); return; }
+                                  final picked = await showDialog<String>(
+                                    context: context,
+                                    builder: (_) => _BloodCityPickerDialog(state: _selectedState!, selectedCity: _selectedCity),
+                                  );
+                                  if (picked != null) setState(() => _selectedCity = picked);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(color: _selectedCity == null ? Colors.grey[300]! : Colors.red[300]!),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.location_city, color: Colors.grey[500], size: 18),
+                                      const SizedBox(width: 6),
+                                      Expanded(child: Text(_selectedCity ?? 'Select City', style: TextStyle(fontSize: 12, color: _selectedCity != null ? Colors.black87 : Colors.grey[400]), overflow: TextOverflow.ellipsis)),
+                                      Icon(Icons.keyboard_arrow_down, color: Colors.grey[500], size: 16),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Emergency note
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -487,3 +600,73 @@ class _BloodRequestScreenState extends State<BloodRequestScreen> {
     );
   }
 }
+
+class _BloodStatePickerDialog extends StatefulWidget {
+  final String? selectedState;
+  const _BloodStatePickerDialog({this.selectedState});
+  @override
+  State<_BloodStatePickerDialog> createState() => _BloodStatePickerDialogState();
+}
+class _BloodStatePickerDialogState extends State<_BloodStatePickerDialog> {
+  final _sc = TextEditingController();
+  List<String> _filtered = IndianStatesData.states;
+  @override
+  void dispose() { _sc.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select State', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      content: SizedBox(width: double.maxFinite, height: 400,
+        child: Column(children: [
+          TextField(controller: _sc, decoration: InputDecoration(hintText: 'Search state...', hintStyle: const TextStyle(fontSize: 12), prefixIcon: const Icon(Icons.search, size: 18), isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+            onChanged: (q) => setState(() { _filtered = IndianStatesData.states.where((s) => s.toLowerCase().contains(q.toLowerCase())).toList(); })),
+          const SizedBox(height: 8),
+          Expanded(child: ListView.builder(itemCount: _filtered.length, itemBuilder: (_, i) {
+            final s = _filtered[i];
+            return ListTile(dense: true, title: Text(s, style: const TextStyle(fontSize: 13)), selected: s == widget.selectedState, selectedTileColor: Colors.red[50], onTap: () => Navigator.pop(context, s));
+          })),
+        ]),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))],
+    );
+  }
+}
+
+class _BloodCityPickerDialog extends StatefulWidget {
+  final String state;
+  final String? selectedCity;
+  const _BloodCityPickerDialog({required this.state, this.selectedCity});
+  @override
+  State<_BloodCityPickerDialog> createState() => _BloodCityPickerDialogState();
+}
+class _BloodCityPickerDialogState extends State<_BloodCityPickerDialog> {
+  final _sc = TextEditingController();
+  late List<String> _cities, _filtered;
+  @override
+  void initState() { super.initState(); _cities = IndianStatesData.getCitiesForState(widget.state); _filtered = _cities; }
+  @override
+  void dispose() { _sc.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Select City — ${widget.state}', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+      contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      content: SizedBox(width: double.maxFinite, height: 400,
+        child: Column(children: [
+          TextField(controller: _sc, decoration: InputDecoration(hintText: 'Search city...', hintStyle: const TextStyle(fontSize: 12), prefixIcon: const Icon(Icons.search, size: 18), isDense: true, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
+            onChanged: (q) => setState(() { _filtered = _cities.where((c) => c.toLowerCase().contains(q.toLowerCase())).toList(); })),
+          const SizedBox(height: 8),
+          Expanded(child: _filtered.isEmpty
+            ? const Center(child: Text('No cities found', style: TextStyle(color: Colors.grey)))
+            : ListView.builder(itemCount: _filtered.length, itemBuilder: (_, i) {
+                final c = _filtered[i];
+                return ListTile(dense: true, title: Text(c, style: const TextStyle(fontSize: 13)), selected: c == widget.selectedCity, selectedTileColor: Colors.red[50], onTap: () => Navigator.pop(context, c));
+              })),
+        ]),
+      ),
+      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel'))],
+    );
+  }
+}
+

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:api_client/api_client.dart';
 import 'package:user_app/screens/booking/nursing_care_selection_screen.dart';
+import 'package:user_app/screens/booking/order_request_screen.dart';
 import 'package:intl/intl.dart';
 
 class ConfirmNurseBookingScreen extends StatefulWidget {
@@ -10,6 +11,8 @@ class ConfirmNurseBookingScreen extends StatefulWidget {
   final int age;
   final String gender;
   final String notes;
+  final String city;
+  final String state;
   final List<NursingCareModel> selectedCares;
   final DateTime? preferredDate;
   final DateTime? preferredTime;
@@ -22,6 +25,8 @@ class ConfirmNurseBookingScreen extends StatefulWidget {
     required this.age,
     required this.gender,
     required this.notes,
+    required this.city,
+    required this.state,
     required this.selectedCares,
     this.preferredDate,
     this.preferredTime,
@@ -62,6 +67,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
           'preferredTime': widget.preferredTime!.toIso8601String(),
         'urgency': 'medium',
         'isEmergency': false,
+        'city': widget.city,
+        'state': widget.state,
         'paymentMethod': _selectedPayment,
         'totalAmount': 499, // From UI
       };
@@ -73,7 +80,16 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Nurse request sent successfully!')),
         );
-        Navigator.of(context).popUntil((route) => route.isFirst);
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => OrderRequestScreen(
+              bookingId: '',
+              bookingData: bookingData,
+              serviceType: 'nurse',
+            ),
+          ),
+          (route) => route.isFirst,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -175,8 +191,8 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                   alignment: Alignment.topCenter,
                 ),
                 Positioned(
-                  top: 25,
-                  left: 5,
+                  top: MediaQuery.of(context).padding.top > 0 ? MediaQuery.of(context).padding.top : 10,
+                  right: 16,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back,
                         color: Colors.black87, size: 24),
@@ -236,6 +252,10 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                             Icons.medical_services_outlined,
                             'Nursing Cares',
                             widget.selectedCares.map((c) => c.name).join('\n')),
+                        if (widget.city.isNotEmpty)
+                          _buildSummaryRow(Icons.location_city, 'City', widget.city),
+                        if (widget.state.isNotEmpty)
+                          _buildSummaryRow(Icons.map_outlined, 'State', widget.state),
                         if (widget.preferredDate != null)
                           _buildSummaryRow(
                               Icons.calendar_today_outlined,
@@ -281,8 +301,7 @@ class _ConfirmNurseBookingScreenState extends State<ConfirmNurseBookingScreen> {
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 0),
+                const SizedBox(height: 64),
 
                 // Payment Details Card
                 Container(

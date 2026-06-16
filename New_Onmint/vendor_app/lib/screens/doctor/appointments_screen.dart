@@ -15,7 +15,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   final _apiClient = OnMintApiClient();
   List<dynamic> _appointments = [];
   bool _isLoading = true;
-  String _selectedStatus = 'accepted'; // Default to accepted to show active appointments
+  String _selectedStatus = 'requested';
 
   @override
   void initState() {
@@ -26,12 +26,14 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
   Future<void> _loadAppointments() async {
     setState(() => _isLoading = true);
     try {
-      final data = await _apiClient.doctor.getAppointments(
+      await _apiClient.initialize();
+      final response = await _apiClient.doctor.getAppointments(
+        page: 1,
+        limit: 100,
         status: _selectedStatus,
       );
-      // Backend returns data in 'data' field, not 'items'
       setState(() {
-        _appointments = data['data'] ?? data['items'] ?? [];
+        _appointments = response['data'] ?? response['items'] ?? [];
         _isLoading = false;
       });
     } catch (e) {
@@ -287,49 +289,58 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
               ),
               const SizedBox(width: 8),
               // Right Side (Status + Chevron)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          statusLabel,
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 10,
-                            color: statusColor,
-                            fontWeight: FontWeight.w600,
-                          ),
+              Flexible(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                statusLabel,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10,
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            if (isCompleted && completedDateStr.isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                'Completed on\n$completedDateStr',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
+                              ),
+                            ] else ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                '${scheduledTime.day}/${scheduledTime.month}/${scheduledTime.year}\n${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
-                      if (isCompleted && completedDateStr.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          'Completed on\n$completedDateStr',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
-                        ),
-                      ] else ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          '${scheduledTime.day}/${scheduledTime.month}/${scheduledTime.year}\n${scheduledTime.hour}:${scheduledTime.minute.toString().padLeft(2, '0')}',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontFamily: 'Poppins', fontSize: 9, color: Colors.grey.shade600, height: 1.1),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.chevron_right, color: Colors.black54, size: 18),
-                ],
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right, color: Colors.black54, size: 18),
+                  ],
+                ),
               ),
             ],
           ),
