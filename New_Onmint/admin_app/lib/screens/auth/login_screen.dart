@@ -232,13 +232,30 @@ class _LoginScreenState extends State<LoginScreen> {
                                     fontFamily: 'monospace',
                                   ),
                                 ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text(
+                                  'Don\'t have an admin account? ',
+                                  style: TextStyle(color: AppColors.textSecondary),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pushNamed('/register'),
+                                  child: const Text(
+                                    'Sign Up',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                 ],
               ),
             ),

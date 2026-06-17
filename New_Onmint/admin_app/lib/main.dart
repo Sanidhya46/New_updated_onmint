@@ -8,6 +8,8 @@ import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 import 'screens/profile/profile_screen.dart';
+import 'screens/auth/register_screen.dart';
+import 'package:location_service/location_service.dart';
 
 void main() {
   runApp(const OnMintAdminApp());
@@ -23,6 +25,7 @@ class OnMintAdminApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider(apiClient)),
+        ChangeNotifierProvider(create: (_) => LocationProvider()),
         Provider.value(value: apiClient),
       ],
       child: MaterialApp(
@@ -33,6 +36,7 @@ class OnMintAdminApp extends StatelessWidget {
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
           '/home': (context) => const HomeScreen(),
           '/profile': (context) => const ProfileScreen(),
         },

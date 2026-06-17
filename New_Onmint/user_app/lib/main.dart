@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:auth_service/auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'config/app_config.dart';
 import 'screens/splash_screen.dart';
@@ -16,7 +18,19 @@ import 'screens/consultation/video_consultation_screen.dart';
 import 'screens/bookings/pharmacist_order_tracking_screen.dart';
 import 'services/cart_service.dart';
 
-void main() {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    print("Firebase init error: $e");
+  }
   runApp(const OnMintUserApp());
 }
 

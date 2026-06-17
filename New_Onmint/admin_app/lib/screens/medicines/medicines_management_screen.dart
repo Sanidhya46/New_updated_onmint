@@ -348,13 +348,11 @@ class _MedicinesManagementScreenState extends State<MedicinesManagementScreen> {
     } else if (medicine['imageUrlSigned'] != null) {
       imageUrl = medicine['imageUrlSigned'];
     } else if (medicine['images'] != null && medicine['images'] is List && (medicine['images'] as List).isNotEmpty) {
-      // Fallback to original URL with base URL
-      final originalUrl = medicine['images'][0];
-      imageUrl = originalUrl.startsWith('http') ? originalUrl : 'http://localhost:5000$originalUrl';
+      // Fallback to original URL
+      imageUrl = medicine['images'][0];
     } else if (medicine['imageUrl'] != null) {
-      // Fallback to original imageUrl with base URL
-      final originalUrl = medicine['imageUrl'];
-      imageUrl = originalUrl.startsWith('http') ? originalUrl : 'http://localhost:5000$originalUrl';
+      // Fallback to original imageUrl
+      imageUrl = medicine['imageUrl'];
     }
 
     return Card(
@@ -685,20 +683,13 @@ class _AddEditMedicineScreenState extends State<AddEditMedicineScreen> {
     if (medicine['imagesSigned'] != null && medicine['imagesSigned'] is List) {
       _existingImageUrls = List<String>.from(medicine['imagesSigned']);
     } else if (medicine['images'] != null && medicine['images'] is List) {
-      // Convert original URLs to full URLs if needed
       _existingImageUrls = (medicine['images'] as List).map((url) {
-        if (url.toString().startsWith('http')) {
-          return url.toString();
-        } else {
-          return 'http://localhost:5000$url';
-        }
+        return url.toString();
       }).toList();
     } else if (medicine['imageUrlSigned'] != null) {
       _existingImageUrls = [medicine['imageUrlSigned']];
     } else if (medicine['imageUrl'] != null) {
-      final url = medicine['imageUrl'];
-      final fullUrl = url.startsWith('http') ? url : 'http://localhost:5000$url';
-      _existingImageUrls = [fullUrl];
+      _existingImageUrls = [medicine['imageUrl']];
     }
   }
 

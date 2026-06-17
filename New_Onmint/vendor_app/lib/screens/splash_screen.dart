@@ -39,8 +39,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   }
 
   Future<void> _checkAuth() async {
-    // Show splash for minimum 2.5 seconds to ensure visibility
-    await Future.delayed(const Duration(milliseconds: 2500));
+    // Show splash for 1.8 seconds to ensure visibility
+    await Future.delayed(const Duration(milliseconds: 1800));
     
     if (!mounted) return;
     
@@ -85,83 +85,35 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           decoration: const BoxDecoration(
             color: Colors.white,
           ),
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Responsive splash image with dynamic sizing
-                  Container(
-                    width: screenSize.width * 0.9,
-                    height: screenSize.height * 0.5,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
+          child: Image.asset(
+            'images/splash_screen.png',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                color: AppColors.primary,
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.medical_services,
+                        size: screenSize.width * 0.25,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'OnMint',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        'images/splash_screen.png',
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: AppColors.primary,
-                            child: Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.medical_services,
-                                    size: screenSize.width * 0.25,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'OnMint',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
                       ),
-                    ),
+                    ],
                   ),
-                  SizedBox(height: screenSize.height * 0.08),
-                  // Loading indicator
-                  SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 3,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primary.withOpacity(0.7),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: screenSize.height * 0.04),
-                  Text(
-                    'Loading...',
-                    style: TextStyle(
-                      fontSize: screenSize.width * 0.04,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),

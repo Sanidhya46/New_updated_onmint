@@ -4,17 +4,17 @@ class ApiConfig {
   // ════════════════════════════════════════════════════════════════════════════
   
   // Change this to your hosted API URL
-  static const String _baseUrlDev = 'http://localhost:5000/api/v1';
+  static const String _baseUrlDev = 'https://api.onmint.in/api/v1';
   // Example: 'https://api.yourdomain.com/api/v1'
   
   // Change to true ONLY if you have separate dev & production environments
-  static const bool _isProduction = false; // MAKE TRUE WHILE HOSTING ..
+  static const bool _isProduction = true; // MAKE TRUE WHILE HOSTING ..
   
   // ════════════════════════════════════════════════════════════════════════════
   // ADVANCED: Only change this if you have separate production server
   // ════════════════════════════════════════════════════════════════════════════
   
-  static const String _baseUrlProd = 'https://production-api.yourdomain.com/api/v1';
+  static const String _baseUrlProd = 'https://api.onmint.in/api/v1';
   
   // ════════════════════════════════════════════════════════════════════════════
   // NO NEED TO CHANGE ANYTHING BELOW THIS LINE

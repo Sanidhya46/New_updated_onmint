@@ -14,7 +14,7 @@ class AppConfig {
   
   // API Configuration
   static const String appName = 'OnMint Admin';
-  static const String apiBaseUrl = 'http://localhost:5000/api/v1';
+  static const String apiBaseUrl = 'https://api.onmint.in/api/v1';
   
   // Theme
   static ThemeData get lightTheme {

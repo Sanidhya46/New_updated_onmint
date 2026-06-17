@@ -124,7 +124,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             
             // Register Form Card
             Container(
-              transform: Matrix4.translationValues(0.0, -10.0, 0.0),
               margin: EdgeInsets.zero,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
