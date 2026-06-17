@@ -112,34 +112,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F8FB),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Image.asset(
+      body: Column(
+        children: [
+          // Top banner image - fixed height, no zooming
+          SizedBox(
+            width: double.infinity,
+            height: 120,
+            child: Image.asset(
               'assets/images/register_login/register_top_banner.png',
               width: double.infinity,
               height: 120,
               fit: BoxFit.cover,
-            ),
-            
-            // Register Form Card
-            Container(
-              margin: EdgeInsets.zero,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: const Color(0xFF0D6EFD),
+                  child: const Center(
+                    child: Text(
+                      'OnMint',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+                );
+              },
+            ),
+          ),
+          
+          // Register Form Card - starts immediately after image
+          Expanded(
+            child: SingleChildScrollView(
+              child: Container(
+                margin: EdgeInsets.zero,
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(20),
+                    topRight: Radius.circular(20),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                   // Header
                   Row(
                             children: [

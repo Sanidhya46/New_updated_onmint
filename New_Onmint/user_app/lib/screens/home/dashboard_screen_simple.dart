@@ -1086,7 +1086,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Image.asset(
-          'images/Advertisement_banner.png',
+          'assets/images/Advertisement_banner.png',
           fit: BoxFit.cover,
           height: 140,
           width: double.infinity,

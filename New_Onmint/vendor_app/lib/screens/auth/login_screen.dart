@@ -156,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Column(
         children: [
           Image.asset(
-            'images/register_login/top_banner.jpeg',
+            'assets/images/register_login/top_banner.jpeg',
             width: double.infinity,
             fit: BoxFit.fitWidth,
             errorBuilder: (context, error, stackTrace) {
@@ -170,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
           
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
               child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,

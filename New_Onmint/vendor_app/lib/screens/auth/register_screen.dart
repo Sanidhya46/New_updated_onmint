@@ -696,7 +696,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: Column(
         children: [
           Image.asset(
-            'images/register_login/top_banner.jpeg',
+            'assets/images/register_login/top_banner.jpeg',
             width: double.infinity,
             fit: BoxFit.fitWidth,
           ),
@@ -716,7 +716,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                   child: Form(
                     key: _formKey1,
                     child: Column(

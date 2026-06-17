@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
             color: Colors.white,
           ),
           child: Image.asset(
-            'images/splash_screen.png',
+            'assets/images/splash_screen.png',
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               return Container(
